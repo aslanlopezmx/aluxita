@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
+    <title>Zelda Retro: Aventura en Yucatán</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Outfit:wght@400;600&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <!-- Contenedor Principal (Simula consola portátil en PC / Pantalla completa en móvil) -->
+    <div class="console-shell">
+      <!-- Pantalla Superior: El Juego (Estilo Zelda NES) -->
+      <div class="screen-viewport">
+        <div class="status-bar">
+          <span id="healthDisplay">❤️ ❤️ ❤️ ❤️ ❤️</span>
+          <span id="itemDisplay">🥐 0/5 | ✨ Xix:0</span>
+        </div>
+        <canvas id="gameCanvas" width="320" height="240"></canvas>
+
+        <!-- Mensajes del juego -->
+        <div id="dialogOverlay" class="dialog-box hidden">
+          <p id="dialogText">¡Has encontrado un cofre del tesoro!</p>
+          <button id="dialogBtn">Aceptar</button>
+        </div>
+      </div>
+
+      <!-- Pantalla Inferior: Carcasa Estilo Game Boy con Controles e Interfaz -->
+      <div class="gameboy-body">
+        <div class="brand-tag">NINTENDO / MAYAB-BOY</div>
+
+        <div class="controls-deck">
+          <!-- Cruceta Direccional (D-Pad) -->
+          <div class="dpad">
+            <button class="d-btn d-up" id="btnUp">▲</button>
+            <button class="d-btn d-left" id="btnLeft">◀</button>
+            <button class="d-btn d-center"></button>
+            <button class="d-btn d-right" id="btnRight">▶</button>
+            <button class="d-btn d-down" id="btnDown">▼</button>
+          </div>
+
+          <!-- Botones Select / Start -->
+          <div class="center-buttons">
+            <div class="pill-btn-group">
+              <div class="pill-btn"></div>
+              <span class="btn-label">SELECT</span>
+            </div>
+            <div class="pill-btn-group">
+              <div class="pill-btn"></div>
+              <span class="btn-label">START</span>
+            </div>
+          </div>
+
+          <!-- Botones de Acción (A y B) -->
+          <div class="action-buttons">
+            <div class="action-group">
+              <button class="action-btn" id="btnB">B</button>
+              <span class="btn-label">ESPADA</span>
+            </div>
+            <div class="action-group">
+              <button class="action-btn" id="btnA">A</button>
+              <span class="btn-label">SALTAR</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal de Recuerdo Desbloqueado (Al abrir cofres) -->
+    <div id="memoryModal" class="modal hidden">
+      <div class="modal-card">
+        <span id="memoryBadge" class="modal-badge">* TESORO ENCONTRADO *</span>
+        <div class="photo-frame">
+          <img id="memoryImg" src="" alt="Recuerdo" />
+        </div>
+        <h2 id="memoryTitle">Título</h2>
+        <p id="memoryMessage">Mensaje...</p>
+        <button id="closeModalBtn" class="btn-retro">CONTINUAR</button>
+      </div>
+    </div>
+
+    <script src="mapdata.js"></script>
+    <script src="script.js"></script>
+  </body>
+</html>
