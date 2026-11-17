@@ -309,6 +309,31 @@ const ENEMY_STUN = 22; // frames que un enemigo queda aturdido al recibir un gol
 const ENEMY_KNOCKBACK = 0.07; // retroceso por frame durante el aturdimiento (casillas)
 const ENEMY_DIE_FRAMES = 30; // duración de la animación de muerte
 
+// Choco (guardián): si un NPC hostil se acerca a la exploradora, Choco va hacia él
+// y lo aparta a base de ladridos y gruñidos. Es un empujón: aturde igual que la
+// espada, pero nunca le quita corazones al hostil.
+const CHOCO_HOSTILE_KINDS = [
+  "alux",
+  "huaychivo",
+  "huaypek",
+  "kaskabal",
+  "xtabay",
+];
+const CHOCO_DEFEND_R = 5; // radio alrededor de la exploradora en el que Choco reacciona
+const CHOCO_ATTACK_R = 1.3; // distancia a la que Choco ya puede empujar al hostil
+const CHOCO_PUSH = 0.1; // fuerza del empujón
+const CHOCO_ATTACK_COOLDOWN = 45; // frames entre empujones
+const CHOCO_GROWL_FRAMES = 36; // frames que se muestra el texto de ladrido/gruñido
+const CHOCO_ATTACK_SPEED = 0.145; // velocidad al ir hacia el hostil (más rápido que correr normal)
+
+// Cleo (miedosa): si un hostil se acerca a la exploradora, en vez de atacarlo se
+// aparta un poco hacia el lado contrario. No huye lejos: se queda cerca de ella.
+const CLEO_FLEE_DIST = 8; // qué tan lejos de la exploradora se aleja al huir
+
+// Chelita (animadora): mientras Choco va al ataque, da vueltas a su alrededor ladrando.
+const CHELITA_CIRCLE_R = 1.4; // radio del círculo que traza alrededor de Choco
+const CHELITA_CIRCLE_SPEED = 0.09; // velocidad angular (radianes por frame)
+
 // Perros compañeros: Choco y Cleo. De cada uno solo puede haber uno en el mapa
 const MAX_DOGS = 1; // por raza
 const ALUX_SCALE = 0.3; // tamaño del alux respecto a su sprite original
@@ -362,7 +387,6 @@ const dogSpots = DOG_KINDS.flatMap((k) =>
 let dogs = [];
 
 let foundCount = 0;
-let xixCount = 0;
 let health = MAX_HEALTH;
 let isPaused = false;
 // Oscuridad alrededor del jugador cuando un kaskabal lo detecta (0 = nada, 1 = máxima)
@@ -6487,6 +6511,11 @@ function spawnEntities() {
         o.fleeSide = 1;
         o.dirGx = 0;
         o.dirGy = 0;
+        o.attackT = 0; // cuenta atrás entre empujones a un hostil (solo Choco)
+        o.growlLeft = 0; // frames que muestra el ladrido/gruñido de ataque
+        o.atkFlip = null; // hacia qué lado mira mientras gruñe
+        o.isAttacking = false; // Choco: si está yendo a empujar a un hostil
+        o.circleAngle = null; // Chelita: ángulo actual al girar alrededor de Choco
         dogs.push(o);
         reserved.push({ gx, gy, r: 1.2 });
       }),
@@ -6853,7 +6882,7 @@ function updateHUD() {
     .filter((g) => g.items.length)
     .map((g) => ` | ${g.def.emoji} ${g.count}/${g.items.length}`)
     .join("");
-  itemDisplay.innerText = `🥐 ${foundCount}/${treasures.length}${gl} | ✨ Xix:${xixCount}`;
+  itemDisplay.innerText = `🥐 ${foundCount}/${treasures.length}${gl}`;
 }
 
 /* ---------- Controles ---------- */
@@ -7150,15 +7179,21 @@ function damageEnemy(o, dmg, nx, ny) {
     return;
   }
   // Retroceso y aturdimiento: se interrumpe el golpe que preparaba
-  o.kbX = nx * ENEMY_KNOCKBACK;
-  o.kbY = ny * ENEMY_KNOCKBACK;
+  knockbackEnemy(o, nx, ny, ENEMY_KNOCKBACK);
+}
+
+// Aturde y hace retroceder a un enemigo sin tocarle los corazones (lo usan tanto
+// la espada —vía damageEnemy— como el empujón de Choco)
+function knockbackEnemy(o, nx, ny, push) {
+  o.kbX = nx * push;
+  o.kbY = ny * push;
   o.kbT = 8;
   if (o.state === "windup" || o.state === "chase") {
     o.state = "recover";
     o.coolT = ENEMY_STUN;
     o.atkT = 0;
   } else if (o.state === "idle" || o.state === "return") {
-    o.state = "chase"; // al ser atacado, se enfurece
+    o.state = "chase"; // al ser golpeado, se enfurece
     o.spotT = 40;
   }
 }
@@ -7404,18 +7439,100 @@ function updateDog(o) {
   let dy = 0;
   let speed = 0;
 
+  // Choco (guardián): si hay un hostil cerca de la exploradora, se convierte en
+  // su objetivo y Choco va derecho hacia él en vez de a su puesto habitual.
+  let threat = null;
+  if (o.cfg.key === "choco" && o.found) {
+    if (o.attackT > 0) o.attackT--;
+    let bestD = Infinity;
+    statics.forEach((e) => {
+      if (!CHOCO_HOSTILE_KINDS.includes(e.kind) || e.dead) return;
+      if (Math.hypot(e.gx - player.gx, e.gy - player.gy) > CHOCO_DEFEND_R)
+        return;
+      const cd = Math.hypot(e.gx - o.gx, e.gy - o.gy);
+      if (cd < bestD) {
+        bestD = cd;
+        threat = e;
+      }
+    });
+  }
+  if (o.cfg.key === "choco") o.isAttacking = !!threat;
+  if (o.growlLeft > 0) o.growlLeft--;
+
+  // Cleo (miedosa): igual que Choco detecta al hostil más cercano a la exploradora,
+  // pero en vez de ir hacia él, se usa para alejarse en dirección contraria.
+  let danger = null;
+  if (o.cfg.key === "cleo" && o.found) {
+    let bestD = Infinity;
+    statics.forEach((e) => {
+      if (!CHOCO_HOSTILE_KINDS.includes(e.kind) || e.dead) return;
+      const ed = Math.hypot(e.gx - player.gx, e.gy - player.gy);
+      if (ed > CHOCO_DEFEND_R) return;
+      if (ed < bestD) {
+        bestD = ed;
+        danger = e;
+      }
+    });
+  }
+
+  // Chelita (animadora): si Choco se lanzó a atacar, se queda dando vueltas
+  // a su alrededor ladrándole, en vez de ir a su puesto habitual.
+  let chocoAttack = null;
+  if (o.cfg.key === "chelita" && o.found) {
+    const choco = dogs.find((d) => d.cfg.key === "choco");
+    if (choco && choco.isAttacking) chocoAttack = choco;
+  }
+
   // Puesto propio: cada perro se coloca detrás de la exploradora y a un lado
   // distinto (Choco a un lado, Cleo al otro). Si ese puesto no es transitable,
   // va hacia ella y se detiene a FOLLOW_R como antes.
   const dirx = player.dirGx;
   const diry = player.dirGy;
-  let tx = player.gx - dirx * o.cfg.slotBack - diry * o.cfg.slotSide;
-  let ty = player.gy - diry * o.cfg.slotBack + dirx * o.cfg.slotSide;
-  let stopR = 0.45;
-  if (!walkable(tx, ty)) {
-    tx = player.gx;
-    ty = player.gy;
-    stopR = FOLLOW_R;
+  let tx, ty, stopR;
+  if (threat) {
+    tx = threat.gx;
+    ty = threat.gy;
+    stopR = CHOCO_ATTACK_R;
+  } else if (danger) {
+    // Punto justo del otro lado de la exploradora respecto al hostil, sin alejarse demasiado
+    const awayX = player.gx - danger.gx;
+    const awayY = player.gy - danger.gy;
+    const ad = Math.hypot(awayX, awayY) || 0.0001;
+    const fx = player.gx + (awayX / ad) * CLEO_FLEE_DIST;
+    const fy = player.gy + (awayY / ad) * CLEO_FLEE_DIST;
+    if (walkable(fx, fy)) {
+      tx = fx;
+      ty = fy;
+      stopR = 0.4;
+    } else {
+      tx = player.gx;
+      ty = player.gy;
+      stopR = FOLLOW_R;
+    }
+  } else if (chocoAttack) {
+    if (o.circleAngle == null) o.circleAngle = Math.random() * Math.PI * 2;
+    o.circleAngle += CHELITA_CIRCLE_SPEED;
+    const cx = chocoAttack.gx + Math.cos(o.circleAngle) * CHELITA_CIRCLE_R;
+    const cy = chocoAttack.gy + Math.sin(o.circleAngle) * CHELITA_CIRCLE_R;
+    if (walkable(cx, cy)) {
+      tx = cx;
+      ty = cy;
+      stopR = 0.3;
+    } else {
+      tx = chocoAttack.gx;
+      ty = chocoAttack.gy;
+      stopR = CHELITA_CIRCLE_R;
+    }
+    if (o.barkLeft <= 0) o.barkLeft = 25; // ladra sin parar mientras da vueltas
+  } else {
+    tx = player.gx - dirx * o.cfg.slotBack - diry * o.cfg.slotSide;
+    ty = player.gy - diry * o.cfg.slotBack + dirx * o.cfg.slotSide;
+    stopR = 0.45;
+    if (!walkable(tx, ty)) {
+      tx = player.gx;
+      ty = player.gy;
+      stopR = FOLLOW_R;
+    }
   }
   const dxt = tx - o.gx;
   const dyt = ty - o.gy;
@@ -7424,9 +7541,32 @@ function updateDog(o) {
   const chase = o.following ? dt > stopR : dt > stopR + 0.45;
   o.following = o.found && !player.boat && chase;
 
+  // Ya alcanzó al hostil: lo empuja ladrando y gruñendo, sin quitarle corazones
+  if (threat && !chase && o.attackT <= 0) {
+    const nx = dxt / dt;
+    const ny = dyt / dt;
+    knockbackEnemy(threat, nx, ny, CHOCO_PUSH);
+    burst(threat.gx, threat.gy, threat.h, ["#ffffff", "#fff3b0"], 6);
+    o.attackT = CHOCO_ATTACK_COOLDOWN;
+    o.growlLeft = CHOCO_GROWL_FRAMES;
+    const asd = dxt - dyt;
+    if (Math.abs(asd) > 0.05) o.atkFlip = asd < 0;
+  }
+
   if (o.following) {
-    o.running = d > RUN_R;
-    speed = o.running ? 0.098 : 0.06;
+    if (threat) {
+      o.running = true;
+      speed = CHOCO_ATTACK_SPEED;
+    } else if (danger) {
+      o.running = true;
+      speed = 0.098;
+    } else if (chocoAttack) {
+      o.running = true;
+      speed = 0.098;
+    } else {
+      o.running = d > RUN_R;
+      speed = o.running ? 0.098 : 0.06;
+    }
 
     let ux = dxt / dt;
     let uy = dyt / dt;
@@ -7585,6 +7725,8 @@ function updateDog(o) {
   const fy = moved ? dy : o.found ? dyp : 0;
   const sd = fx - fy;
   if (Math.abs(sd) > 0.05) o.flip = sd < 0;
+  // Mientras gruñe, se queda mirando hacia el hostil al que le ladró
+  if (o.growlLeft > 0 && o.atkFlip !== null) o.flip = o.atkFlip;
 
   o.h += (tileH(Math.round(o.gx), Math.round(o.gy)) - o.h) * 0.2;
   o.depth = o.gx + o.gy;
@@ -9837,7 +9979,12 @@ function drawObj(o, x, y, now) {
       }
       blit(spr, x, y - bob, o.flip);
 
-      if (o.barkLeft > 0) {
+      if (o.growlLeft > 0) {
+        // Alterna gruñido y ladrido mientras aparta al hostil a empujones
+        const growlTxt =
+          Math.floor(now / 90 + o.phase) % 2 === 0 ? "¡GRRR!" : "¡GUAU!";
+        drawTag(growlTxt, x, y - 26, "#ff6b6b");
+      } else if (o.barkLeft > 0) {
         drawTag("¡GUAU!", x, y - 26, "#ffffff");
       } else if (near) {
         drawTag(o.name.toUpperCase(), x, y - 26, "#ffd166");
