@@ -25,12 +25,16 @@
           <span id="healthDisplay">❤️ ❤️ ❤️ ❤️ ❤️</span>
           <span id="itemDisplay">🥐 0/5 | 🎈 0/10 | 🥤 0/9 | 🧀 0/3</span>
         </div>
-        <canvas id="gameCanvas" width="320" height="240"></canvas>
+        <!-- Área de juego: el lienzo y el letrero comparten contenedor, así el letrero
+             queda siempre debajo de la barra de estado -->
+        <div class="canvas-wrap">
+          <canvas id="gameCanvas" width="320" height="240"></canvas>
 
-        <!-- Mensajes del juego -->
-        <div id="dialogOverlay" class="dialog-box hidden">
-          <p id="dialogText">¡Has encontrado un cofre del tesoro!</p>
-          <button id="dialogBtn">Aceptar</button>
+          <!-- Mensajes del juego -->
+          <div id="dialogOverlay" class="dialog-box hidden">
+            <p id="dialogText">¡Has encontrado un cofre del tesoro!</p>
+            <div class="dialog-hint">Presiona B para salir</div>
+          </div>
         </div>
       </div>
 
@@ -53,11 +57,11 @@
           <!-- Botones Select / Start -->
           <div class="center-buttons">
             <div class="pill-btn-group">
-              <div class="pill-btn"></div>
+              <div class="pill-btn" id="btnSelect"></div>
               <span class="btn-label">SELECT</span>
             </div>
             <div class="pill-btn-group">
-              <div class="pill-btn"></div>
+              <div class="pill-btn" id="btnStart"></div>
               <span class="btn-label">START</span>
             </div>
           </div>

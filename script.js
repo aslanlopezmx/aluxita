@@ -20,6 +20,8 @@ const memoryTitle = document.getElementById("memoryTitle");
 const memoryBadge = document.getElementById("memoryBadge");
 const memoryMessage = document.getElementById("memoryMessage");
 const closeModalBtn = document.getElementById("closeModalBtn");
+const dialogOverlay = document.getElementById("dialogOverlay");
+const dialogText = document.getElementById("dialogText");
 
 /* ---------- Constantes de Escala 10x ---------- */
 const TILE_W = 32;
@@ -35,22 +37,43 @@ const MAP_H = 128;
 // PC...) para que la imagen siempre llene toda la pantalla, sin franjas azules.
 let VIEW_W = canvas.width;
 let VIEW_H = canvas.height;
+
+// Zoom (botón SELECT): k = cuánto mundo se ve respecto al tamaño base.
+// Menos mundo en pantalla = más cerca. El nivel MEDIO es la vista de siempre.
+const ZOOMS = [
+  { name: "CERCA", k: 0.72 },
+  { name: "MEDIO", k: 1 },
+  { name: "LEJOS", k: 1.45 },
+];
+let zoomIdx = 1;
+let zoomMsgT = 0; // frames que se muestra el nombre del zoom
+
+function cycleZoom() {
+  zoomIdx = (zoomIdx + 1) % ZOOMS.length;
+  zoomMsgT = 90;
+  resizeCanvas();
+}
+
 function resizeCanvas() {
   const cw = canvas.clientWidth;
   const ch = canvas.clientHeight;
   if (!cw || !ch) return;
   const aspect = cw / ch;
+  const k = ZOOMS[zoomIdx].k;
   let w;
   let h;
   if (aspect >= 280 / 240) {
-    h = 240; // pantallas anchas: misma altura de siempre, más mundo a los lados
-    w = Math.round(h * aspect);
+    h = 240 * k; // pantallas anchas: misma altura de siempre, más mundo a los lados
+    w = h * aspect;
   } else {
-    w = 280; // pantallas altas (celular vertical): ancho mínimo, más mundo arriba y abajo
-    h = Math.round(w / aspect);
+    w = 280 * k; // pantallas altas (celular vertical): ancho mínimo, más mundo arriba y abajo
+    h = w / aspect;
   }
-  w = Math.min(w, 480);
-  h = Math.min(h, 480);
+  // Tope de tamaño conservando la proporción (así la imagen nunca se deforma)
+  const MAXD = 600;
+  const cap = Math.min(1, MAXD / Math.max(w, h));
+  w = Math.round(w * cap);
+  h = Math.round(h * cap);
   if (w === VIEW_W && h === VIEW_H) return;
   VIEW_W = w;
   VIEW_H = h;
@@ -162,6 +185,19 @@ const treasures = MAP_OBJECTS.filter((o) => o[0] === "cofre")
     title: "",
     message: "",
   }));
+
+// Letreros: se colocan en el editor de mapas (objetos "letrero" de MAP_OBJECTS,
+// con el texto como 4.º valor). Al acercarse muestra una flecha; con A se abre
+// un cartel de madera con el mensaje; con B se cierra.
+const SIGN_RANGE = 1.3;
+const signs = MAP_OBJECTS.filter((o) => o[0] === "letrero").map(
+  ([, gx, gy, texto], i) => ({
+    id: i,
+    gx,
+    gy,
+    text: texto || "...",
+  }),
+);
 
 /* ---------- Coleccionables: globito y bevi ---------- */
 // Se colocan en el editor de mapas (objetos "globito" y "bevi"), máx. 10 de cada uno.
@@ -324,7 +360,7 @@ const HUAYCHIVO_SPEED = 0.062; // velocidad al perseguir (el jugador camina a 0.
 const HUAYCHIVO_WINDUP = 4; // frames que tarda en preparar el golpe (se esquiva saltando)
 const HUAYCHIVO_DAMAGE = 2; // corazones que quita cada golpe
 const HUAYCHIVO_SEP = 0.9; // distancia mínima entre huaychivos
-const HUAYCHIVO_SCALE = 0.65; // tamaño respecto a su sprite original (55x51)
+const HUAYCHIVO_SCALE = 1; // escala del sprite (1 = tamaño nativo 60x76; 0.5 = mitad)
 // Huaypek: su comportamiento es igual al del alux (vive en una zona circular
 // alrededor de su punto, persigue y golpea), pero con apariencia propia: un perro
 // fantasma negro de ojos rojos (ver makeHuaypek). Estos valores son independientes
@@ -479,6 +515,15 @@ const player = {
   faintT: 0, // frames que se muestra el aviso "te desmayaste"
 };
 
+// Cámara adelantada: se desplaza hacia donde camina el personaje (en píxeles de pantalla),
+// como fracción del ancho/alto de la vista, para ver mejor lo que viene
+const LOOK_AHEAD_X = 0.24;
+const LOOK_AHEAD_Y = 0.2;
+// Suavidad del adelanto de cámara (fracción que avanza por cuadro hacia su objetivo):
+// más bajo = más lento y suave; más alto = más rápido y brusco
+const LOOK_EASE_MOVE = 0.02; // al caminar / cambiar de dirección
+const LOOK_EASE_STOP = 0.012; // al detenerse (vuelve al centro)
+const look = { x: 0, y: 0 };
 const camera = {
   x: 0,
   y: 0,
@@ -753,7 +798,7 @@ const PAL = {
     [T_LAGOON]: ["#2aa8e8", "#1f8fd2", "#86dcf6"],
     [T_PATH]: ["#e6c88a", "#d4b26e", "#f5deb0"],
     [T_PINK]: ["#ff9ebb", "#f47ca3", "#ffc8da"],
-    [T_MONTE]: ["#1f6b4a", "#17553a", "#2f8a62"],
+    [T_MONTE]: ["#266b30", "#1e5522", "#388a40"],
     // Casi plano, más claro que la espuma de la orilla (#63c3f3)
     [T_SHALLOW_SEA]: ["#8fdaf9", "#8fdaf9", "#8fdaf9"],
     [T_SHALLOW_LAGOON]: ["#74d8ee", "#58c8e8", "#c4f3fb"],
@@ -903,9 +948,9 @@ function paintPierPlanks(c, cx, cy) {
 function paintMonte(c, cx, cy, gx, gy) {
   const r = mulberry32(gx * 977 + gy * 131 + 6);
   const greens = [
-    ["#0f4a31", "#1b6b47", "#35966a"],
-    ["#13533a", "#237a52", "#4aa87a"],
-    ["#195c3a", "#2b8558", "#63bd8a"],
+    ["#144a20", "#226b2d", "#409644"],
+    ["#195324", "#2c7a32", "#58a84a"],
+    ["#205c22", "#358534", "#74bd54"],
   ];
   for (let k = 0; k < 11; k++) {
     const ox = Math.round((r() - 0.5) * 24);
@@ -3659,6 +3704,691 @@ function makeChaka() {
   });
 }
 
+// Balché (Lonchocarpus punctatus): árbol mediano de tronco delgado gris-pardo con
+// lenticelas claras (de ahí "punctatus"), copa abierta de hojas pinnadas finas y
+// racimos colgantes de flores lila-violeta. Con su corteza se prepara la bebida
+// ceremonial maya llamada balché.
+function makeBalche() {
+  const W = 104;
+  const H = 84;
+  const GY = 78; // línea del suelo
+  return sprite(W, H, 52, GY, (c) => {
+    const wood = ["#2a241e", "#4a4238", "#6e6554", "#968b78"];
+    const lf = ["#15361a", "#2a6226", "#4a9238", "#7cc454", "#a8e078"];
+    const vi = ["#4a2a7e", "#7646c0", "#a278e0", "#cfb0f6", "#f2e6ff"];
+    const inb = (x, y) => x >= 0 && y >= 0 && x < W && y < H;
+
+    // sombra, suelo, pasto y florecitas caídas
+    ellipse(c, 52, GY, 30, 4, "rgba(0,0,0,0.26)");
+    ellipse(c, 52, GY, 25, 2, "#5a4630");
+    const rg = mulberry32(131);
+    for (let i = 0; i < 24; i++) {
+      const x = 28 + ((rg() * 48) | 0);
+      const h = 2 + ((rg() * 4) | 0);
+      pline(
+        c,
+        x,
+        GY,
+        x + (rg() < 0.5 ? -1 : 1),
+        GY - h,
+        lf[1 + ((rg() * 3) | 0)],
+        1,
+      );
+    }
+    for (let i = 0; i < 12; i++) {
+      px(
+        c,
+        26 + ((rg() * 52) | 0),
+        GY - 1 + ((rg() * 3) | 0),
+        vi[2 + ((rg() * 3) | 0)],
+      );
+    }
+
+    // raíces superficiales y tronco delgado, ligeramente inclinado
+    rootCurve(c, 48, 73, 42, 75, 34, GY + 1, 3, 1, wood);
+    rootCurve(c, 56, 73, 62, 75, 70, GY + 1, 3, 1, wood);
+    const hwT = (y) => 3 + (y > 68 ? (y - 68) * 0.4 : 0);
+    const cxT = (y) => 52 + Math.round(Math.sin(y / 8) * 1.4);
+    for (let y = 46; y <= GY; y++) {
+      const cx = cxT(y);
+      const hw = Math.round(hwT(y));
+      const L = cx - hw;
+      const R = cx + hw;
+      px(c, L - 1, y, wood[0]);
+      px(c, R + 1, y, wood[0]);
+      for (let x = L; x <= R; x++) {
+        const u = (x - L) / (2 * hw);
+        let tone = u < 0.3 ? 3 : u < 0.65 ? 2 : 1;
+        const h = hash2(Math.round(u * 8), Math.floor((y + x) / 5), 77);
+        if (h < 0.25) tone -= 1;
+        else if (h > 0.93) tone += 1;
+        if (x >= R - 1) tone = Math.min(tone, 1);
+        px(c, x, y, wood[Math.max(0, Math.min(3, tone))]);
+      }
+      // lenticelas: puntitos claros sobre la corteza
+      if (hash2(y, 5, 91) > 0.55) {
+        const lx = L + 1 + ((hash2(y, 7, 92) * Math.max(1, 2 * hw - 1)) | 0);
+        px(c, lx, y, "#d8cdb4");
+      }
+    }
+    rect(
+      c,
+      52 - Math.round(hwT(GY)) - 1,
+      GY + 1,
+      Math.round(hwT(GY)) * 2 + 3,
+      1,
+      wood[0],
+    );
+
+    // ramificación: pocas ramas finas que se abren en abanico
+    const q = mulberry32(214);
+    const segs = [];
+    const tips = [];
+    const mids = [];
+    const grow = (x, y, ang, len, t, d) => {
+      const x1 = x + Math.sin(ang) * len;
+      const y1 = y - Math.cos(ang) * len;
+      segs.push([
+        Math.round(x),
+        Math.round(y),
+        Math.round(x1),
+        Math.round(y1),
+        t,
+      ]);
+      if (d === 0) {
+        tips.push([x1, y1, ang]);
+        return;
+      }
+      mids.push([x1, y1, ang]);
+      for (let i = 0; i < 2; i++) {
+        let a =
+          ang + (i === 0 ? -1 : 1) * (0.42 + q() * 0.35) + (q() - 0.5) * 0.25;
+        a *= 0.92;
+        grow(x1, y1, a, len * (0.7 + q() * 0.1), Math.max(1, t - 1), d - 1);
+      }
+    };
+    [-1.15, -0.7, -0.25, 0.2, 0.65, 1.1].forEach((a, i) =>
+      grow(52 + (i - 2.5) * 0.6, 49, a, 12 + q() * 3, 2, 2),
+    );
+    segs.forEach(([a, b, x, y, t]) =>
+      pline(c, a - 1, b, x - 1, y, wood[0], t + 2),
+    );
+    segs.forEach(([a, b, x, y, t]) => pline(c, a, b, x, y, wood[1], t + 1));
+    segs.forEach(([a, b, x, y, t]) => pline(c, a, b, x, y, wood[2], t));
+    segs.forEach(
+      ([a, b, x, y, t]) => t > 1 && pline(c, a, b, x, y, wood[3], 1),
+    );
+
+    // hojas compuestas pinnadas: un raquis con pares de foliolos
+    const fronds = [];
+    const addFrond = (x, y, ang, len) => fronds.push([x, y, ang, len]);
+    tips.forEach(([x, y, ang]) => {
+      addFrond(x, y, ang * 0.5 - 0.9, 10 + q() * 3);
+      addFrond(x, y, ang * 0.5, 11 + q() * 3);
+      addFrond(x, y, ang * 0.5 + 0.9, 10 + q() * 3);
+    });
+    mids.forEach(([x, y, ang]) => {
+      addFrond(x, y, ang * 0.6 + (q() < 0.5 ? -1.1 : 1.1), 9 + q() * 3);
+    });
+    for (let i = 0; i < 16; i++) {
+      const a = q() * Math.PI * 2;
+      const d = Math.sqrt(q());
+      addFrond(
+        Math.round(52 + Math.cos(a) * d * 34),
+        Math.round(30 + Math.sin(a) * d * 15),
+        (q() - 0.5) * 2.6,
+        8 + q() * 4,
+      );
+    }
+    fronds.sort((a, b) => a[1] - b[1]);
+    fronds.forEach(([x, y, ang, len]) => {
+      const n = 6;
+      const pts = [];
+      for (let i = 0; i <= n; i++) {
+        const t = i / n;
+        pts.push([
+          Math.round(x + Math.sin(ang) * len * t),
+          Math.round(y - Math.cos(ang) * len * t + len * 0.28 * t * t),
+        ]);
+      }
+      for (let i = 0; i < n; i++)
+        pline(c, pts[i][0], pts[i][1], pts[i + 1][0], pts[i + 1][1], lf[1], 1);
+      for (let i = 1; i <= n; i++) {
+        const [fx, fy] = pts[i];
+        const wdt = i >= n - 1 ? 2 : 3;
+        if (!inb(fx, fy)) continue;
+        const top = fy < 32;
+        // foliolo izquierdo (luz) y derecho (sombra), con borde inferior oscuro
+        rect(c, fx - wdt - 1, fy, wdt, 1, lf[0]);
+        rect(c, fx - wdt - 1, fy - 1, wdt, 1, top ? lf[4] : lf[3]);
+        rect(c, fx + 1, fy, wdt, 1, lf[0]);
+        rect(c, fx + 1, fy - 1, wdt, 1, top ? lf[3] : lf[2]);
+        if (i % 2 === 0) {
+          px(c, fx - wdt - 1, fy - 2, lf[3]);
+          px(c, fx + wdt, fy - 2, lf[2]);
+        }
+      }
+    });
+
+    // racimos de flores lila-violeta: unos erguidos arriba y otros colgantes
+    const flowers = [];
+    tips.concat(mids).forEach(([x, y]) => {
+      const f = Math.min(1, Math.max(0.25, (50 - y) / 30));
+      const n = Math.round(1 + 3 * f);
+      for (let i = 0; i < n; i++) {
+        flowers.push([
+          Math.round(x + (q() - 0.5) * 12),
+          Math.round(y + (q() - 0.6) * 7),
+        ]);
+      }
+    });
+    flowers.sort((a, b) => a[1] - b[1]);
+    flowers.forEach(([x, y]) => {
+      if (!inb(x, y) || y > 56) return;
+      // hilo del racimo y flores en hilera
+      const L = 3 + ((q() * 4) | 0);
+      pline(c, x, y, x, y + L, wood[1], 1);
+      for (let k = 0; k <= L; k++) {
+        const t = 1 + ((q() * 3) | 0);
+        const side = k % 2 ? 1 : -1;
+        px(c, x + side, y + k, vi[t]);
+        if (k % 2 === 0) px(c, x - side, y + k, vi[Math.max(0, t - 1)]);
+      }
+      px(c, x, y - 1, vi[3]);
+      px(c, x, y, vi[4]);
+    });
+  });
+}
+
+// Árbol de Guanacaste / parota (Enterolobium cyclocarpum): árbol enorme de tronco
+// corto y muy grueso, con una copa ancha y plana como paraguas de hojas bipinnadas
+// finas, y vainas oscuras enroscadas en forma de oreja (de ahí "orejón").
+function makeGuanacaste() {
+  const W = 128;
+  const H = 92;
+  const GY = 86; // línea del suelo
+  return sprite(W, H, 64, GY, (c) => {
+    const bark = ["#231e18", "#43392d", "#685a46", "#8f7f66"];
+    const gr = ["#12330f", "#245a1c", "#3f8a2a", "#68b640", "#97d862"];
+    const pod = ["#2a160b", "#4f2a14", "#7a4524", "#a86a3a"];
+    const inb = (x, y) => x >= 0 && y >= 0 && x < W && y < H;
+
+    // sombra amplia bajo la copa y suelo
+    ellipse(c, 64, GY, 48, 5, "rgba(0,0,0,0.30)");
+    ellipse(c, 64, GY - 1, 38, 3, "#5a4630");
+    const rg = mulberry32(417);
+    for (let i = 0; i < 30; i++) {
+      const x = 22 + ((rg() * 84) | 0);
+      const h = 2 + ((rg() * 4) | 0);
+      pline(
+        c,
+        x,
+        GY - 1,
+        x + (rg() < 0.5 ? -1 : 1),
+        GY - 1 - h,
+        gr[1 + ((rg() * 3) | 0)],
+        1,
+      );
+    }
+
+    // raíces anchas que se reparten por el suelo
+    rootCurve(c, 54, 78, 42, 81, 28, GY + 1, 5, 1, bark);
+    rootCurve(c, 74, 78, 86, 81, 100, GY + 1, 5, 1, bark);
+    rootCurve(c, 58, 82, 50, GY + 1, 40, GY + 3, 3, 1, bark);
+    rootCurve(c, 70, 82, 78, GY + 1, 88, GY + 3, 3, 1, bark);
+
+    // tronco corto y muy grueso, ensanchado en la base, con surcos verticales
+    const hwT = (y) => 9 + (y > 70 ? Math.pow((y - 70) / 16, 1.7) * 5 : 0);
+    const cxT = (y) => 64 + Math.round(Math.sin(y / 11) * 1.2);
+    for (let y = 38; y <= GY; y++) {
+      const cx = cxT(y);
+      const hw = Math.round(hwT(y));
+      const L = cx - hw;
+      const R = cx + hw;
+      px(c, L - 1, y, bark[0]);
+      px(c, R + 1, y, bark[0]);
+      for (let x = L; x <= R; x++) {
+        const u = (x - L) / (2 * hw);
+        let tone = u < 0.25 ? 3 : u < 0.62 ? 2 : 1;
+        const key = Math.round(u * 16);
+        const h = hash2(key, Math.floor((y + key * 5) / 6), 23);
+        if (h < 0.3) tone -= 1;
+        else if (h > 0.9) tone += 1;
+        if ((key === 5 || key === 11) && hash2(x, y, 6) > 0.2) tone = 0; // surcos
+        if (x >= R - 1) tone = Math.min(tone, 1);
+        px(c, x, y, bark[Math.max(0, Math.min(3, tone))]);
+      }
+    }
+    rect(
+      c,
+      64 - Math.round(hwT(GY)) - 1,
+      GY + 1,
+      Math.round(hwT(GY)) * 2 + 3,
+      1,
+      bark[0],
+    );
+
+    // ramas gruesas casi horizontales que sostienen la copa
+    limb(
+      c,
+      [
+        [64, 42],
+        [48, 34],
+        [30, 29],
+        [10, 27],
+      ],
+      5,
+      1,
+      bark,
+    );
+    limb(
+      c,
+      [
+        [64, 42],
+        [80, 34],
+        [98, 29],
+        [118, 27],
+      ],
+      5,
+      1,
+      bark,
+    );
+    limb(
+      c,
+      [
+        [62, 40],
+        [56, 28],
+        [48, 18],
+      ],
+      3,
+      1,
+      bark,
+    );
+    limb(
+      c,
+      [
+        [66, 40],
+        [72, 28],
+        [80, 18],
+      ],
+      3,
+      1,
+      bark,
+    );
+    limb(
+      c,
+      [
+        [60, 44],
+        [46, 42],
+        [34, 46],
+      ],
+      3,
+      1,
+      bark,
+    );
+    limb(
+      c,
+      [
+        [68, 44],
+        [82, 42],
+        [94, 46],
+      ],
+      3,
+      1,
+      bark,
+    );
+
+    // vainas en forma de oreja colgando bajo la copa (detrás del follaje)
+    const pods = [];
+    for (let i = 0; i < 16; i++) {
+      pods.push([Math.round(24 + rg() * 80), Math.round(30 + rg() * 14)]);
+    }
+    const drawPod = ([x, y]) => {
+      pline(c, x, y - 4, x, y - 1, bark[1], 1); // tallito
+      // media luna enroscada
+      for (let a = -0.4; a <= 3.3; a += 0.18) {
+        const px0 = Math.round(x + Math.cos(a) * 3);
+        const py0 = Math.round(y + Math.sin(a) * 3);
+        disc(c, px0, py0, 1, pod[a < 1 ? 1 : 0]);
+      }
+      for (let a = 0.2; a <= 2.6; a += 0.3) {
+        px(
+          c,
+          Math.round(x + Math.cos(a) * 3),
+          Math.round(y + Math.sin(a) * 3) - 1,
+          a < 1.4 ? pod[3] : pod[2],
+        );
+      }
+    };
+
+    // copa: capas anchas y planas de follaje fino con bordes irregulares
+    const clusters = [
+      // faldón bajo
+      [14, 36, 12, 5],
+      [114, 36, 12, 5],
+      [30, 40, 14, 5],
+      [98, 40, 14, 5],
+      // banda media
+      [22, 29, 20, 6],
+      [106, 29, 20, 6],
+      [48, 31, 22, 6],
+      [80, 31, 22, 6],
+      [64, 28, 24, 6],
+      // capas altas
+      [38, 20, 22, 6],
+      [90, 20, 22, 6],
+      [64, 16, 30, 7],
+      [48, 12, 20, 5],
+      [80, 12, 20, 5],
+      [64, 8, 22, 5],
+    ];
+    const rg2 = mulberry32(88);
+    for (let i = 0; i < 30; i++) {
+      const a = rg2() * Math.PI * 2;
+      const rx = 52 + rg2() * 10;
+      clusters.push([
+        Math.round(64 + Math.cos(a) * rx),
+        Math.round(24 + Math.sin(a) * (12 + rg2() * 6)),
+        2 + ((rg2() * 4) | 0),
+        2,
+      ]);
+    }
+    const buf = new Int8Array(W * H).fill(-1);
+    clusters.forEach(([cx, cy, rx, ry], id) => {
+      for (let y = cy - ry - 3; y <= cy + ry + 3; y++) {
+        for (let x = cx - rx - 3; x <= cx + rx + 3; x++) {
+          if (!inb(x, y)) continue;
+          const dx = (x - cx) / rx;
+          const dy = (y - cy) / ry;
+          const d =
+            Math.sqrt(dx * dx + dy * dy) +
+            (vnoise(x, y, 3, 60 + id) - 0.5) * 0.55;
+          if (d > 1) continue;
+          // huecos finos entre hojitas (aspecto plumoso)
+          if (dy > -0.1 && d > 0.45 && vnoise(x + 31, y, 2, 120) > 0.72)
+            continue;
+          const v =
+            dy * 0.55 + dx * 0.1 + (vnoise(x, y, 2, 9 + id * 3) - 0.5) * 0.9;
+          buf[y * W + x] = v < -0.2 ? 3 : v < 0.2 ? 2 : v < 0.5 ? 1 : 0;
+        }
+      }
+    });
+    const at = (x, y) =>
+      x < 0 || y < 0 || x >= W || y >= H ? -1 : buf[y * W + x];
+    const out = new Int8Array(buf);
+    for (let y = 0; y < H; y++) {
+      for (let x = 0; x < W; x++) {
+        let t = buf[y * W + x];
+        if (t < 0) continue;
+        if (at(x, y + 1) < 0) t = 0;
+        else if (at(x + 1, y) < 0 || at(x - 1, y) < 0) t = Math.min(t, 1);
+        else if (at(x, y - 1) < 0 && t >= 2) t = hash2(x, y, 3) < 0.3 ? 4 : 3;
+        // trazos finos de foliolos: pequeñas rayitas claras y oscuras
+        else if (hash2(x >> 1, y, 14) > 0.9) t = Math.min(4, t + 1);
+        else if (hash2(x, y >> 1, 15) < 0.08) t = Math.max(0, t - 1);
+        out[y * W + x] = t;
+      }
+    }
+    for (let y = 0; y < H; y++)
+      for (let x = 0; x < W; x++) {
+        const t = out[y * W + x];
+        if (t >= 0) px(c, x, y, gr[t]);
+      }
+
+    // vainas que asoman por debajo del borde de la copa
+    pods.forEach((p) => {
+      if (at(p[0], p[1] + 3) < 0 && at(p[0], p[1] - 4) >= 0) drawPod(p);
+    });
+    [
+      [22, 44],
+      [40, 47],
+      [88, 46],
+      [106, 43],
+      [64, 49],
+    ].forEach(drawPod);
+  });
+}
+
+// Flamboyán (Delonix regia): copa ancha en paraguas de hojas bipinnadas finas,
+// tapizada de racimos de flores rojo-naranja, con vainas largas y leñosas colgando.
+function makeFlamboyan() {
+  const W = 120;
+  const H = 88;
+  const GY = 82;
+  return sprite(W, H, 60, GY, (c) => {
+    const bark = ["#2a221b", "#4d4034", "#76675a", "#9d8c7a"];
+    const gr = ["#13361a", "#25601f", "#3f9030", "#66bd44", "#93dc66"];
+    const fl = ["#6e0f08", "#b01c0e", "#e23a17", "#ff6b2b", "#ffb347"];
+    const pod = ["#241109", "#46260f", "#6a3d1c"];
+    const inb = (x, y) => x >= 0 && y >= 0 && x < W && y < H;
+
+    ellipse(c, 60, GY, 44, 5, "rgba(0,0,0,0.30)");
+    ellipse(c, 60, GY - 1, 34, 3, "#5a4630");
+    const rg = mulberry32(731);
+    for (let i = 0; i < 26; i++) {
+      const x = 22 + ((rg() * 76) | 0);
+      const h = 2 + ((rg() * 4) | 0);
+      pline(
+        c,
+        x,
+        GY - 1,
+        x + (rg() < 0.5 ? -1 : 1),
+        GY - 1 - h,
+        gr[1 + ((rg() * 3) | 0)],
+        1,
+      );
+    }
+    // flores caídas en el suelo
+    for (let i = 0; i < 26; i++) {
+      const x = 20 + ((rg() * 80) | 0);
+      const y = GY - 1 + ((rg() * 4) | 0);
+      px(c, x, y, fl[1 + ((rg() * 3) | 0)]);
+    }
+
+    // contrafuertes de la base
+    rootCurve(c, 55, 72, 46, 76, 34, GY + 1, 4, 1, bark);
+    rootCurve(c, 65, 72, 74, 76, 86, GY + 1, 4, 1, bark);
+    rootCurve(c, 58, 76, 53, GY + 1, 46, GY + 3, 3, 1, bark);
+    rootCurve(c, 62, 76, 67, GY + 1, 74, GY + 3, 3, 1, bark);
+
+    // tronco de grosor medio, corteza lisa y grisácea con manchas
+    const hwT = (y) => 6 + (y > 66 ? Math.pow((y - 66) / 16, 1.8) * 4 : 0);
+    const cxT = (y) => 60 + Math.round(Math.sin(y / 9) * 1.5);
+    for (let y = 36; y <= GY; y++) {
+      const cx = cxT(y);
+      const hw = Math.round(hwT(y));
+      const L = cx - hw;
+      const R = cx + hw;
+      px(c, L - 1, y, bark[0]);
+      px(c, R + 1, y, bark[0]);
+      for (let x = L; x <= R; x++) {
+        const u = (x - L) / (2 * hw);
+        let tone = u < 0.3 ? 3 : u < 0.65 ? 2 : 1;
+        const h = hash2(x, Math.floor(y / 3), 41);
+        if (h < 0.18) tone -= 1;
+        else if (h > 0.93) tone += 1;
+        if (x >= R - 1) tone = Math.min(tone, 1);
+        px(c, x, y, bark[Math.max(0, Math.min(3, tone))]);
+      }
+    }
+    rect(
+      c,
+      60 - Math.round(hwT(GY)) - 1,
+      GY + 1,
+      Math.round(hwT(GY)) * 2 + 3,
+      1,
+      bark[0],
+    );
+
+    // ramas que se abren en V y luego se extienden en horizontal
+    limb(
+      c,
+      [
+        [60, 44],
+        [46, 36],
+        [30, 30],
+        [12, 30],
+      ],
+      4,
+      1,
+      bark,
+    );
+    limb(
+      c,
+      [
+        [60, 44],
+        [74, 36],
+        [90, 30],
+        [108, 30],
+      ],
+      4,
+      1,
+      bark,
+    );
+    limb(
+      c,
+      [
+        [59, 42],
+        [52, 30],
+        [42, 20],
+      ],
+      3,
+      1,
+      bark,
+    );
+    limb(
+      c,
+      [
+        [61, 42],
+        [68, 30],
+        [78, 20],
+      ],
+      3,
+      1,
+      bark,
+    );
+    limb(
+      c,
+      [
+        [58, 48],
+        [44, 46],
+        [30, 50],
+      ],
+      2,
+      1,
+      bark,
+    );
+    limb(
+      c,
+      [
+        [62, 48],
+        [76, 46],
+        [90, 50],
+      ],
+      2,
+      1,
+      bark,
+    );
+
+    // copa: capas anchas y bajas
+    const clusters = [
+      [14, 36, 12, 5],
+      [106, 36, 12, 5],
+      [30, 38, 14, 6],
+      [90, 38, 14, 6],
+      [20, 28, 18, 6],
+      [100, 28, 18, 6],
+      [44, 30, 20, 6],
+      [76, 30, 20, 6],
+      [60, 27, 22, 6],
+      [34, 19, 20, 6],
+      [86, 19, 20, 6],
+      [60, 15, 28, 7],
+      [44, 10, 16, 5],
+      [76, 10, 16, 5],
+    ];
+    const rg2 = mulberry32(55);
+    for (let i = 0; i < 28; i++) {
+      const a = rg2() * Math.PI * 2;
+      const rx = 48 + rg2() * 10;
+      clusters.push([
+        Math.round(60 + Math.cos(a) * rx),
+        Math.round(24 + Math.sin(a) * (12 + rg2() * 6)),
+        2 + ((rg2() * 4) | 0),
+        2,
+      ]);
+    }
+    const buf = new Int8Array(W * H).fill(-1);
+    clusters.forEach(([cx, cy, rx, ry], id) => {
+      for (let y = cy - ry - 3; y <= cy + ry + 3; y++) {
+        for (let x = cx - rx - 3; x <= cx + rx + 3; x++) {
+          if (!inb(x, y)) continue;
+          const dx = (x - cx) / rx;
+          const dy = (y - cy) / ry;
+          const d =
+            Math.sqrt(dx * dx + dy * dy) +
+            (vnoise(x, y, 3, 200 + id) - 0.5) * 0.55;
+          if (d > 1) continue;
+          if (dy > -0.1 && d > 0.45 && vnoise(x + 17, y, 2, 140) > 0.72)
+            continue;
+          const v =
+            dy * 0.55 + dx * 0.1 + (vnoise(x, y, 2, 19 + id * 3) - 0.5) * 0.9;
+          buf[y * W + x] = v < -0.2 ? 3 : v < 0.2 ? 2 : v < 0.5 ? 1 : 0;
+        }
+      }
+    });
+    const at = (x, y) =>
+      x < 0 || y < 0 || x >= W || y >= H ? -1 : buf[y * W + x];
+    const out = new Int8Array(buf);
+    for (let y = 0; y < H; y++) {
+      for (let x = 0; x < W; x++) {
+        let t = buf[y * W + x];
+        if (t < 0) continue;
+        if (at(x, y + 1) < 0) t = 0;
+        else if (at(x + 1, y) < 0 || at(x - 1, y) < 0) t = Math.min(t, 1);
+        else if (at(x, y - 1) < 0 && t >= 2) t = hash2(x, y, 3) < 0.3 ? 4 : 3;
+        else if (hash2(x >> 1, y, 24) > 0.9) t = Math.min(4, t + 1);
+        else if (hash2(x, y >> 1, 25) < 0.08) t = Math.max(0, t - 1);
+        out[y * W + x] = t;
+      }
+    }
+    for (let y = 0; y < H; y++)
+      for (let x = 0; x < W; x++) {
+        const t = out[y * W + x];
+        if (t >= 0) px(c, x, y, gr[t]);
+      }
+
+    // vainas largas y planas colgando bajo la copa
+    for (let i = 0; i < 9; i++) {
+      const x = 22 + ((rg() * 76) | 0);
+      const y0 = 38 + ((rg() * 6) | 0);
+      if (at(x, y0 - 1) < 0) continue;
+      const len = 10 + ((rg() * 8) | 0);
+      pline(c, x, y0, x, y0 + len, pod[1], 2);
+      pline(c, x, y0, x, y0 + len, pod[2], 1);
+      px(c, x, y0 + len, pod[0]);
+    }
+
+    // flores: racimos rojo-naranja sobre la copa, más densos arriba
+    const rf = mulberry32(909);
+    for (let y = 0; y < H; y++) {
+      for (let x = 0; x < W; x++) {
+        const t = out[y * W + x];
+        if (t < 1) continue;
+        const dens = at(x, y - 1) < 0 ? 0.8 : 0.5;
+        if (rf() < dens * 0.8) {
+          const k = rf();
+          const col =
+            k < 0.15 ? fl[1] : k < 0.5 ? fl[2] : k < 0.85 ? fl[3] : fl[4];
+          px(c, x, y, col);
+          if (rf() < 0.45) px(c, x + 1, y, fl[rf() < 0.5 ? 2 : 3]);
+          if (rf() < 0.25) px(c, x, y + 1, fl[1]);
+        }
+      }
+    }
+  });
+}
+
 /* ---------- Fauna: tolok y mono aullador ---------- */
 
 // Tolok (iguana espinosa de cola larga); "up" = cabeza levantada
@@ -3725,291 +4455,746 @@ function makeHowler(howl) {
   });
 }
 
-/* ---------- Huaychivo: hombre-bestia hechicero ---------- */
-// Sprite tomado de la imagen de referencia (55x51 px). Cada letra es un color de la
-// paleta y "." es transparente. Se dibuja al tamaño final con HUAYCHIVO_SCALE.
-const HUAYCHIVO_PAL = {
-  0: "#ccc9c7",
-  1: "#b4b3b1",
-  2: "#e8806e",
-  3: "#aaaaaa",
-  4: "#a2a2a2",
-  5: "#ad9d8f",
-  6: "#999999",
-  7: "#b8605a",
-  8: "#919191",
-  9: "#b0584c",
-  a: "#a85a5a",
-  b: "#888888",
-  c: "#c4474a",
-  d: "#808080",
+/* ---------- Huaychivo: hombre-cabra hechicero ---------- */
+// Nahual de aspecto siniestro: macho cabrío bípedo de pelaje negro-grisáceo y melena
+// desgreñada, cuernos de carnero que se enroscan hacia afuera, ojos rojos incandescentes,
+// hocico con colmillos y barba, garras de hueso, pecho musculoso con cadenas y colgante,
+// taparrabo negro roto con faja roja y patas de cabra (muslo peludo, caña fina, pezuña hendida).
+//
+// Se dibuja en código y a su tamaño final con un pequeño sistema de capas: cada parte del
+// cuerpo es una máscara que se pinta con una rampa de 5 tonos, con la luz entrando desde
+// arriba a la izquierda (borde iluminado arriba-izquierda, sombra abajo-derecha), más un
+// contorno oscuro que separa cada parte de las demás.
+// leg: 0 = parado, 1 / 2 = pasos (levanta una pata), 3 = erguido entre pasos, 4 = parado
+// respirando; atk: 0 = normal, 1 = preparando el golpe (se estira, garras arriba),
+// 2 = golpeando (se agacha y zarpea hacia abajo, con destellos en las garras).
+const HZ_RAMP = {
+  fur: ["#15110d", "#261f18", "#3a3126", "#54473a", "#76654f"],
+  skin: ["#241a16", "#3c2c24", "#5a4436", "#7d6350", "#a28a70"],
+  horn: ["#1c1710", "#38301f", "#5e4e35", "#867150", "#b9a373"],
+  red: ["#2a0505", "#560d0d", "#861616", "#b82620", "#e04a36"],
+  bone: ["#4e493d", "#7a7565", "#a9a28b", "#cfc8ae", "#efe9d0"],
+  cloth: ["#0a0807", "#15110f", "#231d19", "#342c25", "#473d33"],
+  hoof: ["#0e0b08", "#221a12", "#3a2d1d", "#58452d", "#7a6240"],
+  ear: ["#2a1414", "#4a2626", "#6e3b3b", "#8f5252", "#b06a6a"],
 };
-const HUAYCHIVO_ROWS = [
-  "......................188401d.....d81d.................",
-  ".....................d186b381.....6441.................",
-  ".............d......db88dd6611....ad81.................",
-  "..............dd..d188.....d6b8.0..da186d..............",
-  "................d88dd.....dd616dd0d614.................",
-  ".................dd......dddd818ddd614.................",
-  "........................d8dbb86168d83d.................",
-  "......................dd68dddb8d866ba..........dd......",
-  "......4dd6d0.......b088d8bbdb688386386.......d8880.....",
-  "......11.8d.........ddd6bddb368444b384........dd80.....",
-  ".....d8ddd.........d86dd31dddbdd16414dd61d....8d3d.....",
-  ".....b668...1....338b88dbab7d6bcb466cabd0..d.48d31.....",
-  ".....66db...d...ddd8d6888dd8d846db4b8d.6...d..b4d0.....",
-  ".....ddd8d..d...ddd6886dd4d86d88bb11ddd2....6d8d1......",
-  ".....b388b861...db3848888d6db8b88431d8d.1...d8d8b......",
-  ".....bb68484....d463618688ddd8b831d68bd......863d......",
-  "......6566d.....88666b888dd4d4d6da00d8d......846.......",
-  "......d848.....48868688b8dd1d4bb7b5dd8dd....d8b8.......",
-  ".......d88d.....dddddddd84dd88d6d002dd99....d08d.......",
-  "........bd6d...646d8dddd84d60dd88ddddbd4d.d64d4d.......",
-  "........6488d.d46b6dddd8d8bb8d6d663dad8886468db........",
-  "........dd86dd83866dd8dd8dddd6dd684.dd88d448ddd........",
-  "........dd8b84bd4bdddddb8868b6add68.dd88b4bd8.4d.......",
-  "........d.db643dbd..d8d8db6b6d1..dd.dddd8888d.d........",
-  "........d.8b864ddd..d88dd88b8d..ddd.d..dddd8d.0d.......",
-  "........d.ddd88bd..bad86d8dd68d..b......88.d..d........",
-  ".............d8d..dd6d99ddddd9dd.......................",
-  "..............d0..b8bdddd999bdbddb.....................",
-  "..............8..dddddda4ddd4ddddd.....................",
-  "................d88dbddddaaa9ddd8b888..................",
-  "...............dd888bddd949a6addb8888d.................",
-  "..............ddd88888dd99dd1cddd8dd66d................",
-  "..............d8d888b8dd9918dcdd8bdd338d...............",
-  ".............b8d8b8ddbdd9c16d9dddb866336...............",
-  "............dd8688bddddadcd1d9ddddb8438bd..............",
-  ".............d8d88d8ddaadcc9aadddd86b6333..............",
-  "............dd6b88bddbaad9d9cabd.1dd88648..............",
-  "..........dd88336d8dddaad9.dca0..088b88bd..............",
-  "..........88644468dba..b.9ddca..db8d8ddd...............",
-  "..........8bd868bdaaa....dd.9a.ddbbd...................",
-  "..........8bdd66ddaaa....dd.97..bddd...................",
-  ".........d8bdddd.aa8d.......9d...db8...................",
-  ".........8d8.....d.8........dd...0866..................",
-  "........648d................d.....db36.................",
-  "........848d................d.....dd63d................",
-  ".......d668d......................d8b688d..............",
-  "......8db6dd........................dd611..............",
-  "......d884db.........................863db.............",
-  "......68d2dd.........................88512.............",
-  "......63dadd...........................................",
-  "......bd.d.............................................",
-];
-// Casillas de los ojos (se encienden en rojo al preparar el golpe)
-const HUAYCHIVO_EYES = [
-  [26, 11],
-  [27, 11],
-  [31, 11],
-  [32, 11],
-];
-
-// Colorea cada casilla: el pelaje usa la luminosidad de la imagen original como
-// sombreado sobre una rampa marrón; el taparrabo rojo se conserva y se aviva; y hay
-// acentos (garras de hueso, brazaletes dorados, collar de jade, cinturón).
-const HUAYCHIVO_FUR = [
-  "#5a382a",
-  "#7a4c33",
-  "#9a6840",
-  "#b98450",
-  "#d4a468",
-  "#ecc88e",
-];
-const HUAYCHIVO_RED = ["#9c1f1f", "#c9302c", "#e8463a", "#ff7160"];
-function huaychivoColor(x, y, ch) {
-  const base = HUAYCHIVO_PAL[ch];
-  const r = parseInt(base.slice(1, 3), 16);
-  const g = parseInt(base.slice(3, 5), 16);
-  const b = parseInt(base.slice(5, 7), 16);
-  const reddish = r - b > 18;
-  const t = Math.max(0, Math.min(1, (g - 0x7c) / (0xd0 - 0x7c)));
-  const ramp = (arr) =>
-    arr[Math.min(arr.length - 1, Math.floor(t * arr.length))];
-
-  // Taparrabo (región roja del centro/bajo)
-  if (reddish || (y >= 25 && y <= 41 && x >= 21 && x <= 35 && t < 0.55)) {
-    if (y >= 25) return ramp(HUAYCHIVO_RED);
+const HZ_HEX = {};
+function hzHex(s) {
+  if (!HZ_HEX[s]) {
+    HZ_HEX[s] = [
+      parseInt(s.slice(1, 3), 16),
+      parseInt(s.slice(3, 5), 16),
+      parseInt(s.slice(5, 7), 16),
+    ];
   }
-  // Garras: puntas de las manos en alto
-  if (y <= 17 && (x <= 9 || x >= 45)) return t > 0.35 ? "#f1e6c8" : "#bfae86";
-  // Brazaletes dorados en los antebrazos
-  if ((y === 18 || y === 19) && ((x >= 6 && x <= 12) || (x >= 42 && x <= 48)))
-    return t > 0.5 ? "#ffd75e" : "#d9a521";
-  // Collar de jade sobre el pecho
-  if (y >= 19 && y <= 21 && x >= 22 && x <= 36)
-    return t > 0.5 ? "#5fe0b0" : "#1f9c78";
-  // Cinturón dorado sobre el taparrabo
-  if (y === 25 || y === 26)
-    if (x >= 19 && x <= 38) return t > 0.5 ? "#ffd75e" : "#c98f1a";
-  // Hocico y cara: un poco más claros para que se lea el rostro
-  if (y >= 5 && y <= 13 && x >= 21 && x <= 37)
-    return HUAYCHIVO_FUR[Math.min(5, Math.floor(t * 5) + 1)];
-  // Pelaje
-  return ramp(HUAYCHIVO_FUR);
+  return HZ_HEX[s];
+}
+function hzSet(b, x, y, col, a) {
+  x = Math.round(x);
+  y = Math.round(y);
+  if (x < 0 || y < 0 || x >= b.W || y >= b.H) return;
+  const rgb = typeof col === "string" ? hzHex(col) : col;
+  const i = (y * b.W + x) * 4;
+  b.d[i] = rgb[0];
+  b.d[i + 1] = rgb[1];
+  b.d[i + 2] = rgb[2];
+  b.d[i + 3] = a === undefined ? 255 : a;
+}
+function hzLine(b, x0, y0, x1, y1, col, t) {
+  t = t || 1;
+  const n = Math.max(Math.abs(x1 - x0), Math.abs(y1 - y0), 1);
+  for (let i = 0; i <= n; i++) {
+    const x = Math.round(x0 + ((x1 - x0) * i) / n);
+    const y = Math.round(y0 + ((y1 - y0) * i) / n);
+    for (let u = 0; u < t; u++)
+      for (let v = 0; v < t; v++) hzSet(b, x + u, y + v, col);
+  }
+}
+// Máscara binaria: se dibuja con trazos del canvas y se umbraliza para obtener bordes nítidos
+function hzMask(W, H, fn) {
+  const cv = makeCanvas(W, H);
+  const g = cv.getContext("2d");
+  g.fillStyle = "#000";
+  g.strokeStyle = "#000";
+  g.lineCap = "round";
+  g.lineJoin = "round";
+  fn(g);
+  const d = g.getImageData(0, 0, W, H).data;
+  const m = new Uint8Array(W * H);
+  for (let i = 0; i < W * H; i++) m[i] = d[i * 4 + 3] >= 110 ? 1 : 0;
+  return m;
+}
+function hzPoly(g, pts) {
+  g.beginPath();
+  pts.forEach(([x, y], i) => (i ? g.lineTo(x, y) : g.moveTo(x, y)));
+  g.closePath();
+  g.fill();
+}
+function hzEll(g, cx, cy, rx, ry) {
+  g.beginPath();
+  g.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2);
+  g.fill();
+}
+// Tubo con grosor variable a lo largo de una polilínea
+function hzTube(g, pts, rs) {
+  for (let s = 0; s < pts.length - 1; s++) {
+    const [x0, y0] = pts[s];
+    const [x1, y1] = pts[s + 1];
+    const n = Math.max(2, Math.ceil(Math.hypot(x1 - x0, y1 - y0) * 2));
+    for (let i = 0; i <= n; i++) {
+      const t = i / n;
+      g.beginPath();
+      g.arc(
+        x0 + (x1 - x0) * t,
+        y0 + (y1 - y0) * t,
+        rs[s] + (rs[s + 1] - rs[s]) * t,
+        0,
+        Math.PI * 2,
+      );
+      g.fill();
+    }
+  }
+}
+// Ejecuta fn para el lado izquierdo y para su reflejo (eje x = W / 2)
+function hzBoth(g, W, fn) {
+  fn(0);
+  g.save();
+  g.translate(W, 0);
+  g.scale(-1, 1);
+  fn(1);
+  g.restore();
+}
+// Pinta una máscara con una rampa de 5 tonos: luz desde arriba-izquierda
+function hzPaint(b, m, ramp, o) {
+  o = o || {};
+  const { W, H } = b;
+  const R = ramp.map(hzHex);
+  const ins = (x, y) =>
+    x >= 0 && y >= 0 && x < W && y < H && m[y * W + x] === 1;
+  const outCol = o.out === undefined ? ramp[0] : o.out;
+  if (outCol) {
+    const oc = hzHex(outCol);
+    for (let y = 0; y < H; y++)
+      for (let x = 0; x < W; x++)
+        if (
+          !m[y * W + x] &&
+          (ins(x - 1, y) || ins(x + 1, y) || ins(x, y - 1) || ins(x, y + 1))
+        )
+          hzSet(b, x, y, oc);
+  }
+  for (let y = 0; y < H; y++) {
+    for (let x = 0; x < W; x++) {
+      if (!m[y * W + x]) continue;
+      let a = 4;
+      for (let k = 1; k <= 3; k++)
+        if (!ins(x, y - k) || !ins(x - k, y) || !ins(x - k, y - k)) {
+          a = k;
+          break;
+        }
+      let d = 4;
+      for (let k = 1; k <= 3; k++)
+        if (!ins(x, y + k) || !ins(x + k, y) || !ins(x + k, y + k)) {
+          d = k;
+          break;
+        }
+      let t = 2 + (o.bias || 0);
+      t += a === 1 ? 1.6 : a === 2 ? 0.8 : 0;
+      t -= d === 1 ? 1.6 : d === 2 ? 0.8 : 0;
+      if (o.noise) {
+        const n = hash2(x, y, o.seed || 0);
+        if (n < o.noise) t -= 1;
+        else if (n > 1 - o.noise * 0.6) t += 1;
+      }
+      t = Math.max(0, Math.min(4, Math.round(t)));
+      hzSet(b, x, y, R[t]);
+    }
+  }
+}
+// Contorno exterior final de toda la silueta
+function hzSilhouette(b, col) {
+  const { W, H, d } = b;
+  const solid = (x, y) =>
+    x >= 0 && y >= 0 && x < W && y < H && d[(y * W + x) * 4 + 3] >= 200;
+  const todo = [];
+  for (let y = 0; y < H; y++)
+    for (let x = 0; x < W; x++)
+      if (
+        !solid(x, y) &&
+        (solid(x - 1, y) ||
+          solid(x + 1, y) ||
+          solid(x, y - 1) ||
+          solid(x, y + 1))
+      )
+        todo.push([x, y]);
+  todo.forEach(([x, y]) => hzSet(b, x, y, col));
 }
 
-// Huaychivo con animación: leg 0 = parado, 1 / 2 = pasos (levanta una pata y
-// cruza los brazos), 3 = erguido entre pasos, 4 = parado respirando;
-// atk 0 = normal, 1 = preparando el golpe (se estira hacia arriba, ojos encendidos),
-// 2 = golpeando (se agacha sobre ti, con destellos en las garras).
-// Es casi simétrico (mira al frente), así que flip casi no cambia su aspecto.
 function makeHuaychivo(leg, atk) {
-  const SW = 55;
-  const SH = 51;
-  const PX = 4; // margen izquierdo en el lienzo
-  const PY = 8; // margen superior (el cuerpo se estira hacia arriba al preparar el golpe)
-  const SPLIT = 40; // fila de la cadera: de aquí hacia abajo son las patas
-  const MID = 27; // columna central que separa pata izquierda y derecha
-  const CW = 64;
-  const CH = 62;
-  return sprite(CW, CH, 32, PY + SH, (c) => {
-    const OUT = "#1c1c22";
-    const buf = Array.from({ length: CH }, () => Array(CW).fill(null));
-    const eyes = new Set(HUAYCHIVO_EYES.map(([x, y]) => x + "," + y));
-    const colorAt = (x, y) => {
-      const ch = HUAYCHIVO_ROWS[y][x];
-      if (ch === ".") return null;
-      if (eyes.has(x + "," + y)) return atk > 0 ? "#ff1a1a" : "#e8362f";
-      return huaychivoColor(x, y, ch);
-    };
+  const W = 60;
+  const H = 76;
+  const GY = 71; // línea del suelo
+  return sprite(W, H, 30, GY, (c) => {
+    const b = { W, H, d: new Uint8ClampedArray(W * H * 4) };
+    const M = (x) => W - x;
+    const FUR = HZ_RAMP.fur;
+    const eye = atk > 0 ? "#ff5a3a" : "#ee2f20";
 
-    // ---- Pose según el cuadro de animación ----
-    // leg: 0 = parado, 1 / 2 = paso (levanta pata izquierda / derecha),
-    // 3 = cuerpo erguido entre pasos, 4 = parado (respiración, brazos algo abiertos)
-    // Ángulos de los brazos: negativo en el izquierdo / positivo en el derecho = abrir
-    let aL = 0;
-    let aR = 0;
+    // ---- Pose ----
+    let by = 0; // + = se agacha, - = se estira
     let liftL = 0;
     let liftR = 0;
-    let bodyY = 0; // positivo = se agacha, negativo = se estira
-    let lean = 0; // balanceo lateral del torso
+    // brazos en coordenadas del lado izquierdo (el derecho es el reflejo): codo y mano
+    let aL = { e: [7, 38], h: [8, 25] };
+    let aR = { e: [6, 36], h: [7, 28] };
     if (leg === 1 || leg === 2) {
-      const s = leg === 1 ? 1 : -1;
-      liftL = leg === 1 ? 7 : 0;
-      liftR = leg === 2 ? 7 : 0;
-      aL = -0.42 * s; // brazos que se cruzan al caminar
-      aR = -0.42 * s;
-      bodyY = 2;
-      lean = -s * 2;
+      by = 1;
+      liftL = leg === 1 ? 3 : 0;
+      liftR = leg === 2 ? 3 : 0;
+      const up = { e: [6, 35], h: [6, 23] };
+      const dn = { e: [7, 38], h: [9, 28] };
+      aL = leg === 1 ? dn : up;
+      aR = leg === 1 ? up : dn;
     } else if (leg === 3) {
-      bodyY = -2;
+      by = -1;
+      aL = { e: [7, 37], h: [8, 24] };
+      aR = { e: [7, 37], h: [8, 24] };
     } else if (leg === 4) {
-      aL = -0.14;
-      aR = 0.14;
-      bodyY = -1;
+      by = -1;
+      aL = { e: [5, 37], h: [7, 22] };
+      aR = { e: [5, 37], h: [7, 22] };
     }
     if (atk === 1) {
-      aL = -0.6;
-      aR = 0.6;
+      by = -2;
+      aL = { e: [6, 24], h: [4, 10] };
+      aR = { e: [6, 24], h: [4, 10] };
     } else if (atk === 2) {
-      aL = 0.95;
-      aR = -0.95;
+      by = 2;
+      aL = { e: [9, 43], h: [13, 57] };
+      aR = { e: [9, 43], h: [13, 57] };
+    }
+    const U = 4 + by; // desplazamiento vertical del cuerpo superior
+    const L0 = 6; // desplazamiento vertical de las patas bajas
+
+    // ---- Sombra en el suelo ----
+    for (let y = -3; y <= 3; y++) {
+      const w = Math.round(17 * Math.sqrt(1 - (y * y) / 10));
+      for (let x = -w; x <= w; x++) hzSet(b, 30 + x, GY - 1 + y, "#000000", 80);
     }
 
-    // Patas: la que da el paso se levanta bastante y se abre un poco
-    for (let y = SPLIT; y < SH; y++) {
-      for (let x = 0; x < SW; x++) {
-        const col = colorAt(x, y);
-        if (!col) continue;
-        const left = x < MID;
-        const lift = left ? liftL : liftR;
-        const k = lift ? (y - SPLIT) / (SH - SPLIT) : 0; // más desplazada la punta
-        const dx = Math.round(k * 2 * (left ? -1 : 1) * (lift ? 1 : 0));
-        const yy = PY + y - Math.round(lift * (0.4 + 0.6 * k));
-        if (yy >= 0) buf[yy][PX + x + dx] = col;
-      }
-    }
-
-    // Torso y cabeza: al preparar el golpe se estiran hacia arriba y al golpear se
-    // agachan; el desplazamiento baja hasta 0 en la cadera para no abrir huecos
-    const top = (atk === 1 ? -3 : atk === 2 ? 3 : 0) + bodyY;
-    const dyOf = (y) => Math.round(top * Math.max(0, 1 - y / SPLIT));
-    const dxOf = (y) => Math.round(lean * Math.max(0, 1 - y / SPLIT));
-    const ARM_Y = 26;
-    const isArm = (x, y) => y <= ARM_Y && (x <= 13 || x >= 42);
-    for (let y = 0; y < SPLIT; y++) {
-      const y0 = PY + y + dyOf(y);
-      const y1 = PY + y + 1 + dyOf(y + 1);
-      for (let yy = y0; yy <= Math.max(y0, y1 - 1); yy++) {
-        for (let x = 0; x < SW; x++) {
-          if (isArm(x, y)) continue; // los brazos se dibujan aparte (rotados)
-          const col = colorAt(x, y);
-          if (col) buf[yy][PX + x + dxOf(y)] = col;
-        }
-      }
-    }
-
-    // Brazos: se giran alrededor del hombro (mapeo inverso para no dejar huecos)
-    const armDy = dyOf(22);
-    const armDx = dxOf(22);
-    const drawArm = (x0, x1, pvx, pvy, ang) => {
-      const cs = Math.cos(ang);
-      const sn = Math.sin(ang);
-      for (let dy = -6; dy < SH; dy++) {
-        for (let dx = x0 - 14; dx <= x1 + 14; dx++) {
-          // destino (dx, dy) -> origen girando -ang alrededor del hombro
-          const rx = dx - pvx;
-          const ry = dy - pvy;
-          const sx = Math.round(pvx + rx * cs + ry * sn);
-          const sy = Math.round(pvy - rx * sn + ry * cs);
-          if (sx < x0 || sx > x1 || sy < 0 || sy > ARM_Y) continue;
-          if (!isArm(sx, sy)) continue;
-          const col = colorAt(sx, sy);
-          if (!col) continue;
-          const X = PX + dx + armDx;
-          const Y = PY + dy + armDy;
-          if (X >= 0 && X < CW && Y >= 0 && Y < CH) buf[Y][X] = col;
-        }
-      }
-    };
-    drawArm(0, 13, 13, 22, aL);
-    drawArm(42, SW - 1, 42, 22, aR);
-
-    // Destellos en las garras al golpear
-    if (atk === 2) {
-      const spark = (x, y, pvx, ang) => {
-        const rx = x - pvx;
-        const ry = y - 22;
-        const X = Math.round(pvx + rx * Math.cos(ang) - ry * Math.sin(ang));
-        const Y = Math.round(22 + rx * Math.sin(ang) + ry * Math.cos(ang));
-        const bx = PX + X + armDx;
-        const by = PY + Y + armDy;
-        if (bx >= 0 && bx < CW && by >= 0 && by < CH) buf[by][bx] = "#ffffff";
+    // ---- Patas de cabra: muslo peludo, rodilla hacia afuera, caña fina y pezuña ----
+    const legGeom = (s) => {
+      const L = s ? liftR : liftL;
+      return {
+        hip: [22, 44 + U],
+        knee: [L ? 15.5 : 17, 54 + L0 - L],
+        ank: [L ? 18 : 19.5, 60 + L0 - L],
+        L,
       };
-      [
-        [4, 14],
-        [2, 16],
-        [8, 12],
-      ].forEach(([x, y]) => spark(x, y, 13, aL));
-      [
-        [52, 13],
-        [53, 15],
-        [48, 11],
-      ].forEach(([x, y]) => spark(x, y, 42, aR));
+    };
+    [0, 1].forEach((s) => {
+      const gm = legGeom(s);
+      const m = hzMask(W, H, (g) => {
+        g.save();
+        if (s) {
+          g.translate(W, 0);
+          g.scale(-1, 1);
+        }
+        hzTube(g, [gm.hip, gm.knee, gm.ank], [6.2, 4.4, 2.3]);
+        // pelaje del muslo y flecos en la rodilla
+        hzPoly(g, [
+          [gm.knee[0] - 3.5, gm.knee[1] - 3],
+          [gm.knee[0] - 6.5, gm.knee[1] + 0.5],
+          [gm.knee[0] - 3, gm.knee[1] + 2.5],
+        ]);
+        hzPoly(g, [
+          [gm.knee[0] - 3, gm.knee[1] + 2],
+          [gm.knee[0] - 4.5, gm.knee[1] + 6],
+          [gm.knee[0] - 1, gm.knee[1] + 4.5],
+        ]);
+        g.restore();
+      });
+      hzPaint(b, m, FUR, { noise: 0.1, seed: 31 + s, bias: 0.1 });
+      // pezuña hendida
+      const ax = s ? M(gm.ank[0]) : gm.ank[0];
+      const ay = gm.ank[1];
+      const hm = hzMask(W, H, (g) =>
+        hzPoly(g, [
+          [ax - 3.5, ay + 0.5],
+          [ax + 3.5, ay + 0.5],
+          [ax + 4.5, ay + 5],
+          [ax - 4.5, ay + 5],
+        ]),
+      );
+      hzPaint(b, hm, HZ_RAMP.hoof, {});
+      hzSet(b, ax, ay + 3, HZ_RAMP.hoof[0]);
+      hzSet(b, ax, ay + 4, HZ_RAMP.hoof[0]);
+    });
+
+    // ---- Melena trasera: pelo largo y desgreñado alrededor del cuello y hombros ----
+    {
+      const rm = mulberry32(4242);
+      const pts = [];
+      const N = 32;
+      for (let i = 0; i < N; i++) {
+        const a = (i / N) * Math.PI * 2;
+        const rr = (i % 2 ? 8 : 11.5) + rm() * 3;
+        pts.push([
+          30 + Math.cos(a) * rr * 1.3,
+          22 + U - 4 + Math.sin(a) * rr * 0.85,
+        ]);
+      }
+      const m = hzMask(W, H, (g) => hzPoly(g, pts));
+      hzPaint(b, m, FUR, { noise: 0.1, seed: 5, bias: -1.3 });
     }
 
-    // Contorno oscuro de 1 px (como el resto de los sprites)
-    const filled = (x, y) =>
-      y >= 0 && y < CH && x >= 0 && x < CW && buf[y][x] !== null;
-    const edge = [];
-    for (let y = 0; y < CH; y++) {
-      for (let x = 0; x < CW; x++) {
-        if (filled(x, y)) continue;
-        if (
-          filled(x + 1, y) ||
-          filled(x - 1, y) ||
-          filled(x, y + 1) ||
-          filled(x, y - 1)
-        )
-          edge.push([x, y]);
+    // ---- Torso musculoso ----
+    {
+      const m = hzMask(W, H, (g) => {
+        g.translate(0, U);
+        hzPoly(g, [
+          [13, 28],
+          [19, 24],
+          [41, 24],
+          [47, 28],
+          [44, 37],
+          [40, 45],
+          [20, 45],
+          [16, 37],
+        ]);
+        hzEll(g, 30, 25, 14, 4);
+      });
+      hzPaint(b, m, FUR, { noise: 0.06, seed: 71, bias: 0.15 });
+      // pectorales
+      const pm = hzMask(W, H, (g) => {
+        g.translate(0, U);
+        hzEll(g, 23.5, 32, 6.2, 4.2);
+        hzEll(g, 36.5, 32, 6.2, 4.2);
+      });
+      hzPaint(b, pm, FUR, { out: FUR[1], bias: 0.7, noise: 0.04, seed: 72 });
+      // abdomen en cuadros
+      const am = hzMask(W, H, (g) => {
+        g.translate(0, U);
+        [37, 40.5, 44].forEach((y) => {
+          g.fillRect(25, y, 4, 2);
+          g.fillRect(31, y, 4, 2);
+        });
+      });
+      hzPaint(b, am, FUR, { out: FUR[1], bias: 0.3 });
+      // costillas
+      [29.5, 32.5].forEach((y) => {
+        hzSet(b, 17, y + U - 4 + 4, FUR[1]);
+      });
+    }
+
+    // ---- Taparrabo negro roto con faja y tira roja ----
+    {
+      const rag = [
+        [22, 44],
+        [38, 44],
+        [39.5, 50],
+        [38.5, 53],
+        [36, 51.5],
+        [34, 55],
+        [31.5, 52],
+        [29, 56],
+        [26.5, 52],
+        [24, 55],
+        [22, 51],
+        [20.5, 53],
+        [20.5, 49],
+      ];
+      const m = hzMask(W, H, (g) => {
+        g.translate(0, U);
+        hzPoly(g, rag);
+      });
+      hzPaint(b, m, HZ_RAMP.cloth, { noise: 0.1, seed: 83, bias: 0 });
+      // tira roja central con flecos
+      const sm = hzMask(W, H, (g) => {
+        g.translate(0, U);
+        hzPoly(g, [
+          [27.5, 45],
+          [32.5, 45],
+          [32, 54],
+          [31, 56.5],
+          [30, 55],
+          [29, 56.5],
+          [28, 54],
+        ]);
+      });
+      hzPaint(b, sm, HZ_RAMP.red, { noise: 0.1, seed: 9 });
+      // faja roja en la cintura
+      const fm = hzMask(W, H, (g) => {
+        g.translate(0, U);
+        g.fillRect(20, 43, 20, 4);
+      });
+      hzPaint(b, fm, HZ_RAMP.red, { noise: 0.06, seed: 10, bias: 0.2 });
+      // nudo de la faja
+      const km = hzMask(W, H, (g) => {
+        g.translate(0, U);
+        hzEll(g, 30, 45, 3, 3);
+      });
+      hzPaint(b, km, HZ_RAMP.red, { bias: 0.3 });
+      // amuleto de hueso (calavera chica)
+      const tm = hzMask(W, H, (g) => {
+        g.translate(0, U);
+        g.fillRect(28, 48, 5, 4);
+      });
+      hzPaint(b, tm, HZ_RAMP.bone, {});
+      hzSet(b, 29.5, 50 + U, "#14100c");
+      hzSet(b, 31.5, 50 + U, "#14100c");
+    }
+
+    // ---- Cadenas y medallón de hueso en el pecho ----
+    {
+      const chain = (x0, y0, x1, y1, sag) => {
+        for (let i = 0; i <= 14; i++) {
+          const t = i / 14;
+          const x = x0 + (x1 - x0) * t;
+          const y = y0 + (y1 - y0) * t + Math.sin(t * Math.PI) * sag;
+          hzSet(b, x, y + U, i % 2 ? HZ_RAMP.bone[3] : HZ_RAMP.bone[1]);
+        }
+      };
+      chain(17, 27, 30, 40, 3);
+      chain(43, 27, 30, 40, 3);
+      const mm = hzMask(W, H, (g) => {
+        g.translate(0, U);
+        hzEll(g, 30, 40.5, 2.2, 2.2);
+      });
+      hzPaint(b, mm, HZ_RAMP.bone, {});
+      hzSet(b, 30, 40 + U, "#14100c");
+    }
+
+    // ---- Brazos: hombro -> codo -> mano con brazalete y garras de hueso ----
+    const armPts = (a, s) => {
+      const sh = [14, 30 + U];
+      const e = [a.e[0], a.e[1] + 4 + (atk === 2 ? 0 : by)];
+      const h = [a.h[0], a.h[1] + 4 + (atk === 2 ? 0 : by)];
+      return { sh, e, h };
+    };
+    [0, 1].forEach((s) => {
+      const a = armPts(s ? aR : aL, s);
+      const m = hzMask(W, H, (g) => {
+        g.save();
+        if (s) {
+          g.translate(W, 0);
+          g.scale(-1, 1);
+        }
+        hzTube(g, [a.sh, a.e, a.h], [4.4, 3.5, 2.7]);
+        g.restore();
+      });
+      hzPaint(b, m, FUR, { noise: 0.08, seed: 91 + s, bias: 0.5 });
+      // vello en el antebrazo
+      const rm = mulberry32(300 + s);
+      for (let i = 0; i < 7; i++) {
+        const t = rm();
+        const x = a.e[0] + (a.h[0] - a.e[0]) * t + (rm() < 0.5 ? -3 : 3);
+        const y = a.e[1] + (a.h[1] - a.e[1]) * t;
+        hzSet(b, s ? M(x) : x, y, FUR[1]);
+      }
+      // brazalete
+      const t0 = 0.5;
+      const t1 = 0.72;
+      const bm = hzMask(W, H, (g) => {
+        g.save();
+        if (s) {
+          g.translate(W, 0);
+          g.scale(-1, 1);
+        }
+        hzTube(
+          g,
+          [
+            [a.e[0] + (a.h[0] - a.e[0]) * t0, a.e[1] + (a.h[1] - a.e[1]) * t0],
+            [a.e[0] + (a.h[0] - a.e[0]) * t1, a.e[1] + (a.h[1] - a.e[1]) * t1],
+          ],
+          [3.2, 3.0],
+        );
+        g.restore();
+      });
+      hzPaint(b, bm, HZ_RAMP.hoof, { bias: 0.3 });
+      {
+        const bx = a.e[0] + (a.h[0] - a.e[0]) * 0.6;
+        const by2 = a.e[1] + (a.h[1] - a.e[1]) * 0.6;
+        hzSet(b, s ? M(bx) : bx, by2, HZ_RAMP.bone[3]);
+      }
+      // mano y garras
+      const dx0 = a.h[0] - a.e[0];
+      const dy0 = a.h[1] - a.e[1];
+      const th = Math.atan2(dy0, dx0);
+      const claws = [-0.85, -0.3, 0.3, 0.85];
+      const hmask = hzMask(W, H, (g) => {
+        g.save();
+        if (s) {
+          g.translate(W, 0);
+          g.scale(-1, 1);
+        }
+        hzEll(g, a.h[0], a.h[1], 3, 3);
+        g.restore();
+      });
+      hzPaint(b, hmask, HZ_RAMP.skin, { bias: 0.2 });
+      const cmask = hzMask(W, H, (g) => {
+        g.save();
+        if (s) {
+          g.translate(W, 0);
+          g.scale(-1, 1);
+        }
+        claws.forEach((off) => {
+          const a0 = th + off * 0.9;
+          const a1 = th + off * 1.25;
+          hzTube(
+            g,
+            [
+              [a.h[0] + Math.cos(a0) * 2.6, a.h[1] + Math.sin(a0) * 2.6],
+              [a.h[0] + Math.cos(a1) * 7.2, a.h[1] + Math.sin(a1) * 7.2],
+            ],
+            [1.15, 0.55],
+          );
+        });
+        g.restore();
+      });
+      hzPaint(b, cmask, HZ_RAMP.bone, { bias: 0 });
+      if (atk === 2) {
+        const hx = s ? M(a.h[0]) : a.h[0];
+        const sgn = s ? -1 : 1;
+        hzLine(
+          b,
+          hx + sgn * 2,
+          a.h[1] + 8,
+          hx + sgn * 9,
+          a.h[1] + 14,
+          "#ffffff",
+          1,
+        );
+        hzLine(
+          b,
+          hx - sgn * 1,
+          a.h[1] + 9,
+          hx + sgn * 5,
+          a.h[1] + 15,
+          "#ffe9b0",
+          1,
+        );
+        hzLine(
+          b,
+          hx - sgn * 4,
+          a.h[1] + 8,
+          hx + sgn * 1,
+          a.h[1] + 13,
+          "#ffffff",
+          1,
+        );
+      }
+    });
+
+    // ---- Cuernos de carnero: salen de la frente, se enroscan hacia afuera y abajo ----
+    const hornPath = [
+      [25, 10],
+      [21, 5.5],
+      [15, 3.5],
+      [9.5, 5.5],
+      [6.5, 10.5],
+      [8.5, 14.5],
+    ];
+    const hornR = [3.5, 3.1, 2.6, 2.1, 1.5, 0.75];
+    {
+      const m = hzMask(W, H, (g) => {
+        g.translate(0, U);
+        hzBoth(g, W, () => hzTube(g, hornPath, hornR));
+      });
+      hzPaint(b, m, HZ_RAMP.horn, {});
+      // anillos del cuerno
+      for (let s = 0; s < 2; s++) {
+        for (let i = 1; i < hornPath.length - 1; i++) {
+          const [x0, y0] = hornPath[i];
+          const [x1, y1] = hornPath[i + 1];
+          [0.15, 0.6].forEach((t) => {
+            const x = x0 + (x1 - x0) * t;
+            const y = y0 + (y1 - y0) * t;
+            const nx = -(y1 - y0);
+            const ny = x1 - x0;
+            const nl = Math.hypot(nx, ny) || 1;
+            const r = hornR[i] * 0.55;
+            for (let k = -1; k <= 1; k++)
+              hzSet(
+                b,
+                s ? M(x + (nx / nl) * r * k) : x + (nx / nl) * r * k,
+                y + (ny / nl) * r * k + U,
+                HZ_RAMP.horn[1],
+              );
+          });
+        }
       }
     }
 
-    ellipse(c, 32, PY + SH - 1, 22, 3, "rgba(0,0,0,0.30)");
-    edge.forEach(([x, y]) => px(c, x, y, OUT));
-    for (let y = 0; y < CH; y++)
-      for (let x = 0; x < CW; x++) if (buf[y][x]) px(c, x, y, buf[y][x]);
+    // ---- Orejas puntiagudas hacia los lados ----
+    {
+      const m = hzMask(W, H, (g) => {
+        g.translate(0, U);
+        hzBoth(g, W, () =>
+          hzPoly(g, [
+            [23, 13.5],
+            [16, 15],
+            [9, 24.5],
+            [14.5, 22],
+            [23, 19.5],
+          ]),
+        );
+      });
+      hzPaint(b, m, FUR, { noise: 0.06, seed: 44, bias: 0.2 });
+      const im = hzMask(W, H, (g) => {
+        g.translate(0, U);
+        hzBoth(g, W, () =>
+          hzPoly(g, [
+            [21.5, 15.5],
+            [17, 16.5],
+            [11.5, 23],
+            [15.5, 20.5],
+            [21.5, 18.5],
+          ]),
+        );
+      });
+      hzPaint(b, im, HZ_RAMP.ear, { out: null, bias: -0.9 });
+    }
+
+    // ---- Cuello ----
+    {
+      const m = hzMask(W, H, (g) => {
+        g.translate(0, U);
+        hzEll(g, 30, 25, 5.5, 4);
+      });
+      hzPaint(b, m, FUR, { bias: -0.6, noise: 0.15, seed: 12 });
+    }
+
+    // ---- Cabeza: cráneo, hocico alargado, barba, ojos, colmillos ----
+    {
+      // barba (detrás del hocico)
+      const bm = hzMask(W, H, (g) => {
+        g.translate(0, U);
+        hzPoly(g, [
+          [27, 30],
+          [30, 31],
+          [27.5, 36],
+        ]);
+        hzPoly(g, [
+          [28.5, 31],
+          [31.5, 31],
+          [30, 39],
+        ]);
+        hzPoly(g, [
+          [30, 31],
+          [33, 30],
+          [32.5, 36],
+        ]);
+      });
+      hzPaint(b, bm, FUR, { noise: 0.08, seed: 61, bias: 0.9 });
+
+      const hm = hzMask(W, H, (g) => {
+        g.translate(0, U);
+        hzEll(g, 30, 15, 8.4, 7.2);
+        hzPoly(g, [
+          [24.2, 17],
+          [35.8, 17],
+          [34.6, 24],
+          [33.4, 29.5],
+          [26.6, 29.5],
+          [25.4, 24],
+        ]);
+      });
+      hzPaint(b, hm, FUR, { noise: 0.05, seed: 21, bias: 0.8 });
+      // hocico más claro
+      const mm = hzMask(W, H, (g) => {
+        g.translate(0, U);
+        hzEll(g, 30, 26.5, 4.7, 3.6);
+      });
+      hzPaint(b, mm, HZ_RAMP.skin, { out: FUR[1], bias: 0.6 });
+      // mandíbula
+      const jm = hzMask(W, H, (g) => {
+        g.translate(0, U);
+        hzEll(g, 30, 30.3, 3.4, 1.7 + (atk > 0 ? 1.3 : 0));
+      });
+      hzPaint(b, jm, HZ_RAMP.skin, { bias: -0.2 });
+
+      // frente: ceño fruncido
+      hzLine(b, 22.5, 11 + U, 29, 14.2 + U, FUR[0], 2);
+      hzLine(b, M(22.5), 11 + U, M(29), 14.2 + U, FUR[0], 2);
+      hzLine(b, 23, 10 + U, 28, 12.8 + U, FUR[3], 1);
+      hzLine(b, M(23), 10 + U, M(28), 12.8 + U, FUR[3], 1);
+      // cuencas oscuras y ojos incandescentes
+      [0, 1].forEach((s) => {
+        const X = (x) => (s ? M(x) : x);
+        [
+          [24, 15],
+          [25, 15],
+          [26, 16],
+          [27, 16],
+          [25, 16],
+          [26, 17],
+        ].forEach(([x, y]) => hzSet(b, X(x), y + U, "#1a0b0a"));
+        hzSet(b, X(24), 14 + U, "#6e0c0c");
+        hzSet(b, X(25), 14 + U, eye);
+        hzSet(b, X(26), 15 + U, eye);
+        hzSet(b, X(27), 15 + U, "#ffb08a");
+        hzSet(b, X(25), 15 + U, "#9c1414");
+        hzSet(b, X(26), 14 + U, "#6e0c0c");
+      });
+      // nariz y fosas
+      hzSet(b, 28.5, 27 + U, "#120d0b");
+      hzSet(b, 31.5, 27 + U, "#120d0b");
+      hzLine(b, 29, 20 + U, 29, 24 + U, FUR[1], 1);
+      hzLine(b, 31, 20 + U, 31, 24 + U, FUR[1], 1);
+      // boca con colmillos
+      if (atk > 0) {
+        for (let x = 27; x <= 33; x++)
+          for (let y = 29; y <= 32; y++) hzSet(b, x, y + U, "#1a0606");
+        hzSet(b, 29, 31 + U, "#c23030");
+        hzSet(b, 30, 31 + U, "#e04a36");
+        hzSet(b, 31, 31 + U, "#c23030");
+        [27, 29, 31, 33].forEach((x) => {
+          hzSet(b, x, 29 + U, HZ_RAMP.bone[4]);
+          hzSet(b, x, 30 + U, HZ_RAMP.bone[3]);
+        });
+        [28, 32].forEach((x) => {
+          hzSet(b, x, 32 + U, HZ_RAMP.bone[4]);
+          hzSet(b, x, 31 + U, HZ_RAMP.bone[3]);
+        });
+      } else {
+        for (let x = 27; x <= 33; x++) hzSet(b, x, 29.5 + U, "#140a09");
+        hzSet(b, 27, 30 + U, HZ_RAMP.bone[4]);
+        hzSet(b, 27, 31 + U, HZ_RAMP.bone[3]);
+        hzSet(b, 33, 30 + U, HZ_RAMP.bone[4]);
+        hzSet(b, 33, 31 + U, HZ_RAMP.bone[3]);
+        hzSet(b, 29, 30 + U, HZ_RAMP.bone[2]);
+        hzSet(b, 31, 30 + U, HZ_RAMP.bone[2]);
+      }
+    }
+
+    // ---- Mechones de pelo sobre los hombros ----
+    {
+      const m = hzMask(W, H, (g) => {
+        g.translate(0, U);
+        hzBoth(g, W, () => {
+          hzPoly(g, [
+            [14, 27],
+            [10, 21],
+            [17, 25],
+          ]);
+          hzPoly(g, [
+            [18, 25],
+            [15, 18],
+            [22, 23],
+          ]);
+          hzPoly(g, [
+            [11, 30],
+            [6, 27],
+            [12, 27],
+          ]);
+        });
+      });
+      hzPaint(b, m, FUR, { noise: 0.06, seed: 15, bias: 0.4 });
+    }
+
+    // ---- Contorno exterior y volcado al canvas ----
+    hzSilhouette(b, "#0a0807");
+    c.putImageData(new ImageData(b.d, W, H), 0, 0);
   });
 }
 
@@ -6172,6 +7357,29 @@ function makeCheckpointSprite(on) {
   });
 }
 
+// Sprite del letrero: poste de madera con un tablón de cartel encima
+function makeSignSprite() {
+  return sprite(22, 30, 11, 28, (c) => {
+    ellipse(c, 11, 28, 8, 3, "rgba(0,0,0,0.3)");
+    // poste
+    rect(c, 9, 10, 4, 18, "#6b4423");
+    rect(c, 9, 10, 1, 18, "#8a5a33");
+    rect(c, 12, 10, 1, 18, "#4a2d16");
+    // tablón del letrero
+    rect(c, 1, 0, 20, 12, "#5c3a1e");
+    rect(c, 2, 1, 18, 10, "#a9733f");
+    rect(c, 2, 1, 18, 1, "#c08a52");
+    // clavos en las esquinas
+    rect(c, 3, 2, 2, 2, "#3d2410");
+    rect(c, 17, 2, 2, 2, "#3d2410");
+    rect(c, 3, 8, 2, 2, "#3d2410");
+    rect(c, 17, 8, 2, 2, "#3d2410");
+    // líneas grabadas (sugieren texto)
+    rect(c, 5, 4, 12, 1, "#5c3a1e");
+    rect(c, 5, 6, 9, 1, "#5c3a1e");
+  });
+}
+
 // Imagen del recuerdo "¡Encontraste la espada!" (se dibuja en un canvas)
 function makeSwordCardImage() {
   const W = 160;
@@ -6276,7 +7484,7 @@ function clearWhiteBackground(c, w, h) {
 function makeMonteGrass(v) {
   return sprite(40, 32, 20, 24, (c) => {
     const r = mulberry32(900 + v * 37);
-    const g = ["#08301f", "#0f4a31", "#1b6b47", "#35966a", "#7fc9a0"];
+    const g = ["#0b3012", "#144a20", "#226b2d", "#409644", "#8cc96e"];
     ellipse(c, 20, 23, 15, 5, "rgba(10,40,10,0.35)");
     // masa baja y densa
     leafMass(c, 20, 16, 13, 5, 100 + v, g, 14, 4, 7);
@@ -6407,6 +7615,9 @@ function buildSprites() {
   SP.despeinada = makeDespeinada();
   SP.makulis = makeMakulis();
   SP.chaka = makeChaka();
+  SP.balche = makeBalche();
+  SP.guanacaste = makeGuanacaste();
+  SP.flamboyan = makeFlamboyan();
   SP.tolok = [makeTolok(false), makeTolok(true)];
   // El mono se dibuja a la mitad de su tamaño original
   SP.howler = [makeHowler(false), makeHowler(true)].map((s) =>
@@ -6464,14 +7675,14 @@ function buildSprites() {
     wind: makeHuaychivo(0, 1),
     hit: makeHuaychivo(0, 2),
   };
-  // Se reduce (HUAYCHIVO_SCALE) respecto al sprite original
-  SP.huaychivo.stand = scaleSprite(SP.huaychivo.stand, HUAYCHIVO_SCALE);
-  SP.huaychivo.idle = scaleSprite(SP.huaychivo.idle, HUAYCHIVO_SCALE);
-  SP.huaychivo.walk = SP.huaychivo.walk.map((s) =>
-    scaleSprite(s, HUAYCHIVO_SCALE),
-  );
-  SP.huaychivo.wind = scaleSprite(SP.huaychivo.wind, HUAYCHIVO_SCALE);
-  SP.huaychivo.hit = scaleSprite(SP.huaychivo.hit, HUAYCHIVO_SCALE);
+  if (HUAYCHIVO_SCALE !== 1) {
+    const k = HUAYCHIVO_SCALE;
+    SP.huaychivo.stand = scaleSprite(SP.huaychivo.stand, k);
+    SP.huaychivo.idle = scaleSprite(SP.huaychivo.idle, k);
+    SP.huaychivo.walk = SP.huaychivo.walk.map((q) => scaleSprite(q, k));
+    SP.huaychivo.wind = scaleSprite(SP.huaychivo.wind, k);
+    SP.huaychivo.hit = scaleSprite(SP.huaychivo.hit, k);
+  }
   SP.kaskabal = {
     stand: makeKaskabal(0, 0),
     walk: [makeKaskabal(1, 0), makeKaskabal(2, 0)],
@@ -6527,6 +7738,7 @@ function buildSprites() {
   SP.monteGrass = [0, 1, 2, 3].map(makeMonteGrass);
   SP.sword = makeSwordSprite();
   SP.checkpoint = [makeCheckpointSprite(false), makeCheckpointSprite(true)];
+  SP.sign = makeSignSprite();
   SP.collect = {};
   COLLECT_DEFS.forEach(
     (d) => (SP.collect[d.type] = makeCollectSprite(d.sprite, d.keyWhite)),
@@ -6587,6 +7799,10 @@ function spawnEntities() {
   checkpoints.forEach((cp) =>
     reserved.push({ gx: cp.gx, gy: cp.gy, r: CHECKPOINT_R + 0.8 }),
   );
+  signs.forEach((s) => {
+    blockers.push({ gx: s.gx, gy: s.gy, r: 0.32 });
+    reserved.push({ gx: s.gx, gy: s.gy, r: 1.3 });
+  });
 
   const byType = (type) => MAP_OBJECTS.filter((o) => o[0] === type);
 
@@ -7001,6 +8217,9 @@ function spawnEntities() {
     ["despeinada", SP.despeinada, 0.4],
     ["makulis", SP.makulis, 0.4],
     ["chaka", SP.chaka, 0.4],
+    ["balche", SP.balche, 0.4],
+    ["guanacaste", SP.guanacaste, 0.8],
+    ["flamboyan", SP.flamboyan, 0.6],
   ].forEach(([type, spr, rad]) =>
     byType(type).forEach(([, gx, gy], i) => {
       addStatic(spr, gx, gy, { canopy: true, r: rad, flip: i % 2 === 1 });
@@ -7179,6 +8398,7 @@ function setupControls() {
 
   bindPress("btnA", actionA);
   bindPress("btnB", attack);
+  bindPress("btnSelect", cycleZoom);
 
   window.addEventListener("keydown", (e) => {
     if (
@@ -7196,6 +8416,7 @@ function setupControls() {
     if (e.repeat) return;
     if (e.code === "Space" || e.code === "KeyE") actionA();
     if (e.code === "KeyX" || e.code === "KeyK") attack();
+    if (e.code === "KeyZ") cycleZoom();
   });
 
   window.addEventListener("keyup", (e) => {
@@ -7371,9 +8592,36 @@ function sailable(gx, gy) {
 function actionA() {
   if (isPaused) return;
   if (tryBoat()) return;
-  if (!checkChestInteraction()) {
-    if (player.jumpT === 0) player.jumpT = 1;
-  }
+  if (checkChestInteraction()) return;
+  if (checkSignInteraction()) return;
+  if (player.jumpT === 0) player.jumpT = 1;
+}
+
+// Letrero cercano: con A se abre el cartel de madera con su mensaje
+function checkSignInteraction() {
+  if (isPaused) return false;
+  let found = false;
+  signs.forEach((s) => {
+    if (found) return;
+    const dist = Math.hypot(player.gx - s.gx, player.gy - s.gy);
+    if (dist < SIGN_RANGE) {
+      openSignDialog(s.text);
+      found = true;
+    }
+  });
+  return found;
+}
+
+function openSignDialog(text) {
+  isPaused = true;
+  keys = { up: false, down: false, left: false, right: false };
+  dialogText.innerText = text;
+  dialogOverlay.classList.remove("hidden");
+}
+
+function closeSignDialog() {
+  dialogOverlay.classList.add("hidden");
+  isPaused = false;
 }
 
 // Terreno transitable: tierra, monte, playas (agua somera) y muelle
@@ -7389,8 +8637,13 @@ function landAt(gx, gy) {
   );
 }
 
-// Botón B: mandoble de espada. Golpea a los enemigos que estén al frente y al alcance.
+// Botón B: si hay un letrero abierto lo cierra; si no, mandoble de espada
+// (golpea a los enemigos que estén al frente y al alcance).
 function attack() {
+  if (!dialogOverlay.classList.contains("hidden")) {
+    closeSignDialog();
+    return;
+  }
   if (
     !hasSword ||
     isPaused ||
@@ -7583,6 +8836,95 @@ function walkable(gx, gy) {
   }
   if (inBox(gx, gy)) return false;
   return true;
+}
+
+// Obstáculo redondo (edificio, roca, cenote...) que contiene el punto, el más
+// "hundido" si hay varios; null si no hay ninguno
+function blockerAt(gx, gy) {
+  let best = null;
+  let bd = 0;
+  for (let i = 0; i < blockers.length; i++) {
+    const b = blockers[i];
+    const pen = b.r - Math.hypot(gx - b.gx, gy - b.gy);
+    if (pen > bd) {
+      bd = pen;
+      best = b;
+    }
+  }
+  return best;
+}
+
+// Mueve a la exploradora (dx, dy) sin que se atore: si choca contra un obstáculo
+// redondo, resbala por su borde y lo rodea; contra orillas o troncos, resbala por
+// el eje libre. Si por algún motivo quedó dentro de un obstáculo, se la empuja afuera.
+function movePlayer(dx, dy, canGo) {
+  const x0 = player.gx;
+  const y0 = player.gy;
+  const onFoot = canGo === walkable;
+
+  // 0. Quedó dentro de un obstáculo (p. ej. al reaparecer): salir hacia afuera
+  if (onFoot) {
+    const inside = blockerAt(x0, y0);
+    if (inside) {
+      let nx = x0 - inside.gx;
+      let ny = y0 - inside.gy;
+      const nl = Math.hypot(nx, ny);
+      if (nl < 0.001) {
+        nx = 1;
+        ny = 0;
+      } else {
+        nx /= nl;
+        ny /= nl;
+      }
+      const ox = x0 + nx * 0.12;
+      const oy = y0 + ny * 0.12;
+      if (landAt(ox, oy)) {
+        player.gx = ox;
+        player.gy = oy;
+        return;
+      }
+    }
+  }
+
+  // 1. Camino libre
+  if (canGo(x0 + dx, y0 + dy)) {
+    player.gx = x0 + dx;
+    player.gy = y0 + dy;
+    return;
+  }
+
+  // 2. Obstáculo redondo: resbalar por su borde (tangente), hacia el lado al que
+  //    empuja el movimiento; si ese lado está tapado, probar el contrario
+  if (onFoot) {
+    const b = blockerAt(x0 + dx, y0 + dy);
+    if (b) {
+      let nx = x0 - b.gx;
+      let ny = y0 - b.gy;
+      const nl = Math.hypot(nx, ny) || 1;
+      nx /= nl;
+      ny /= nl;
+      const tx = -ny;
+      const ty = nx;
+      const sp = Math.hypot(dx, dy);
+      const along = dx * tx + dy * ty;
+      const dir = along >= 0 ? 1 : -1;
+      // al menos el 60% de la velocidad: así nunca se queda pegada de frente
+      const mag = Math.max(Math.abs(along), sp * 0.6);
+      for (const sgn of [dir, -dir]) {
+        const sx = tx * sgn * mag;
+        const sy = ty * sgn * mag;
+        if (canGo(x0 + sx, y0 + sy)) {
+          player.gx = x0 + sx;
+          player.gy = y0 + sy;
+          return;
+        }
+      }
+    }
+  }
+
+  // 3. Resbalar por cada eje (orillas del mapa, troncos...)
+  if (canGo(x0 + dx, y0)) player.gx = x0 + dx;
+  if (canGo(player.gx, y0 + dy)) player.gy = y0 + dy;
 }
 
 // ---------- Ruta de los perros (A* sobre casillas) ----------
@@ -8132,6 +9474,8 @@ function playerFaint() {
   player.jumpT = 0;
   player.invuln = 120;
   player.faintT = 160;
+  look.x = 0;
+  look.y = 0;
   burst(player.gx, player.gy, player.h, ["#ffffff", "#ffd166", "#74c69d"], 18);
   // Los aluxes se calman y vuelven a su sitio
   statics.forEach((o) => {
@@ -9596,8 +10940,9 @@ function updateHowler(o, howlers) {
 }
 
 function snapCamera() {
-  camera.x = WX0 + (player.gx - player.gy) * HW - VIEW_W / 2;
-  camera.y = WY0 + (player.gx + player.gy) * HH - player.h * U - VIEW_H / 2 + 8;
+  camera.x = WX0 + (player.gx - player.gy) * HW - VIEW_W / 2 + look.x;
+  camera.y =
+    WY0 + (player.gx + player.gy) * HH - player.h * U - VIEW_H / 2 + 8 + look.y;
 }
 
 function update() {
@@ -9656,8 +11001,7 @@ function update() {
     }
     // En bote solo se avanza por agua que no es playa; a pie, por tierra y playa
     const canGo = player.boat ? sailable : walkable;
-    if (canGo(player.gx + dGx, player.gy)) player.gx += dGx;
-    if (canGo(player.gx, player.gy + dGy)) player.gy += dGy;
+    movePlayer(dGx, dGy, canGo);
   } else {
     player.step = 0;
   }
@@ -9707,8 +11051,24 @@ function update() {
   const targetH = tileH(Math.round(player.gx), Math.round(player.gy));
   player.h += (targetH - player.h) * 0.25;
 
-  const tx = WX0 + (player.gx - player.gy) * HW - VIEW_W / 2;
-  const ty = WY0 + (player.gx + player.gy) * HH - player.h * U - VIEW_H / 2 + 8;
+  // Adelanto de cámara: apunta hacia la dirección de marcha (en pantalla) y vuelve
+  // despacio al centro cuando el personaje se detiene
+  let lx = 0;
+  let ly = 0;
+  if (player.moving) {
+    const sx = (dGx - dGy) * HW;
+    const sy = (dGx + dGy) * HH;
+    const sl = Math.hypot(sx, sy) || 1;
+    lx = (sx / sl) * VIEW_W * LOOK_AHEAD_X;
+    ly = (sy / sl) * VIEW_H * LOOK_AHEAD_Y;
+  }
+  const lookEase = player.moving ? LOOK_EASE_MOVE : LOOK_EASE_STOP;
+  look.x += (lx - look.x) * lookEase;
+  look.y += (ly - look.y) * lookEase;
+
+  const tx = WX0 + (player.gx - player.gy) * HW - VIEW_W / 2 + look.x;
+  const ty =
+    WY0 + (player.gx + player.gy) * HH - player.h * U - VIEW_H / 2 + 8 + look.y;
   camera.x += (tx - camera.x) * 0.14;
   camera.y += (ty - camera.y) * 0.14;
 
@@ -9880,7 +11240,7 @@ function drawPlayer(x, y, now, onBoat) {
   // Aspecto inspirado en la foto de referencia: cabello largo, ondulado y brillante
   // en tonos castaños con luces caramelo, raya al lado con un mechón sobre la cara,
   // lentes ovalados de carey (naranja con manchas oscuras) y cristal café, ojos verde
-  // miel, labios color durazno y top crema con hombros descubiertos.
+  // miel y labios color durazno. Vestimenta: blusa verde, pantalón caqui y botas cafés.
   const SKIN = "#f1c8a8";
   const SKIN_D = "#d6a07c";
   const SKIN_L = "#fbe0c8";
@@ -9915,15 +11275,31 @@ function drawPlayer(x, y, now, onBoat) {
     return HR[t];
   };
 
-  // piernas y sandalias
-  rect(ctx, x - 3, py - legL, 2, legL, SKIN);
-  rect(ctx, x + 1, py - legR, 2, legR, SKIN);
-  px(ctx, x - 2, py - legL, SKIN_D);
-  px(ctx, x + 1, py - legR, SKIN_D);
-  rect(ctx, x - 3, py - 3, 2, 1, "#d9a066"); // tiras de la sandalia
-  rect(ctx, x + 1, py - 3, 2, 1, "#d9a066");
-  rect(ctx, x - 3, py - 1, 2, 1, "#6b3f1e");
-  rect(ctx, x + 1, py - 1, 2, 1, "#6b3f1e");
+  // pantalón caqui (piernas) y botas cafés
+  const KH = "#c8b88a";
+  const KH_D = "#a89868";
+  const KH_L = "#dccfa2";
+  const BT = "#7a4a26";
+  const BT_D = "#42240f";
+  const BT_L = "#a06a38";
+  const stepping = player.moving && !onBoat;
+  const liftL = air ? 1 : stepping ? 5 - legL : 0; // la pierna que se levanta al caminar
+  const liftR = air ? 1 : stepping ? 5 - legR : 0;
+  [
+    [x - 4, liftL],
+    [x + 1, liftR],
+  ].forEach(([lx, lift]) => {
+    const top = H - 5;
+    const bootY = py - 3 - lift;
+    const h = Math.max(0, bootY - top);
+    rect(ctx, lx, top, 3, h, KH);
+    rect(ctx, lx + 2, top, 1, h, KH_D);
+    px(ctx, lx, top, KH_L);
+    rect(ctx, lx, bootY, 3, 2, BT); // caña de la bota
+    px(ctx, lx, bootY, BT_L);
+    rect(ctx, lx - 1, bootY + 2, 5, 1, BT_D); // suela
+    px(ctx, lx, bootY + 1, BT_L);
+  });
 
   // cabello largo detrás del cuerpo (masa ondulada hasta el pecho)
   for (let r = 0; r < 16; r++) {
@@ -9939,41 +11315,45 @@ function drawPlayer(x, y, now, onBoat) {
     }
   }
 
-  // falda con greca en el dobladillo y flecos
-  for (let i = 0; i < 6; i++) {
-    const hw = i < 2 ? 4 : 5;
+  // cadera del pantalón caqui con cinturón café
+  for (let i = 0; i < 5; i++) {
     const yy = H - 10 + i;
-    for (let xx = -hw; xx < hw; xx++) {
-      let col = xx >= hw - 2 ? CREAM_D : CREAM;
-      if (i === 0)
-        col = xx >= hw - 2 ? BROWN_D : BROWN; // cinturón
-      else if (i === 4)
-        col = xx % 2 === 0 ? RED : GREEN; // greca
-      else if (i === 5) col = xx % 2 === 0 ? BROWN : BROWN_D; // flecos
+    for (let xx = -4; xx < 4; xx++) {
+      let col = xx >= 2 ? KH_D : xx === -4 ? KH_L : KH;
+      if (i === 0) col = xx >= 2 ? BROWN_D : BROWN; // cinturón
       px(ctx, x + xx, yy, col);
     }
   }
-  px(ctx, x - 1, H - 10, JADE); // adorno del cinturón
+  px(ctx, x - 1, H - 10, "#d9b44a"); // hebilla del cinturón
+  px(ctx, x, H - 8, KH_D); // bragueta
+  px(ctx, x, H - 7, KH_D);
+  px(ctx, x - 3, H - 8, KH_D); // bolsillos
+  px(ctx, x + 2, H - 8, KH);
 
-  // top crema con escote en V y tirantes (hombros descubiertos)
+  // blusa verde con escote en V y mangas cortas
+  const BL = "#3a8a3c";
+  const BL_D = "#276a2c";
+  const BL_L = "#5cab57";
   for (let j = 0; j < 6; j++) {
     for (let xx = -4; xx < 4; xx++) {
-      px(ctx, x + xx, H - 16 + j, xx >= 2 ? TOP_D : TOP);
+      px(ctx, x + xx, H - 16 + j, xx >= 2 ? BL_D : xx === -4 ? BL_L : BL);
     }
   }
-  rect(ctx, x - 4, H - 16, 8, 1, SKIN); // hombros y clavículas
-  px(ctx, x - 3, H - 16, TOP); // tirantes
-  px(ctx, x + 2, H - 16, TOP_D);
-  rect(ctx, x - 2, H - 15, 4, 1, SKIN); // escote en V
-  rect(ctx, x - 1, H - 14, 2, 1, SKIN_L);
+  px(ctx, x - 1, H - 11, BL_D); // pliegue de la blusa
+  px(ctx, x + 1, H - 12, BL_D);
+  rect(ctx, x - 2, H - 16, 4, 1, SKIN); // cuello y escote en V
+  rect(ctx, x - 1, H - 15, 2, 1, SKIN);
   px(ctx, x - 1, H - 15, SKIN_L);
-  px(ctx, x - 1, H - 11, TOP_D); // pliegue del top
+  px(ctx, x - 2, H - 15, BL_L); // cuello de la blusa
+  px(ctx, x + 1, H - 15, BL_D);
 
-  // brazos con pulsera de jade
+  // brazos: manga corta verde y pulsera de jade
   [-1, 1].forEach((d) => {
     const ax = d < 0 ? x - 6 : x + 4;
-    rect(ctx, ax, H - 15, 2, 5, SKIN);
-    px(ctx, d < 0 ? ax : ax + 1, H - 14, SKIN_D);
+    rect(ctx, ax, H - 16, 2, 3, d < 0 ? BL : BL_D); // manga
+    px(ctx, ax, H - 16, BL_L);
+    rect(ctx, ax, H - 13, 2, 3, SKIN);
+    px(ctx, d < 0 ? ax : ax + 1, H - 12, SKIN_D);
     rect(ctx, ax, H - 10, 2, 1, JADE);
   });
 
@@ -10261,6 +11641,29 @@ function drawTag(txt, x, y, col) {
   ctx.fillText(txt, x, y);
 }
 
+// Texto "(A)" en píxeles (siempre nítido), con contorno negro; (x, y) = centro superior
+function drawButtonHintA(x, y) {
+  const G = [".X..X..X.", "X..X.X..X", "X..XXX..X", "X..X.X..X", ".X.X.X.X."];
+  const x0 = Math.round(x - 4);
+  ctx.fillStyle = "#000000";
+  G.forEach((row, r) => {
+    for (let c = 0; c < row.length; c++) {
+      if (row[c] !== "X") continue;
+      [
+        [-1, 0],
+        [1, 0],
+        [0, -1],
+        [0, 1],
+      ].forEach(([dx, dy]) => ctx.fillRect(x0 + c + dx, y + r + dy, 1, 1));
+    }
+  });
+  ctx.fillStyle = "#ffffff";
+  G.forEach((row, r) => {
+    for (let c = 0; c < row.length; c++)
+      if (row[c] === "X") ctx.fillRect(x0 + c, y + r, 1, 1);
+  });
+}
+
 // Flecha que rebota sobre algo con lo que se puede interactuar con A
 function drawHintArrow(x, y, now) {
   const bob = Math.round(Math.sin(now / 160) * 1.5);
@@ -10322,6 +11725,8 @@ function drawBoatedPlayer(x, y, now) {
     drawTag("¡SOLO EN UN MUELLE!", x, y - 44, "#ffd166");
   } else if (nearestPierTile(player.boat.gx, player.boat.gy, 2.2)) {
     drawHintArrow(x, y - 40 + bob, now);
+    const hb = Math.round(Math.sin(now / 160) * 1.5);
+    drawButtonHintA(x, y - 51 + bob + hb);
   }
 }
 
@@ -10427,15 +11832,9 @@ function drawObj(o, x, y, now) {
         const d = Math.hypot(player.gx - t.gx, player.gy - t.gy);
 
         if (d < 2.6) {
-          const bob = Math.round(Math.sin(now / 160) * 1.5);
-          ctx.fillStyle = "#000000";
-          ctx.fillRect(x - 3, y - 27 + bob, 7, 3);
-          ctx.fillRect(x - 2, y - 24 + bob, 5, 2);
-          ctx.fillRect(x - 1, y - 22 + bob, 3, 2);
-          ctx.fillStyle = "#f72585";
-          ctx.fillRect(x - 2, y - 26 + bob, 5, 1);
-          ctx.fillRect(x - 1, y - 25 + bob, 3, 1);
-          ctx.fillRect(x, y - 24 + bob, 1, 1);
+          drawHintArrow(x, y - 27, now);
+          const hb = Math.round(Math.sin(now / 160) * 1.5);
+          drawButtonHintA(x, y - 38 + hb);
         }
       }
       break;
@@ -10752,6 +12151,21 @@ function drawObj(o, x, y, now) {
       break;
     }
 
+    case "sign": {
+      blit(SP.sign, x, y);
+      const near =
+        !isPaused &&
+        Math.hypot(player.gx - o.s.gx, player.gy - o.s.gy) < SIGN_RANGE;
+      if (near) {
+        // La flecha va sobre el letrero (sin tapar su cartel) y un "(A)" encima
+        // avisa que se lee presionando A
+        drawHintArrow(x, y - 40, now);
+        const hb = Math.round(Math.sin(now / 160) * 1.5);
+        drawButtonHintA(x, y - 51 + hb);
+      }
+      break;
+    }
+
     case "sword": {
       // Flota, brilla con un halo y suelta destellos
       const bob = Math.round(Math.sin(now / 350) * 2);
@@ -10794,7 +12208,11 @@ function drawObj(o, x, y, now) {
       drawRipple(x, y + 5, now, false);
       blit(SP.boat.back, x, y + bob, o.flip);
       blit(SP.boat.front, x, y + bob, o.flip);
-      if (boatToBoard() === o) drawHintArrow(x, y - 20 + bob, now);
+      if (boatToBoard() === o) {
+        drawHintArrow(x, y - 20 + bob, now);
+        const hb = Math.round(Math.sin(now / 160) * 1.5);
+        drawButtonHintA(x, y - 31 + bob + hb);
+      }
       break;
     }
 
@@ -10881,6 +12299,19 @@ function draw(now) {
         depth: t.gx + t.gy + 0.01,
       };
     pushObj(t.obj);
+  });
+
+  signs.forEach((s) => {
+    if (!s.obj)
+      s.obj = {
+        kind: "sign",
+        s,
+        gx: s.gx,
+        gy: s.gy,
+        h: tileH(s.gx, s.gy),
+        depth: s.gx + s.gy + 0.01,
+      };
+    pushObj(s.obj);
   });
 
   if (!draw.playerObj) draw.playerObj = { kind: "player" };
@@ -10974,6 +12405,14 @@ function draw(now) {
     // Tinte rojo leve en toda la pantalla
     ctx.fillStyle = `rgba(190,10,20,${(0.1 * bloodFear * pulse).toFixed(3)})`;
     ctx.fillRect(0, 0, VIEW_W, VIEW_H);
+  }
+
+  // Aviso del nivel de zoom (botón SELECT): aparece un momento y se desvanece
+  if (zoomMsgT > 0) {
+    zoomMsgT--;
+    ctx.globalAlpha = Math.min(1, zoomMsgT / 25);
+    drawTag("ZOOM: " + ZOOMS[zoomIdx].name, VIEW_W / 2, 22, "#ffffff");
+    ctx.globalAlpha = 1;
   }
 }
 
