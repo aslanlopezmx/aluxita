@@ -581,3 +581,162 @@ body {
         bottom: 30px;
     }
 }
+
+/* ---------- Pantalla principal ---------- */
+.title-screen {
+    position: absolute;
+    inset: 0;
+    z-index: 20;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4cqh;
+    background: radial-gradient(ellipse at center, rgba(20, 40, 30, 0.72) 0%, rgba(5, 10, 8, 0.92) 100%);
+    font-family: 'Press Start 2P', monospace;
+    text-align: center;
+    cursor: pointer;
+    transition: opacity 0.4s;
+}
+
+.title-screen.closing {
+    opacity: 0;
+    pointer-events: none;
+}
+
+.title-top {
+    font-size: clamp(9px, 3.4cqw, 18px);
+    color: #ffe28a;
+    text-shadow: 2px 2px 0 #3d2410;
+}
+
+.title-main {
+    margin: 0;
+    font-size: clamp(22px, 11cqw, 56px);
+    color: #fff3df;
+    text-shadow: 3px 3px 0 #b9824c, 6px 6px 0 #4a2d16;
+    letter-spacing: 2px;
+}
+
+.title-sub {
+    font-size: clamp(8px, 2.6cqw, 14px);
+    color: #7ed9a0;
+}
+
+.title-start {
+    font-size: clamp(9px, 3.2cqw, 16px);
+    color: #fff;
+    animation: title-blink 1s steps(2, start) infinite;
+}
+
+@keyframes title-blink {
+    50% {
+        opacity: 0;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .title-start {
+        animation: none;
+    }
+}
+
+/* ---------- Menú de pausa y mapa ---------- */
+.pause-menu {
+    position: absolute;
+    inset: 0;
+    z-index: 15;
+    background: rgba(5, 10, 8, 0.78);
+    font-family: 'Press Start 2P', monospace;
+    color: #fff3df;
+    container-type: size;
+}
+
+.pause-menu.hidden,
+.pause-panel.hidden,
+.map-view.hidden {
+    display: none;
+}
+
+.pause-panel {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 5cqh;
+}
+
+.pause-title {
+    font-size: clamp(14px, 6cqw, 30px);
+    color: #ffe28a;
+    text-shadow: 3px 3px 0 #4a2d16;
+}
+
+#pauseList {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 3cqh;
+}
+
+#pauseList li {
+    font-size: clamp(10px, 3.6cqw, 18px);
+    padding: 6px 14px 6px 34px;
+    position: relative;
+    cursor: pointer;
+    color: #b9b09c;
+}
+
+#pauseList li.sel {
+    color: #fff;
+}
+
+#pauseList li.sel::before {
+    content: "▶";
+    position: absolute;
+    left: 8px;
+    color: #ffd166;
+}
+
+.pause-hint,
+.map-hint {
+    font-size: clamp(7px, 2cqw, 11px);
+    color: #8fa39a;
+    text-align: center;
+    line-height: 1.8;
+}
+
+.map-view {
+    position: absolute;
+    inset: 0;
+    background: #0b1620;
+}
+
+#mapCanvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    image-rendering: pixelated;
+}
+
+.map-title {
+    position: absolute;
+    top: 8px;
+    left: 10px;
+    font-size: clamp(9px, 3cqw, 15px);
+    color: #ffe28a;
+    text-shadow: 2px 2px 0 #000;
+}
+
+.map-hint {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 8px;
+    text-shadow: 1px 1px 0 #000;
+}
