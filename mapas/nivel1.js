@@ -1,4 +1,4 @@
-// mapdata.js - generado por el Editor de Mapa Yucatán
+// niveles/nivel1.js - generado por el Editor de Mapa Yucatán
 // Cuadrícula 128x128: fila = gy (0-127), columna = gx (0-127)
 // Leyenda: ~ agua  . arena  # pasto  L laguna  = camino  P laguna rosa  M monte  S playa mar  G playa laguna  R playa laguna rosa  W muelle
 const MAP_ROWS = [
@@ -209,12 +209,6 @@ const MAP_OBJECTS = [
   ["flamboyan", 85, 92],
   ["flamboyan", 79, 100],
   ["flamboyan", 89, 107],
-  [
-    "letrero",
-    105,
-    107,
-    "¡Hola viajera! Bienvenida a Yucatán, es un lugar hermoso con muchas cosas por descubrir, pero tambien hay muchos peligros... ¡Disfruta tu aventura!",
-  ],
   ["roca", 106, 100],
   ["roca", 115, 93],
   ["roca", 97, 106],
@@ -239,12 +233,6 @@ const MAP_OBJECTS = [
   ["tronco", 111, 90, 4, 1],
   ["tronco", 113, 87, 2, 0],
   ["faro", 86, 52],
-  [
-    "letrero",
-    90,
-    55,
-    "¡Encontraste un muelle! Puedes navegar por el mar con un bote, ten en cuenta que sólo puedes desembarcar en otros muelles, se que no quieres naufragar, ¿verdad?",
-  ],
   ["tolok", 114, 94],
   ["jaguar", 98, 94],
   ["jaguar", 75, 101],
@@ -328,9 +316,6 @@ const MAP_OBJECTS = [
   ["flamenco", 123, 71],
   ["flamenco", 120, 70],
   ["flamenco", 114, 59],
-  ["globito", 116, 44],
-  ["globito", 121, 30],
-  ["globito", 90, 94],
   ["ceiba", 80, 15],
   ["ceiba", 66, 16],
   ["ceiba", 89, 26],
@@ -431,12 +416,6 @@ const MAP_OBJECTS = [
   ["arbusto", 112, 10],
   ["arbusto", 118, 16],
   ["arbusto", 119, 13],
-  [
-    "letrero",
-    62,
-    8,
-    "Esta isla es peligrosa, no deberías adentrarte en ella sin antes tener un arma... Aunque estoy seguro que la aventura valdrá la pena.",
-  ],
   ["checkpoint", 71, 10],
   ["perro", 116, 14],
   ["jaguar", 100, 9],
@@ -487,4 +466,9 @@ const MAP_OBJECTS = [
   ["alux", 69, 23],
   ["alux", 63, 18],
   ["espada", 107, 105],
+  ["salida", 111, 98],
+  ["globito", 108, 101],
+  ["globito", 110, 103],
+  ["bevi", 105, 107],
+  ["cofre", 103, 111],
 ];

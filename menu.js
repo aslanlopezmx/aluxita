@@ -4,7 +4,7 @@
 // START abre/cierra el menú. Flechas arriba/abajo eligen, A acepta, B vuelve.
 // En el mapa las flechas lo desplazan, A cambia el zoom y B vuelve al menú.
 let menuOpen = false;
-let menuView = "list"; // "list" | "map"
+let menuView = "list"; // "list" | "map" | "confirm"
 let menuSel = 0;
 let mapCx = 0;
 let mapCy = 0;
@@ -15,8 +15,16 @@ let mapBase = null; // imagen 1 píxel por casilla, se crea la primera vez
 const MAP_ACROSS = [24, 48, MAP_W + 6];
 const MENU_ITEMS = [
   { act: "resume", label: "CONTINUAR" },
+  { act: "save", label: "GUARDAR" },
   { act: "map", label: "VER MAPA" },
+  { act: "exit", label: "SALIR AL MENÚ" },
 ];
+const CONFIRM_ITEMS = [
+  { act: "exitNo", label: "NO, VOLVER" },
+  { act: "exitYes", label: "SÍ, SALIR" },
+];
+let pauseMsgT = null;
+const curItems = () => (menuView === "confirm" ? CONFIRM_ITEMS : MENU_ITEMS);
 
 // Paleta minimalista por tipo de casilla
 const MAP_COLORS = {
@@ -60,6 +68,7 @@ function openMenu() {
   menuView = "list";
   menuSel = 0;
   isPaused = true;
+  setPauseMsg("");
   menuEl().classList.remove("hidden");
   renderMenu();
 }
@@ -87,29 +96,60 @@ function openMapView() {
   renderMenu();
 }
 
+function setPauseMsg(text, color) {
+  const el = document.getElementById("pauseMsg");
+  el.textContent = text;
+  el.style.color = color || "";
+  clearTimeout(pauseMsgT);
+  if (text) pauseMsgT = setTimeout(() => (el.textContent = ""), 2200);
+}
+
 function menuSelect(act) {
   if (act === "resume") closeMenu();
   else if (act === "map") openMapView();
+  else if (act === "save") {
+    if (saveGame()) setPauseMsg("¡PARTIDA GUARDADA!");
+    else setPauseMsg("NO SE PUDO GUARDAR", "#ff8a8a");
+  } else if (act === "exit") {
+    menuView = "confirm";
+    menuSel = 0; // "NO, VOLVER" queda seleccionado por seguridad
+    setPauseMsg("");
+    renderMenu();
+  } else if (act === "exitNo") {
+    menuView = "list";
+    menuSel = MENU_ITEMS.findIndex((it) => it.act === "exit");
+    renderMenu();
+  } else if (act === "exitYes") {
+    // Vuelve a la pantalla principal reiniciando el juego (lo no guardado se pierde)
+    location.reload();
+  }
 }
 
 // Flecha arriba/abajo pulsada (teclado, cruceta o joystick): cambia la opción
 function menuNav(name) {
-  if (menuView !== "list") return;
+  if (menuView === "map") return;
   const dir = name === "down" ? 1 : name === "up" ? -1 : 0;
   if (!dir) return;
-  menuSel = (menuSel + dir + MENU_ITEMS.length) % MENU_ITEMS.length;
+  const n = curItems().length;
+  menuSel = (menuSel + dir + n) % n;
   renderMenu();
+}
+
+// Flecha pulsada en cualquier pantalla (título o menú de pausa)
+function uiNav(name) {
+  if (!gameStarted) titleNav(name);
+  else if (menuOpen) menuNav(name);
 }
 
 // Botón A
 function menuA() {
-  if (menuView === "list") menuSelect(MENU_ITEMS[menuSel].act);
-  else mapLevel = (mapLevel + 1) % MAP_ACROSS.length;
+  if (menuView === "map") mapLevel = (mapLevel + 1) % MAP_ACROSS.length;
+  else menuSelect(curItems()[menuSel].act);
 }
 
 // Botón B
 function menuBack() {
-  if (menuView === "map") {
+  if (menuView === "map" || menuView === "confirm") {
     menuView = "list";
     renderMenu();
   } else closeMenu();
@@ -118,13 +158,20 @@ function menuBack() {
 function renderMenu() {
   document
     .getElementById("pausePanel")
-    .classList.toggle("hidden", menuView !== "list");
+    .classList.toggle("hidden", menuView === "map");
+  const confirming = menuView === "confirm";
+  document.getElementById("pauseTitle").textContent = confirming
+    ? "¿SALIR?"
+    : "PAUSA";
+  document.getElementById("pauseHint").innerHTML = confirming
+    ? "EL PROGRESO NO GUARDADO<br>SE PERDERÁ"
+    : "▲▼ ELEGIR &nbsp; A ACEPTAR &nbsp; START VOLVER";
   document
     .getElementById("mapView")
     .classList.toggle("hidden", menuView !== "map");
   const list = document.getElementById("pauseList");
   list.innerHTML = "";
-  MENU_ITEMS.forEach((it, i) => {
+  curItems().forEach((it, i) => {
     const li = document.createElement("li");
     li.textContent = it.label;
     if (i === menuSel) li.className = "sel";
@@ -204,4 +251,79 @@ function drawMapView() {
     g.fillRect(player.gx - 3.5 * u, player.gy - 3.5 * u, 7 * u, 7 * u);
   }
   g.setTransform(1, 0, 0, 1, 0, 0);
+}
+
+/* ---------- Pantalla principal: partida nueva o guardada ---------- */
+// START (o un toque) en la pantalla de título abre la elección; A o START aceptan.
+const TITLE_ITEMS = [
+  { act: "new", label: "PARTIDA NUEVA" },
+  { act: "load", label: "PARTIDA GUARDADA" },
+];
+let titleStage = "press"; // "press" | "choose"
+let titleSel = 0;
+
+const titleItemOK = (it) => it.act !== "load" || hasSave();
+
+function refreshTitleList() {
+  const list = document.getElementById("titleList");
+  if (!list) return;
+  if (!titleItemOK(TITLE_ITEMS[titleSel]))
+    titleSel = TITLE_ITEMS.findIndex(titleItemOK);
+  list.innerHTML = "";
+  TITLE_ITEMS.forEach((it, i) => {
+    const ok = titleItemOK(it);
+    const li = document.createElement("li");
+    li.textContent = ok ? it.label : it.label + " (VACÍA)";
+    li.className = (i === titleSel ? "sel " : "") + (ok ? "" : "off");
+    li.addEventListener("pointerdown", (e) => {
+      e.stopPropagation();
+      if (!ok) return;
+      titleSel = i;
+      titleAccept();
+    });
+    list.appendChild(li);
+  });
+}
+
+// START / toque en el título: la primera vez muestra la elección; después acepta
+function titleStart() {
+  if (gameStarted) return;
+  if (cutActive) return cutNext();
+  if (titleStage === "press") {
+    titleStage = "choose";
+    titleSel = hasSave() ? 1 : 0; // si hay guardado, se propone continuarlo
+    document.getElementById("titleStart").classList.add("hidden");
+    document.getElementById("titleList").classList.remove("hidden");
+    document.getElementById("titleHint").classList.remove("hidden");
+    refreshTitleList();
+  } else titleAccept();
+}
+
+function titleNav(name) {
+  if (cutActive || titleStage !== "choose") return;
+  const dir = name === "down" ? 1 : name === "up" ? -1 : 0;
+  if (!dir) return;
+  const n = TITLE_ITEMS.length;
+  for (let k = 1; k <= n; k++) {
+    const j = (titleSel + dir * k + n * k) % n;
+    if (titleItemOK(TITLE_ITEMS[j])) {
+      titleSel = j;
+      break;
+    }
+  }
+  refreshTitleList();
+}
+
+// Botón A en el título: acepta la opción (o abre la elección)
+function titleA() {
+  if (cutActive) return cutNext();
+  if (titleStage === "choose") titleAccept();
+  else titleStart();
+}
+
+function titleAccept() {
+  const it = TITLE_ITEMS[titleSel];
+  if (cutActive || !titleItemOK(it)) return;
+  if (it.act === "load") startGame(true);
+  else nuevaPartida();
 }

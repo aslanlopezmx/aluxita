@@ -46,6 +46,25 @@ function addStatic(spr, gx, gy, opts) {
   return o;
 }
 
+// Casilla caminable cerca del inicio donde aparece un perro que llega de otro nivel
+function dogStartSpot() {
+  const cand = [];
+  for (let oy = -5; oy <= 5; oy++)
+    for (let ox = -5; ox <= 5; ox++) {
+      const d = Math.hypot(ox, oy);
+      if (d >= 1.5) cand.push([d, ox, oy]);
+    }
+  cand.sort((a, b) => a[0] - b[0]);
+  for (const [, ox, oy] of cand) {
+    const x = START_TILE.gx + ox;
+    const y = START_TILE.gy + oy;
+    if (!walkable(x, y)) continue;
+    if (dogs.some((d) => Math.hypot(d.gx - x, d.gy - y) < 1.4)) continue;
+    return [x, y];
+  }
+  return [START_TILE.gx, START_TILE.gy];
+}
+
 function spawnEntities() {
   treasures.forEach((t) => reserved.push({ gx: t.gx, gy: t.gy, r: 1.8 }));
   hammocks.forEach((h) => reserved.push({ gx: h.gx, gy: h.gy, r: 1.5 }));
@@ -207,37 +226,40 @@ function spawnEntities() {
 
   // 6a. Perros (Choco y Cleo): de cada raza solo existe uno (aunque el mapa traiga
   // más objetos de ese tipo, se usa el primero). Siguen a la exploradora a todas partes.
+  // Los perros ya encontrados en un nivel anterior (CARRY) aparecen junto al inicio,
+  // ya como compañeros, y su objeto del mapa (si lo hay) no se vuelve a crear.
   DOG_KINDS.forEach((cfg) =>
-    byType(cfg.type)
-      .slice(0, MAX_DOGS)
-      .forEach(([, gx, gy]) => {
-        const o = addStatic(SP.dogs[cfg.key].stand[0], gx, gy);
-        o.kind = "dog";
-        o.name = cfg.name;
-        o.cfg = cfg;
-        o.sp = SP.dogs[cfg.key];
-        o.phase = gx * 1.9 + gy;
-        o.moving = false;
-        o.running = false;
-        o.found = false; // se queda quieto hasta que la exploradora lo encuentre
-        o.escT = 0; // frames que lleva rodeando un obstáculo
-        o.escDx = 0;
-        o.escDy = 0;
-        o.stuck = 0;
-        o.barkT = 240 + Math.random() * 300; // cuenta atrás para ladrar
-        o.barkLeft = 0; // frames que muestra el "¡GUAU!"
-        o.idleT = 0;
-        o.fleeSide = 1;
-        o.dirGx = 0;
-        o.dirGy = 0;
-        o.attackT = 0; // cuenta atrás entre empujones a un hostil (solo Choco)
-        o.growlLeft = 0; // frames que muestra el ladrido/gruñido de ataque
-        o.atkFlip = null; // hacia qué lado mira mientras gruñe
-        o.isAttacking = false; // Choco: si está yendo a empujar a un hostil
-        o.circleAngle = null; // Chelita: ángulo actual al girar alrededor de Choco
-        dogs.push(o);
-        reserved.push({ gx, gy, r: 1.2 });
-      }),
+    (CARRY && CARRY.dogs && CARRY.dogs.includes(cfg.key)
+      ? [["perro", ...dogStartSpot(), true]]
+      : byType(cfg.type).slice(0, MAX_DOGS)
+    ).forEach(([, gx, gy, carried]) => {
+      const o = addStatic(SP.dogs[cfg.key].stand[0], gx, gy);
+      o.kind = "dog";
+      o.name = cfg.name;
+      o.cfg = cfg;
+      o.sp = SP.dogs[cfg.key];
+      o.phase = gx * 1.9 + gy;
+      o.moving = false;
+      o.running = false;
+      o.found = !!carried; // se queda quieto hasta que la exploradora lo encuentre
+      o.escT = 0; // frames que lleva rodeando un obstáculo
+      o.escDx = 0;
+      o.escDy = 0;
+      o.stuck = 0;
+      o.barkT = 240 + Math.random() * 300; // cuenta atrás para ladrar
+      o.barkLeft = 0; // frames que muestra el "¡GUAU!"
+      o.idleT = 0;
+      o.fleeSide = 1;
+      o.dirGx = 0;
+      o.dirGy = 0;
+      o.attackT = 0; // cuenta atrás entre empujones a un hostil (solo Choco)
+      o.growlLeft = 0; // frames que muestra el ladrido/gruñido de ataque
+      o.atkFlip = null; // hacia qué lado mira mientras gruñe
+      o.isAttacking = false; // Choco: si está yendo a empujar a un hostil
+      o.circleAngle = null; // Chelita: ángulo actual al girar alrededor de Choco
+      dogs.push(o);
+      reserved.push({ gx, gy, r: 1.2 });
+    }),
   );
 
   // 6b. Jaguar: deambula por el mapa y huye del jugador; si se le acerca
@@ -604,6 +626,7 @@ function spawnEntities() {
 // Botón B: si hay un letrero abierto lo cierra; si no, mandoble de espada
 // (golpea a los enemigos que estén al frente y al alcance).
 function attack() {
+  if (cutActive) return cutSkip();
   if (menuOpen) return menuBack();
   if (!dialogOverlay.classList.contains("hidden")) {
     closeSignDialog();

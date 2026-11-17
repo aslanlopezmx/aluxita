@@ -1081,6 +1081,25 @@ function drawObj(o, x, y, now) {
       break;
     }
 
+    case "exit": {
+      // Portal en el suelo: gris si aún faltan cosas, dorado con un rayo de luz si ya se puede salir
+      const ok = levelComplete();
+      const pulse = 0.5 + 0.5 * Math.sin(now / 300);
+      ctx.globalAlpha = ok ? 0.5 + 0.25 * pulse : 0.4;
+      ellipse(ctx, x, y, 27, 13, ok ? "#ffd166" : "#6b6f8a");
+      ctx.globalAlpha = 1;
+      ellipse(ctx, x, y, 19, 9, ok ? "#fff3b0" : "#2f3245");
+      ellipse(ctx, x, y, 10, 5, ok ? "#ffffff" : "#454a63");
+      if (ok) {
+        ctx.globalAlpha = 0.16 + 0.1 * pulse;
+        ctx.fillStyle = "#ffe28a";
+        ctx.fillRect(x - 9, y - 54, 18, 54);
+        ctx.globalAlpha = 1;
+        drawTag("SALIDA", x, y - 58, "#ffd166");
+      }
+      break;
+    }
+
     case "sign": {
       blit(SP.sign, x, y);
       const near =
@@ -1229,6 +1248,20 @@ function draw(now) {
         depth: t.gx + t.gy + 0.01,
       };
     pushObj(t.obj);
+  });
+
+  exits.forEach((ex) => {
+    if (!ex.obj)
+      ex.obj = {
+        kind: "exit",
+        ex,
+        gx: ex.gx,
+        gy: ex.gy,
+        h: 0,
+        depth: ex.gx + ex.gy - 1.2, // plano en el suelo: se dibuja antes que lo que lo pisa
+      };
+    ex.obj.h = tileH(Math.round(ex.gx), Math.round(ex.gy));
+    pushObj(ex.obj);
   });
 
   signs.forEach((s) => {

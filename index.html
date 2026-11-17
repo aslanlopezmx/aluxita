@@ -35,15 +35,37 @@
             <div class="title-top">AVENTURA EN</div>
             <h1 class="title-main">YUCATÁN</h1>
             <div class="title-sub">ZELDA RETRO</div>
-            <div class="title-start">PRESIONA START</div>
+            <div id="titleStart" class="title-start">PRESIONA START</div>
+            <ul id="titleList" class="menu-list hidden"></ul>
+            <div id="titleHint" class="pause-hint hidden">
+              ▲▼ ELEGIR &nbsp; A / START ACEPTAR
+            </div>
+          </div>
+
+          <!-- Cinemática de introducción (partida nueva) -->
+          <div id="cutscene" class="cutscene hidden">
+            <img id="cutImg" class="cut-img" alt="" />
+            <div class="cut-hint">
+              <span id="cutNext">A SIGUIENTE</span> &nbsp; B SALTAR &nbsp;
+              <span id="cutCount"></span>
+            </div>
+          </div>
+
+          <!-- Pantalla de carga (después de la cinemática) -->
+          <div id="loadingScreen" class="loading-screen hidden">
+            <div class="loading-text">
+              CARGANDO<span class="loading-dots"></span>
+            </div>
+            <div class="loading-bar"><div class="loading-fill"></div></div>
           </div>
 
           <!-- Menú de pausa (START) con vista de mapa -->
           <div id="pauseMenu" class="pause-menu hidden">
             <div id="pausePanel" class="pause-panel">
-              <div class="pause-title">PAUSA</div>
-              <ul id="pauseList"></ul>
-              <div class="pause-hint">
+              <div id="pauseTitle" class="pause-title">PAUSA</div>
+              <ul id="pauseList" class="menu-list"></ul>
+              <div id="pauseMsg" class="pause-msg"></div>
+              <div id="pauseHint" class="pause-hint">
                 ▲▼ ELEGIR &nbsp; A ACEPTAR &nbsp; START VOLVER
               </div>
             </div>
@@ -120,13 +142,16 @@
       </div>
     </div>
 
-    <script src="mapdata.js"></script>
+    <script src="levelmaps.js"></script>
     <script src="config.js"></script>
     <script src="utils.js"></script>
     <script src="map.js"></script>
     <script src="sprites.js"></script>
     <script src="entities.js"></script>
     <script src="render.js"></script>
+    <script src="cutscene.js"></script>
+    <script src="save.js"></script>
+    <script src="salida.js"></script>
     <script src="menu.js"></script>
     <script src="main.js"></script>
     <script src="joystick.js"></script>

@@ -24,13 +24,19 @@ let keys = {
 
 // START: en la pantalla principal empieza; durante el juego abre/cierra el menú
 function pressStart() {
-  if (!gameStarted) startGame();
+  if (cutActive) return cutNext();
+  if (!gameStarted) titleStart();
   else togglePauseMenu();
 }
 
 // Pantalla principal: el juego queda pausado hasta presionar START
-function startGame() {
+// load = true: continúa la partida guardada; si no se puede cargar, no empieza
+function startGame(load) {
   if (gameStarted) return;
+  if (load === true && !loadGame()) {
+    refreshTitleList();
+    return;
+  }
   gameStarted = true;
   isPaused = false;
   const t = document.getElementById("titleScreen");
@@ -46,7 +52,7 @@ function setupControls() {
     btn.addEventListener("touchstart", (e) => {
       e.preventDefault();
       keys[keyName] = true;
-      if (menuOpen) menuNav(keyName);
+      uiNav(keyName);
     });
 
     btn.addEventListener("touchend", (e) => {
@@ -56,7 +62,7 @@ function setupControls() {
     btn.addEventListener("touchcancel", () => (keys[keyName] = false));
     btn.addEventListener("mousedown", () => {
       keys[keyName] = true;
-      if (menuOpen) menuNav(keyName);
+      uiNav(keyName);
     });
     btn.addEventListener("mouseup", () => (keys[keyName] = false));
     btn.addEventListener("mouseleave", () => (keys[keyName] = false));
@@ -83,7 +89,7 @@ function setupControls() {
   bindPress("btnStart", pressStart);
   document
     .getElementById("titleScreen")
-    .addEventListener("pointerdown", startGame);
+    .addEventListener("pointerdown", titleStart);
 
   window.addEventListener("keydown", (e) => {
     if (
@@ -99,10 +105,8 @@ function setupControls() {
     if (e.code === "ArrowLeft" || e.code === "KeyA") keys.left = true;
     if (e.code === "ArrowRight" || e.code === "KeyD") keys.right = true;
     if (e.repeat) return;
-    if (menuOpen) {
-      if (e.code === "ArrowUp" || e.code === "KeyW") menuNav("up");
-      if (e.code === "ArrowDown" || e.code === "KeyS") menuNav("down");
-    }
+    if (e.code === "ArrowUp" || e.code === "KeyW") uiNav("up");
+    if (e.code === "ArrowDown" || e.code === "KeyS") uiNav("down");
     if (e.code === "Enter" || e.code === "Escape" || e.code === "KeyP")
       pressStart();
     if (e.code === "Space" || e.code === "KeyE") actionA();
@@ -129,7 +133,8 @@ function checkChestInteraction() {
     if (dist < 1.3 && !chest.opened && !opened) {
       chest.opened = true;
       // El recuerdo depende del orden en que se abren los cofres, no de su posición
-      const mem = MEMORIES[foundCount];
+      const mem = MEMORIES[MEM_OFFSET + foundCount];
+      chest.memIdx = MEM_OFFSET + foundCount; // para poder restaurarlo al cargar partida
       chest.image = mem.image;
       chest.title = mem.title;
       chest.message = mem.message;
@@ -247,6 +252,8 @@ function tryBoat() {
 }
 
 function actionA() {
+  if (cutActive) return cutNext();
+  if (!gameStarted) return titleA();
   if (menuOpen) return menuA();
   if (isPaused) return;
   if (tryBoat()) return;
@@ -603,6 +610,7 @@ function update() {
   checkCollect();
   updateCheckpoints();
   checkDogFound();
+  checkExit();
 
   // Si algún kaskabal detectó al jugador, la oscuridad se cierra poco a poco;
   // cuando lo pierde, se disipa más despacio
@@ -659,7 +667,9 @@ buildSprites();
 buildTerrain();
 spawnEntities();
 initEnemyHp();
+tagStatics();
 setupControls();
+refreshTitleList();
 updateHUD();
 resizeCanvas();
 window.addEventListener("resize", resizeCanvas);
@@ -668,4 +678,5 @@ window.addEventListener("orientationchange", () =>
 );
 if (window.ResizeObserver) new ResizeObserver(resizeCanvas).observe(canvas);
 snapCamera();
+autoStart();
 requestAnimationFrame(loop);

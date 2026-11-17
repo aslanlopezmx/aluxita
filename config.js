@@ -141,12 +141,16 @@ const MEMORIES = [
       "Te amo con todo mi corazón, uay. Prometo cuidarte y alcahuetearte hoy, mañana y siempre en esta tierra hermosa.",
   },
 ];
+// La lista es una sola para todo el juego y se reparte en orden entre los niveles:
+// si el nivel 1 tiene 3 cofres usa los recuerdos 1-3; el nivel 2 sigue con el 4, etc.
+// MEM_OFFSET = cuántos recuerdos ya se usaron en los niveles anteriores.
+const MEM_OFFSET = (CARRY && CARRY.mem) || 0;
 
 // Los cofres se colocan en el editor de mapas (objetos "cofre" de MAP_OBJECTS).
 // Máximo 5: si hay más, solo se usan los primeros 5.
 const MAX_CHESTS = 5;
 const treasures = MAP_OBJECTS.filter((o) => o[0] === "cofre")
-  .slice(0, Math.min(MAX_CHESTS, MEMORIES.length))
+  .slice(0, Math.min(MAX_CHESTS, Math.max(0, MEMORIES.length - MEM_OFFSET)))
   .map(([, gx, gy], i) => ({
     id: i + 1,
     gx,
@@ -156,6 +160,13 @@ const treasures = MAP_OBJECTS.filter((o) => o[0] === "cofre")
     title: "",
     message: "",
   }));
+
+if (MAP_OBJECTS.filter((o) => o[0] === "cofre").length > treasures.length)
+  console.warn(
+    "Nivel " +
+      NIVEL +
+      ": hay más cofres en el mapa que recuerdos disponibles. Agrega más recuerdos a MEMORIES (config.js).",
+  );
 
 // Letreros: se colocan en el editor de mapas (objetos "letrero" de MAP_OBJECTS,
 // con el texto como 4.º valor). Al acercarse muestra una flecha; con A se abre
@@ -272,16 +283,18 @@ const collectItems = collectibles.flatMap((g) => g.items);
 // que la exploradora la encuentra, el botón B no hace nada. Si el mapa no trae
 // ninguna espada, el ataque está disponible desde el inicio (así nunca se bloquea).
 const swordSpot = MAP_OBJECTS.find((o) => o[0] === "espada");
-const swordItem = swordSpot
-  ? {
-      kind: "sword",
-      gx: swordSpot[1],
-      gy: swordSpot[2],
-      h: 0,
-      depth: swordSpot[1] + swordSpot[2] + 0.01,
-      collected: false,
-    }
-  : null;
+// (si la espada ya viene de un nivel anterior, no se vuelve a poner)
+const swordItem =
+  swordSpot && !(CARRY && CARRY.sword)
+    ? {
+        kind: "sword",
+        gx: swordSpot[1],
+        gy: swordSpot[2],
+        h: 0,
+        depth: swordSpot[1] + swordSpot[2] + 0.01,
+        collected: false,
+      }
+    : null;
 let hasSword = !swordItem;
 
 /* ---------- Checkpoints (zona segura de concreto) ---------- */
@@ -305,6 +318,15 @@ const checkpoints = MAP_OBJECTS.filter((o) => o[0] === "checkpoint")
 const safeTiles = new Set(); // casillas de concreto de todos los checkpoints
 const tileKey = (x, y) => y * 1000 + x;
 let lastCheckpoint = null;
+
+/* ---------- Salida del nivel ---------- */
+// Se coloca en el editor de mapas (objeto "salida", solo una por nivel). Al entrar a
+// su zona: si ya tienes todos los cofres y objetos del nivel, empieza la cinemática
+// de salida y pasas al siguiente nivel; si no, avisa qué te falta.
+const EXIT_R = 1.6; // radio de la zona de salida, en casillas (igual en el editor)
+const exits = MAP_OBJECTS.filter((o) => o[0] === "salida")
+  .slice(0, 1)
+  .map(([, gx, gy]) => ({ gx, gy, inside: false, obj: null }));
 
 const hammocks = MAP_OBJECTS.filter((o) => o[0] === "hamaca").map((o) => ({
   gx: o[1],
