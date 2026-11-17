@@ -31,8 +31,34 @@ const U = 6; // píxeles por nivel de altura
 // 64 * 64 = 4,096 tiles (10.24 veces más área que 20 * 20 = 400)
 const MAP_W = 128;
 const MAP_H = 128;
-const VIEW_W = canvas.width;
-const VIEW_H = canvas.height;
+// Resolución interna del lienzo: se adapta a la forma del área disponible (celular,
+// PC...) para que la imagen siempre llene toda la pantalla, sin franjas azules.
+let VIEW_W = canvas.width;
+let VIEW_H = canvas.height;
+function resizeCanvas() {
+  const cw = canvas.clientWidth;
+  const ch = canvas.clientHeight;
+  if (!cw || !ch) return;
+  const aspect = cw / ch;
+  let w;
+  let h;
+  if (aspect >= 280 / 240) {
+    h = 240; // pantallas anchas: misma altura de siempre, más mundo a los lados
+    w = Math.round(h * aspect);
+  } else {
+    w = 280; // pantallas altas (celular vertical): ancho mínimo, más mundo arriba y abajo
+    h = Math.round(w / aspect);
+  }
+  w = Math.min(w, 480);
+  h = Math.min(h, 480);
+  if (w === VIEW_W && h === VIEW_H) return;
+  VIEW_W = w;
+  VIEW_H = h;
+  canvas.width = w; // al cambiar el tamaño se reinicia el contexto
+  canvas.height = h;
+  ctx.imageSmoothingEnabled = false;
+  if (typeof snapCamera === "function") snapCamera();
+}
 
 // Origen y dimensiones del canvas offscreen para cubrir todo el rombo 64x64
 const WX0 = 2150;
@@ -304,7 +330,7 @@ const ENEMY_HP = {
 };
 const SWORD_REACH = 1.8; // alcance de la espada, en casillas
 const SWORD_DAMAGE = 1; // corazones que quita cada golpe
-const SWORD_COOLDOWN = 14; // frames que dura el mandoble (no se puede repetir antes)
+const SWORD_COOLDOWN = 20; // frames que dura el mandoble (no se puede repetir antes)
 const ENEMY_STUN = 22; // frames que un enemigo queda aturdido al recibir un golpe
 const ENEMY_KNOCKBACK = 0.07; // retroceso por frame durante el aturdimiento (casillas)
 const ENEMY_DIE_FRAMES = 30; // duración de la animación de muerte
@@ -331,8 +357,8 @@ const CHOCO_ATTACK_SPEED = 0.145; // velocidad al ir hacia el hostil (más rápi
 const CLEO_FLEE_DIST = 8; // qué tan lejos de la exploradora se aleja al huir
 
 // Chelita (animadora): mientras Choco va al ataque, da vueltas a su alrededor ladrando.
-const CHELITA_CIRCLE_R = 1.4; // radio del círculo que traza alrededor de Choco
-const CHELITA_CIRCLE_SPEED = 0.09; // velocidad angular (radianes por frame)
+const CHELITA_CIRCLE_R = 4; // radio del círculo que traza alrededor de Choco
+const CHELITA_CIRCLE_LEAD = 1.5; // casillas de adelanto sobre el círculo (más = giro más fluido, menos = más pegada al borde)
 
 // Perros compañeros: Choco y Cleo. De cada uno solo puede haber uno en el mapa
 const MAX_DOGS = 1; // por raza
@@ -7510,11 +7536,24 @@ function updateDog(o) {
       stopR = FOLLOW_R;
     }
   } else if (chocoAttack) {
-    if (o.circleAngle == null) o.circleAngle = Math.random() * Math.PI * 2;
-    o.circleAngle += CHELITA_CIRCLE_SPEED;
-    const cx = chocoAttack.gx + Math.cos(o.circleAngle) * CHELITA_CIRCLE_R;
-    const cy = chocoAttack.gy + Math.sin(o.circleAngle) * CHELITA_CIRCLE_R;
-    if (walkable(cx, cy)) {
+    // Órbita real alrededor de Choco: el punto objetivo se calcula a partir de la
+    // posición ACTUAL de Chelita (no de un ángulo que avanza solo), así que siempre
+    // está sobre el círculo de radio CHELITA_CIRCLE_R centrado en Choco, un poco
+    // adelante de ella en el sentido de giro. Ella lo persigue y por eso rodea a Choco.
+    if (o.circleDir == null) o.circleDir = Math.random() < 0.5 ? 1 : -1;
+    const curA = Math.atan2(o.gy - chocoAttack.gy, o.gx - chocoAttack.gx);
+    const lead = CHELITA_CIRCLE_LEAD / CHELITA_CIRCLE_R; // radianes de adelanto
+    let cx = 0;
+    let cy = 0;
+    let ok = false;
+    for (let k = 0; k < 2 && !ok; k++) {
+      const a = curA + o.circleDir * lead;
+      cx = chocoAttack.gx + Math.cos(a) * CHELITA_CIRCLE_R;
+      cy = chocoAttack.gy + Math.sin(a) * CHELITA_CIRCLE_R;
+      ok = walkable(cx, cy);
+      if (!ok) o.circleDir = -o.circleDir; // obstáculo: gira hacia el otro lado
+    }
+    if (ok) {
       tx = cx;
       ty = cy;
       stopR = 0.3;
@@ -9543,18 +9582,43 @@ function drawPlayer(x, y, now, onBoat) {
   const legR = air ? 4 : walk ? 5 : 4;
   const H = py - bob; // referencia del cuerpo (sube y baja al caminar)
 
-  const SKIN = "#c68a5e";
-  const SKIN_D = "#a96d45";
+  // Aspecto inspirado en la foto de referencia: cabello largo, ondulado y brillante
+  // en tonos castaños con luces caramelo, raya al lado con un mechón sobre la cara,
+  // lentes ovalados de carey (naranja con manchas oscuras) y cristal café, ojos verde
+  // miel, labios color durazno y top crema con hombros descubiertos.
+  const SKIN = "#f1c8a8";
+  const SKIN_D = "#d6a07c";
+  const SKIN_L = "#fbe0c8";
+  const TOP = "#f7f1e4";
+  const TOP_D = "#d9cfba";
   const CREAM = "#f6efdc";
   const CREAM_D = "#d8ccb0";
   const RED = "#c1272d";
   const GREEN = "#2e8b57";
   const JADE = "#2fbf71";
-  const JADE_D = "#1d6b48";
-  const HAIR = "#3b2315";
-  const HAIR_L = "#5a3820";
   const BROWN = "#8a5a2e";
   const BROWN_D = "#5e3a1a";
+  const HR = ["#22130c", "#3d2416", "#5e3a22", "#8a5a34", "#b98652"]; // oscuro → luz caramelo
+  const FR = "#b4501e"; // armazón de carey
+  const FR_D = "#5a2410"; // manchas del carey
+  const LENS = "#6e2a1a"; // cristal café rojizo
+  const LENS_L = "#c0704a"; // reflejo
+  const EYE = "#86a04e"; // verde miel
+  const LIP = "#d98c7a";
+  const LIP_L = "#eeaa98";
+
+  // Ondas del cabello: se mecen al caminar
+  const sway = player.moving && !onBoat ? (player.step >> 3) & 1 : 0;
+  const WV = [0, 0, -1, -1, 0, 1, 1, 0, -1, -1, 0, 1, 1, 0, -1, -1];
+  const wv = (r) => WV[(r + (sway ? 2 : 0)) % WV.length];
+  const hairTone = (xx, yy, eL, eR) => {
+    const u = (xx - eL) / (eR - eL + 1);
+    let t = u < 0.22 ? 3 : u < 0.62 ? 2 : 1; // luz a la izquierda
+    const k = (xx + yy + wv(yy)) % 5; // mechones ondulados y brillantes
+    if (k === 0 && u < 0.8) t = Math.min(4, t + 1);
+    else if (k === 3) t = Math.max(0, t - 1);
+    return HR[t];
+  };
 
   // piernas y sandalias
   rect(ctx, x - 3, py - legL, 2, legL, SKIN);
@@ -9566,7 +9630,21 @@ function drawPlayer(x, y, now, onBoat) {
   rect(ctx, x - 3, py - 1, 2, 1, "#6b3f1e");
   rect(ctx, x + 1, py - 1, 2, 1, "#6b3f1e");
 
-  // falda bordada con flecos (6 filas)
+  // cabello largo detrás del cuerpo (masa ondulada hasta el pecho)
+  for (let r = 0; r < 16; r++) {
+    const yy = H - 24 + r;
+    const hw = r < 2 ? 4 : r < 4 ? 5 : 6;
+    const w1 = r > 4 ? wv(r) : 0;
+    const w2 = r > 4 ? -wv(r + 4) : 0;
+    const eL = x - hw + w1;
+    const eR = x + hw - 1 + w2;
+    for (let xx = eL; xx <= eR; xx++) {
+      if (r >= 14 && hash2(xx, r, 17) < 0.5) continue; // puntas
+      px(ctx, xx, yy, hairTone(xx, yy, eL, eR));
+    }
+  }
+
+  // falda con greca en el dobladillo y flecos
   for (let i = 0; i < 6; i++) {
     const hw = i < 2 ? 4 : 5;
     const yy = H - 10 + i;
@@ -9575,87 +9653,107 @@ function drawPlayer(x, y, now, onBoat) {
       if (i === 0)
         col = xx >= hw - 2 ? BROWN_D : BROWN; // cinturón
       else if (i === 4)
-        col = xx % 2 === 0 ? RED : GREEN; // greca del dobladillo
+        col = xx % 2 === 0 ? RED : GREEN; // greca
       else if (i === 5) col = xx % 2 === 0 ? BROWN : BROWN_D; // flecos
       px(ctx, x + xx, yy, col);
     }
   }
   px(ctx, x - 1, H - 10, JADE); // adorno del cinturón
-  // pájaro bordado
-  px(ctx, x - 1, H - 9, GREEN);
-  px(ctx, x, H - 9, RED);
-  rect(ctx, x - 2, H - 8, 3, 1, GREEN);
-  px(ctx, x + 1, H - 8, RED);
-  px(ctx, x - 1, H - 7, GREEN);
-  px(ctx, x, H - 7, GREEN);
 
-  // huipil (blusa) con cuello, collar de jade y banda bordada
+  // top crema con escote en V y tirantes (hombros descubiertos)
   for (let j = 0; j < 6; j++) {
     for (let xx = -4; xx < 4; xx++) {
-      px(ctx, x + xx, H - 16 + j, xx >= 2 ? CREAM_D : CREAM);
+      px(ctx, x + xx, H - 16 + j, xx >= 2 ? TOP_D : TOP);
     }
   }
-  rect(ctx, x - 1, H - 16, 2, 1, SKIN); // escote
-  rect(ctx, x - 2, H - 15, 4, 1, JADE); // collar
-  px(ctx, x - 1, H - 14, JADE); // dije
-  px(ctx, x, H - 14, JADE_D);
-  for (let xx = -4; xx < 4; xx++) {
-    px(ctx, x + xx, H - 13, xx % 2 === 0 ? RED : GREEN); // banda bordada
-  }
+  rect(ctx, x - 4, H - 16, 8, 1, SKIN); // hombros y clavículas
+  px(ctx, x - 3, H - 16, TOP); // tirantes
+  px(ctx, x + 2, H - 16, TOP_D);
+  rect(ctx, x - 2, H - 15, 4, 1, SKIN); // escote en V
+  rect(ctx, x - 1, H - 14, 2, 1, SKIN_L);
+  px(ctx, x - 1, H - 15, SKIN_L);
+  px(ctx, x - 1, H - 11, TOP_D); // pliegue del top
 
-  // brazos: manga corta, antebrazo y pulseras de jade
+  // brazos con pulsera de jade
   [-1, 1].forEach((d) => {
     const ax = d < 0 ? x - 6 : x + 4;
-    rect(ctx, ax, H - 15, 2, 2, d < 0 ? CREAM : CREAM_D);
-    rect(ctx, ax, H - 13, 2, 4, SKIN);
-    px(ctx, d < 0 ? ax : ax + 1, H - 13, SKIN_D);
-    rect(ctx, ax, H - 11, 2, 1, JADE);
+    rect(ctx, ax, H - 15, 2, 5, SKIN);
+    px(ctx, d < 0 ? ax : ax + 1, H - 14, SKIN_D);
+    rect(ctx, ax, H - 10, 2, 1, JADE);
   });
 
-  // trenzas con cuentas de jade y plumas
-  [-4, 3].forEach((bx) => {
-    for (let k = 0; k < 11; k++) {
-      px(ctx, x + bx, H - 22 + k, k % 2 ? HAIR : HAIR_L);
+  // cuello y cabeza
+  rect(ctx, x - 1, H - 17, 2, 2, SKIN_D);
+  rect(ctx, x - 3, H - 23, 6, 6, SKIN);
+  rect(ctx, x - 2, H - 17, 4, 1, SKIN);
+  px(ctx, x + 2, H - 21, SKIN_D); // sombra del lado derecho
+  px(ctx, x + 2, H - 20, SKIN_D);
+  px(ctx, x - 2, H - 22, SKIN_L); // luz en la frente
+  px(ctx, x - 3, H - 20, SKIN_L);
+
+  // cabello sobre la frente: raya al lado y mechón sobre la cara
+  rect(ctx, x - 4, H - 24, 8, 1, HR[1]);
+  rect(ctx, x - 4, H - 23, 8, 1, HR[2]);
+  px(ctx, x, H - 23, SKIN_L); // la raya
+  px(ctx, x - 1, H - 23, HR[3]);
+  px(ctx, x - 3, H - 24, HR[3]);
+  px(ctx, x - 2, H - 24, HR[4]);
+  px(ctx, x - 3, H - 22, HR[2]);
+  px(ctx, x + 2, H - 22, HR[1]);
+  px(ctx, x - 1, H - 22, HR[2]); // mechón que cae de la raya
+
+  // ojos verde miel con pestañas
+  px(ctx, x - 2, H - 22, EYE);
+  px(ctx, x + 1, H - 22, EYE);
+  px(ctx, x - 2, H - 23, HR[0]);
+  px(ctx, x + 1, H - 23, HR[0]);
+
+  // lentes ovalados de carey, un poco caídos sobre la nariz
+  rect(ctx, x - 3, H - 21, 2, 1, FR); // marco superior
+  rect(ctx, x + 1, H - 21, 2, 1, FR);
+  px(ctx, x - 4, H - 20, FR); // aros laterales
+  px(ctx, x + 3, H - 20, FR_D);
+  rect(ctx, x - 3, H - 20, 2, 1, LENS);
+  rect(ctx, x + 1, H - 20, 2, 1, LENS);
+  px(ctx, f > 0 ? x - 3 : x + 2, H - 20, LENS_L); // reflejo
+  px(ctx, x - 1, H - 20, FR_D); // puente
+  px(ctx, x, H - 20, FR);
+  rect(ctx, x - 3, H - 19, 2, 1, FR_D); // marco inferior
+  rect(ctx, x + 1, H - 19, 2, 1, FR);
+  px(ctx, x - 1, H - 19, SKIN_D); // nariz
+  px(ctx, x, H - 19, SKIN_D);
+
+  // labios color durazno
+  px(ctx, x - 1, H - 18, LIP_L);
+  px(ctx, x, H - 18, LIP);
+  px(ctx, f > 0 ? x + 1 : x - 2, H - 18, SKIN_D); // mejilla
+
+  // mechones largos al frente, sobre los hombros (enmarcan la cara y el escote)
+  for (let r = 0; r < 15; r++) {
+    const yy = H - 23 + r;
+    const wl = r > 5 ? wv(r + 1) : 0;
+    const wr = r > 5 ? -wv(r + 4) : 0;
+    const tipL = r >= 13 && hash2(r, 5, 9) < 0.5;
+    const tipR = r >= 13 && hash2(r, 6, 9) < 0.5;
+    const below = r >= 6; // por debajo de la barbilla cubre parte de los hombros
+    if (!tipL) {
+      px(ctx, x - 4, yy, hairTone(x - 4, yy, x - 5, x - 3));
+      if (below) {
+        px(ctx, x - 5 + wl, yy, hairTone(x - 5, yy, x - 5, x - 3));
+        px(ctx, x - 3, yy, hairTone(x - 3, yy, x - 5, x - 3));
+      }
     }
-    px(ctx, x + bx, H - 11, JADE);
-  });
-  [-5, 4].forEach((fx) => {
-    px(ctx, x + fx, H - 22, "#f4ead2");
-    px(ctx, x + fx, H - 21, "#f4ead2");
-    px(ctx, x + fx, H - 20, "#7a5a3a");
-  });
-
-  // cabeza
-  rect(ctx, x - 3, H - 22, 6, 5, SKIN);
-  px(ctx, x - 3, H - 18, SKIN_D);
-  px(ctx, x + 2, H - 18, SKIN_D);
-  rect(ctx, x - 3, H - 23, 6, 1, HAIR); // cabello
-  rect(ctx, x - 3, H - 22, 2, 1, HAIR);
-  rect(ctx, x + 1, H - 22, 2, 1, HAIR);
-  px(ctx, x - 3, H - 21, HAIR);
-  px(ctx, x + 2, H - 21, HAIR);
-  px(ctx, x - 2 + f, H - 20, "#2a1b12"); // ojos
-  px(ctx, x + 1 + f, H - 20, "#2a1b12");
-  px(ctx, x - 2, H - 19, "#d9805f"); // mejillas
-  px(ctx, x + 1, H - 19, "#d9805f");
-  px(ctx, f > 0 ? x : x - 1, H - 18, "#9c4a3a"); // boca
-
-  // corona de flores
-  const crown = [
-    "#2f8a38",
-    "#e63946",
-    "#e63946",
-    "#2f8a38",
-    "#2f8a38",
-    "#ffd166",
-    "#e63946",
-    "#2f8a38",
-  ];
-  crown.forEach((col, k) => px(ctx, x - 4 + k, H - 24, col));
-  px(ctx, x - 3, H - 25, "#e63946");
-  px(ctx, x - 2, H - 25, "#ffd166");
-  px(ctx, x + 1, H - 25, "#e63946");
-  px(ctx, x + 2, H - 25, "#ffd166");
+    if (!tipR) {
+      px(ctx, x + 3, yy, hairTone(x + 3, yy, x + 3, x + 5));
+      if (below) {
+        px(ctx, x + 4 + wr, yy, hairTone(x + 4, yy, x + 3, x + 5));
+        px(ctx, x + 2, yy, hairTone(x + 2, yy, x + 3, x + 5));
+      }
+    }
+  }
+  // aros de los lentes por encima del cabello lateral
+  px(ctx, x - 4, H - 20, FR);
+  px(ctx, x + 3, H - 20, FR_D);
 }
 
 // Corazones sobre un enemigo (aparecen al pelear o al estar herido)
@@ -9690,7 +9788,8 @@ function drawEnemyHearts(o) {
   }
 }
 
-// Mandoble de espada: la hoja barre un arco al frente y deja una estela
+// Mandoble de espada: preparación (se echa hacia atrás), tajo veloz con estela en
+// medialuna, destello al final y chispas. Todo se dibuja con píxeles.
 function drawSword(x, y) {
   const p = 1 - player.attackT / SWORD_COOLDOWN; // 0 → 1 durante el golpe
   let ux = player.aimGx - player.aimGy; // dirección en pantalla (isométrica)
@@ -9699,63 +9798,160 @@ function drawSword(x, y) {
   ux /= ul;
   uy /= ul;
   const base = Math.atan2(uy, ux);
-  const SWEEP = 1.4; // barre ±80°
+  const SWEEP = 1.6; // barre ±92°
+  const WIND = 0.2; // fracción del golpe dedicada a la preparación
+  const HIT = 0.72; // fracción en la que termina el tajo
   const cx = x;
   const cy = y - Math.round(player.z) - 11;
-  // Estela del arco ya recorrido
-  for (let i = 0; i <= 12; i++) {
-    const t = (p * i) / 12;
-    const a = base - SWEEP + 2 * SWEEP * t;
-    ctx.globalAlpha = 0.25 + 0.55 * (i / 12);
-    px(
-      ctx,
-      Math.round(cx + Math.cos(a) * 14),
-      Math.round(cy + Math.sin(a) * 10.5),
-      "#e8f6ff",
-    );
-    px(
-      ctx,
-      Math.round(cx + Math.cos(a) * 12),
-      Math.round(cy + Math.sin(a) * 9),
-      "#bfe3f5",
-    );
+  const YS = 0.75; // aplastado vertical (perspectiva isométrica)
+  const BL = 22; // largo visual de la hoja, en píxeles (solo estético: el alcance real es SWORD_REACH)
+
+  // Ángulo de la hoja: se echa un poco hacia atrás y luego corta con aceleración
+  const startA = base - SWEEP;
+  let a;
+  let swing; // 0 → 1 progreso del tajo
+  if (p < WIND) {
+    const w = p / WIND;
+    a = startA - 0.35 * Math.sin(w * Math.PI * 0.5);
+    swing = 0;
+  } else if (p < HIT) {
+    const s = (p - WIND) / (HIT - WIND);
+    swing = 1 - Math.pow(1 - s, 3); // arranca muy rápido y frena
+    a = startA - 0.35 + (2 * SWEEP + 0.35) * swing; // continúa desde la preparación y termina en base + SWEEP
+  } else {
+    swing = 1;
+    a = base + SWEEP;
   }
-  ctx.globalAlpha = 1;
-  // Hoja, guarda y empuñadura
-  const a = base - SWEEP + 2 * SWEEP * p;
-  const ca = Math.cos(a);
-  const sa = Math.sin(a) * 0.75;
-  pline(
-    ctx,
-    cx + ca * 4,
-    cy + sa * 4,
-    cx + ca * 13,
-    cy + sa * 13,
-    "#eef4f8",
-    1,
-  );
-  pline(
-    ctx,
-    cx + ca * 4 + 1,
-    cy + sa * 4,
-    cx + ca * 12 + 1,
-    cy + sa * 12,
-    "#9fb0bd",
-    1,
-  );
-  px(ctx, Math.round(cx + ca * 13), Math.round(cy + sa * 13), "#ffffff");
-  const gx = cx + ca * 4;
-  const gy = cy + sa * 4;
-  pline(
-    ctx,
-    gx - sa * 1.6,
-    gy + ca * 1.2,
-    gx + sa * 1.6,
-    gy - ca * 1.2,
-    "#ffd166",
-    1,
-  );
-  pline(ctx, cx + ca * 1, cy + sa * 1, cx + ca * 3, cy + sa * 3, "#8a5a2e", 1);
+  const fade = p < HIT ? 1 : Math.max(0, 1 - (p - HIT) / (1 - HIT));
+
+  // ---- Estela en medialuna ----
+  if (swing > 0) {
+    const TRAIL = 1.9; // radianes de cola detrás de la hoja
+    const aTail = Math.max(startA, a - TRAIL);
+    const n = Math.max(2, Math.ceil((a - aTail) / 0.035));
+    for (let i = 0; i <= n; i++) {
+      const t = i / n; // 0 = cola, 1 = cabeza
+      const ang = aTail + (a - aTail) * t;
+      const ca = Math.cos(ang);
+      const sa = Math.sin(ang) * YS;
+      const inner = 7 + 3 * (1 - t); // la cola se ensancha hacia dentro
+      const outer = BL + 2 - 2 * (1 - t);
+      for (let r = inner; r <= outer; r++) {
+        const k = (r - inner) / (outer - inner); // 0 = borde interno, 1 = externo
+        // borde externo cian brillante, centro blanco, interior azulado tenue
+        let col = "#8fdcff";
+        if (k > 0.72) col = "#ffffff";
+        else if (k > 0.45) col = "#d8f4ff";
+        else if (k < 0.2) col = "#5aa9e6";
+        ctx.globalAlpha = Math.min(1, (0.15 + 0.85 * t * t) * fade);
+        ctx.fillStyle = col;
+        ctx.fillRect(Math.round(cx + ca * r), Math.round(cy + sa * r), 1, 1);
+      }
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  // ---- Chispas que saltan de la punta ----
+  if (swing > 0.1) {
+    for (let k = 0; k < 6; k++) {
+      const life = (p * 14 + k * 1.7) % 4; // 0..4 frames de vida cíclicos
+      const spread = (k - 2.5) * 0.35;
+      const d = BL + 2 + life * 2.2;
+      const sx = cx + Math.cos(a + spread) * d;
+      const sy = cy + Math.sin(a + spread) * d * YS - life * 0.8;
+      ctx.globalAlpha = Math.max(0, (1 - life / 4) * fade);
+      px(ctx, Math.round(sx), Math.round(sy), k % 2 ? "#fff6c8" : "#ffffff");
+      if (k % 3 === 0) px(ctx, Math.round(sx) + 1, Math.round(sy), "#ffd166");
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  // ---- Hoja, guarda y empuñadura (visibles durante preparación y tajo) ----
+  const bladeFade = p < HIT + 0.1 ? 1 : Math.max(0, 1 - (p - HIT - 0.1) / 0.18);
+  if (bladeFade > 0) {
+    ctx.globalAlpha = bladeFade;
+    const ca = Math.cos(a);
+    const sa = Math.sin(a) * YS;
+    const nx = -sa; // perpendicular, para dar grosor
+    const ny = ca;
+    // hoja de 2 px: borde oscuro, cuerpo claro y filo brillante
+    pline(
+      ctx,
+      cx + ca * 4,
+      cy + sa * 4,
+      cx + ca * BL,
+      cy + sa * BL,
+      "#5d6e7c",
+      3,
+    );
+    pline(
+      ctx,
+      cx + ca * 4,
+      cy + sa * 4,
+      cx + ca * (BL - 1),
+      cy + sa * (BL - 1),
+      "#cfdbe4",
+      2,
+    );
+    pline(
+      ctx,
+      cx + ca * 5 + nx * 0.6,
+      cy + sa * 5 + ny * 0.6,
+      cx + ca * (BL - 1) + nx * 0.6,
+      cy + sa * (BL - 1) + ny * 0.6,
+      "#ffffff",
+      1,
+    );
+    // destello en la punta (más fuerte justo al impactar)
+    const flash = swing > 0.85 && p < HIT + 0.12 ? 1 : 0;
+    const tx = Math.round(cx + ca * BL);
+    const ty = Math.round(cy + sa * BL);
+    px(ctx, tx, ty, "#ffffff");
+    if (flash) {
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(tx - 3, ty, 7, 1);
+      ctx.fillRect(tx, ty - 3, 1, 7);
+      ctx.fillStyle = "#fff3a8";
+      ctx.fillRect(tx - 1, ty - 1, 3, 3);
+      px(ctx, tx - 2, ty - 2, "#ffd166");
+      px(ctx, tx + 2, ty - 2, "#ffd166");
+      px(ctx, tx - 2, ty + 2, "#ffd166");
+      px(ctx, tx + 2, ty + 2, "#ffd166");
+    }
+    // guarda dorada
+    const gx = cx + ca * 4;
+    const gy = cy + sa * 4;
+    pline(
+      ctx,
+      gx - nx * 2.2,
+      gy - ny * 2.2,
+      gx + nx * 2.2,
+      gy + ny * 2.2,
+      "#8a5a1a",
+      2,
+    );
+    pline(
+      ctx,
+      gx - nx * 2,
+      gy - ny * 2,
+      gx + nx * 2,
+      gy + ny * 2,
+      "#ffd166",
+      1,
+    );
+    // empuñadura y pomo
+    pline(
+      ctx,
+      cx + ca * 1,
+      cy + sa * 1,
+      cx + ca * 3,
+      cy + sa * 3,
+      "#6b3f1e",
+      2,
+    );
+    px(ctx, Math.round(cx), Math.round(cy), "#ffd166");
+    ctx.globalAlpha = 1;
+  }
 }
 
 // Texto corto con contorno oscuro (aullidos y avisos)
@@ -10451,5 +10647,11 @@ spawnEntities();
 initEnemyHp();
 setupControls();
 updateHUD();
+resizeCanvas();
+window.addEventListener("resize", resizeCanvas);
+window.addEventListener("orientationchange", () =>
+  setTimeout(resizeCanvas, 150),
+);
+if (window.ResizeObserver) new ResizeObserver(resizeCanvas).observe(canvas);
 snapCamera();
 requestAnimationFrame(loop);
