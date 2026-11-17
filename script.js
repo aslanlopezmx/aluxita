@@ -260,6 +260,45 @@ const collectibles = COLLECT_DEFS.map((def) => ({
 }));
 const collectItems = collectibles.flatMap((g) => g.items);
 
+/* ---------- Espada (habilidad de ataque) ---------- */
+// Se coloca en el editor de mapas (objeto "espada"): solo cuenta la primera. Hasta
+// que la exploradora la encuentra, el botón B no hace nada. Si el mapa no trae
+// ninguna espada, el ataque está disponible desde el inicio (así nunca se bloquea).
+const swordSpot = MAP_OBJECTS.find((o) => o[0] === "espada");
+const swordItem = swordSpot
+  ? {
+      kind: "sword",
+      gx: swordSpot[1],
+      gy: swordSpot[2],
+      h: 0,
+      depth: swordSpot[1] + swordSpot[2] + 0.01,
+      collected: false,
+    }
+  : null;
+let hasSword = !swordItem;
+
+/* ---------- Checkpoints (zona segura de concreto) ---------- */
+// Se colocan en el editor de mapas (objeto "checkpoint"). Alrededor de cada uno hay
+// un piso de concreto: dentro de él los hostiles no detectan ni lastiman a la
+// exploradora. Al desmayarse, reaparece en el último checkpoint que pisó (si no ha
+// pisado ninguno, en el punto de inicio).
+const MAX_CHECKPOINTS = 5;
+const CHECKPOINT_R = 3.2; // radio de la zona segura, en casillas (igual en el editor)
+const checkpoints = MAP_OBJECTS.filter((o) => o[0] === "checkpoint")
+  .slice(0, MAX_CHECKPOINTS)
+  .map(([, gx, gy], i) => ({
+    id: i,
+    gx,
+    gy,
+    visited: false,
+    flashT: 0,
+    tiles: new Set(),
+    obj: null,
+  }));
+const safeTiles = new Set(); // casillas de concreto de todos los checkpoints
+const tileKey = (x, y) => y * 1000 + x;
+let lastCheckpoint = null;
+
 const hammocks = MAP_OBJECTS.filter((o) => o[0] === "hamaca").map((o) => ({
   gx: o[1],
   gy: o[2],
@@ -683,6 +722,24 @@ function buildMap() {
   hammocks.forEach((h) => ensureLand(h.gx, h.gy, 0));
   dogSpots.forEach((d) => ensureLand(d[1], d[2], 0));
   collectItems.forEach((g) => ensureLand(g.gx, g.gy, 0));
+  if (swordItem) ensureLand(swordItem.gx, swordItem.gy, 0);
+  // Checkpoints: terreno firme en el centro y piso de concreto en la zona segura
+  checkpoints.forEach((cp) => {
+    ensureLand(cp.gx, cp.gy, 1);
+    const cx0 = Math.round(cp.gx);
+    const cy0 = Math.round(cp.gy);
+    const rr = Math.ceil(CHECKPOINT_R);
+    for (let y = cy0 - rr; y <= cy0 + rr; y++) {
+      for (let x = cx0 - rr; x <= cx0 + rr; x++) {
+        if (Math.hypot(x - cx0, y - cy0) > CHECKPOINT_R) continue;
+        const t = tileAt(x, y);
+        if (t !== T_SAND && t !== T_GRASS && t !== T_PATH && t !== T_MONTE)
+          continue;
+        cp.tiles.add(tileKey(x, y));
+        safeTiles.add(tileKey(x, y));
+      }
+    }
+  });
   buildStream();
 }
 
@@ -769,6 +826,53 @@ function paintTop(c, cx, cy, pal) {
         c.fillStyle = pal[2];
         c.fillRect(x0 + i, y, 1, 1);
       }
+    }
+  }
+}
+
+// Piso de concreto de la zona segura de un checkpoint: losa gris con juntas, grietas
+// y, en el borde de la zona, una franja de precaución amarilla y negra
+const CONCRETE_PAL = ["#a6a6a2", "#919190", "#c0c0bb"];
+function paintConcrete(c, cx, cy, gx, gy) {
+  paintTop(c, cx, cy, CONCRETE_PAL);
+  const inZone = (x, y) => safeTiles.has(tileKey(x, y));
+  // Borde de cada lado de la losa (2 px por fila). Si el vecino no es concreto,
+  // franja de precaución; si lo es, una junta fina más oscura.
+  const sides = [
+    // [vecino gx, vecino gy, filas, lado]
+    [gx - 1, gy, 0, 8, "L"], // NO
+    [gx, gy - 1, 0, 8, "R"], // NE
+    [gx, gy + 1, 8, 16, "L"], // SO
+    [gx + 1, gy, 8, 16, "R"], // SE
+  ];
+  sides.forEach(([nx, ny, r0, r1, side]) => {
+    const edge = !inZone(nx, ny);
+    for (let r = r0; r < r1; r++) {
+      const w = 4 * (Math.min(r, 15 - r) + 1);
+      const x0 = cx - (w >> 1);
+      const y = cy - 8 + r;
+      const xs = side === "L" ? [x0, x0 + 1] : [x0 + w - 2, x0 + w - 1];
+      if (edge) {
+        c.fillStyle = (r >> 1) % 2 ? "#2e2e2e" : "#f2c13d";
+      } else {
+        c.fillStyle = "#7c7c79";
+      }
+      xs.forEach((x) => c.fillRect(x, y, 1, 1));
+    }
+  });
+  // Grietas y manchas sueltas
+  const rnd = mulberry32(gx * 811 + gy * 29 + 77);
+  for (let k = 0; k < 3; k++) {
+    const ox = Math.round((rnd() - 0.5) * 16);
+    const oy = Math.round((rnd() - 0.5) * 6);
+    if (Math.abs(ox) / 16 + Math.abs(oy) / 8 > 0.6) continue;
+    if (rnd() < 0.5) {
+      px(c, cx + ox, cy + oy, "#6f6f6c");
+      px(c, cx + ox + 1, cy + oy + 1, "#6f6f6c");
+      px(c, cx + ox + 2, cy + oy + 1, "#6f6f6c");
+    } else {
+      px(c, cx + ox, cy + oy, "#d6d6d1");
+      px(c, cx + ox + 1, cy + oy, "#d6d6d1");
     }
   }
 }
@@ -1309,6 +1413,10 @@ function buildTerrain() {
         cliff(c, "L", cx, cy, Math.round((h - hl) * U), t, tileAt(gx, gy + 1));
       if (hr < h)
         cliff(c, "R", cx, cy, Math.round((h - hr) * U), t, tileAt(gx + 1, gy));
+      if (safeTiles.has(tileKey(gx, gy))) {
+        paintConcrete(c, cx, cy, gx, gy);
+        continue;
+      }
       paintTop(c, cx, cy, PAL.top[t]);
       const sIdx = STREAM.findIndex((s) => s.gx === gx && s.gy === gy);
       if (sIdx >= 0) paintStream(c, cx, cy, false);
@@ -6009,6 +6117,114 @@ function makeCollectSprite(src, keyWhite) {
   return spr;
 }
 
+// Sprite de la espada (en vertical, apoyada en el suelo), dibujada con píxeles
+function makeSwordSprite() {
+  return sprite(24, 36, 12, 34, (c) => {
+    const D = "#2b3646"; // contorno
+    // Hoja: punta y cuerpo
+    rect(c, 11, 2, 2, 1, D);
+    rect(c, 10, 3, 4, 2, D);
+    rect(c, 9, 5, 6, 19, D);
+    rect(c, 11, 3, 2, 1, "#eaf6ff");
+    rect(c, 10, 4, 4, 1, "#cfe3f3");
+    rect(c, 10, 5, 4, 18, "#cfe3f3");
+    rect(c, 10, 4, 1, 19, "#ffffff"); // brillo
+    rect(c, 13, 5, 1, 18, "#8aa5bb"); // sombra
+    // Guarda dorada
+    rect(c, 5, 24, 14, 4, D);
+    rect(c, 6, 25, 12, 2, "#f2c13d");
+    rect(c, 6, 25, 12, 1, "#ffe28a");
+    px(c, 11, 26, "#f72585"); // gema
+    px(c, 12, 26, "#f72585");
+    // Empuñadura y pomo
+    rect(c, 10, 28, 4, 4, D);
+    rect(c, 11, 28, 2, 4, "#7a4519");
+    px(c, 11, 29, "#c07b36");
+    px(c, 12, 31, "#c07b36");
+    rect(c, 9, 32, 6, 3, D);
+    rect(c, 10, 33, 4, 1, "#f2c13d");
+  });
+}
+
+// Sprite del checkpoint: poste de metal con farol y bandera sobre una base de concreto.
+// Apagado = rojo/gris; encendido (ya pisado) = verde brillante
+function makeCheckpointSprite(on) {
+  return sprite(24, 44, 12, 40, (c) => {
+    ellipse(c, 12, 40, 9, 3, "rgba(0,0,0,0.3)");
+    // base de concreto
+    rect(c, 5, 35, 14, 6, "#3b3b3b");
+    rect(c, 6, 36, 12, 4, "#8e8e8b");
+    rect(c, 6, 36, 12, 1, "#c0c0bb");
+    // poste
+    rect(c, 11, 11, 2, 25, "#3b3b3b");
+    rect(c, 11, 11, 1, 25, "#9aa0a6");
+    // bandera
+    rect(c, 13, 15, 9, 6, "#2b2b2b");
+    rect(c, 13, 16, 8, 4, on ? "#52b788" : "#c9184a");
+    rect(c, 13, 19, 8, 1, on ? "#2d8a5e" : "#8f1236");
+    // farol
+    rect(c, 6, 2, 12, 2, "#2b2b2b");
+    rect(c, 9, 0, 6, 2, "#2b2b2b");
+    rect(c, 7, 4, 10, 8, "#2b2b2b");
+    rect(c, 8, 5, 8, 6, on ? "#7dffb0" : "#5a5f66");
+    if (on) rect(c, 9, 6, 3, 3, "#eafff2");
+    rect(c, 6, 12, 12, 1, "#2b2b2b");
+  });
+}
+
+// Imagen del recuerdo "¡Encontraste la espada!" (se dibuja en un canvas)
+function makeSwordCardImage() {
+  const W = 160;
+  const H = 120;
+  const cv = makeCanvas(W, H);
+  const c = cv.getContext("2d");
+  c.imageSmoothingEnabled = false;
+  const g = c.createLinearGradient(0, 0, 0, H);
+  g.addColorStop(0, "#1b2a49");
+  g.addColorStop(1, "#3a5a8c");
+  c.fillStyle = g;
+  c.fillRect(0, 0, W, H);
+  // Rayos de luz detrás de la espada
+  c.save();
+  c.translate(W / 2, H / 2);
+  for (let i = 0; i < 12; i++) {
+    c.rotate(Math.PI / 6);
+    c.fillStyle = "rgba(255,226,138,0.14)";
+    c.beginPath();
+    c.moveTo(0, 0);
+    c.lineTo(-12, -110);
+    c.lineTo(12, -110);
+    c.closePath();
+    c.fill();
+  }
+  c.restore();
+  // Chispas
+  [
+    [24, 22],
+    [132, 30],
+    [40, 92],
+    [122, 88],
+    [76, 10],
+  ].forEach(([x, y]) => {
+    c.fillStyle = "#fff6c8";
+    c.fillRect(x, y - 3, 2, 7);
+    c.fillRect(x - 2, y, 6, 2);
+  });
+  const k = 3;
+  c.drawImage(
+    SP.sword.cv,
+    0,
+    0,
+    24,
+    36,
+    (W - 24 * k) / 2,
+    (H - 36 * k) / 2,
+    24 * k,
+    36 * k,
+  );
+  return cv.toDataURL("image/png");
+}
+
 // Quita el fondo blanco de un sprite JPG: borra solo el blanco conectado con los
 // bordes (así no se pierden los brillos blancos del interior del dibujo)
 function clearWhiteBackground(c, w, h) {
@@ -6309,6 +6525,8 @@ function buildSprites() {
   SP.crop = makeCropPatch();
   SP.boat = makeBoat();
   SP.monteGrass = [0, 1, 2, 3].map(makeMonteGrass);
+  SP.sword = makeSwordSprite();
+  SP.checkpoint = [makeCheckpointSprite(false), makeCheckpointSprite(true)];
   SP.collect = {};
   COLLECT_DEFS.forEach(
     (d) => (SP.collect[d.type] = makeCollectSprite(d.sprite, d.keyWhite)),
@@ -6365,6 +6583,10 @@ function spawnEntities() {
   treasures.forEach((t) => reserved.push({ gx: t.gx, gy: t.gy, r: 1.8 }));
   hammocks.forEach((h) => reserved.push({ gx: h.gx, gy: h.gy, r: 1.5 }));
   collectItems.forEach((g) => reserved.push({ gx: g.gx, gy: g.gy, r: 1.2 }));
+  if (swordItem) reserved.push({ gx: swordItem.gx, gy: swordItem.gy, r: 1.5 });
+  checkpoints.forEach((cp) =>
+    reserved.push({ gx: cp.gx, gy: cp.gy, r: CHECKPOINT_R + 0.8 }),
+  );
 
   const byType = (type) => MAP_OBJECTS.filter((o) => o[0] === type);
 
@@ -6908,7 +7130,8 @@ function updateHUD() {
     .filter((g) => g.items.length)
     .map((g) => ` | ${g.def.emoji} ${g.count}/${g.items.length}`)
     .join("");
-  itemDisplay.innerText = `🥐 ${foundCount}/${treasures.length}${gl}`;
+  const sw = swordItem ? ` | ⚔️ ${hasSword ? 1 : 0}/1` : "";
+  itemDisplay.innerText = `🥐 ${foundCount}/${treasures.length}${gl}${sw}`;
 }
 
 /* ---------- Controles ---------- */
@@ -7168,7 +7391,13 @@ function landAt(gx, gy) {
 
 // Botón B: mandoble de espada. Golpea a los enemigos que estén al frente y al alcance.
 function attack() {
-  if (isPaused || player.attackT > 0 || player.faintT > 0 || player.boat)
+  if (
+    !hasSword ||
+    isPaused ||
+    player.attackT > 0 ||
+    player.faintT > 0 ||
+    player.boat
+  )
     return;
   player.attackT = SWORD_COOLDOWN;
   const ax = player.aimGx;
@@ -7257,7 +7486,62 @@ function openMemoryModal(chest, badge) {
 
 // Recoger coleccionables al acercarse: el 1.º y el último abren la leyenda;
 // los demás solo actualizan el contador
+// ¿La exploradora está pisando el concreto de un checkpoint? (zona segura)
+function playerSafe() {
+  if (!safeTiles.size || player.boat) return false;
+  return safeTiles.has(tileKey(Math.round(player.gx), Math.round(player.gy)));
+}
+
+// Al pisar un checkpoint se enciende y pasa a ser el punto de reaparición
+function updateCheckpoints() {
+  checkpoints.forEach((cp) => {
+    if (cp.flashT > 0) cp.flashT--;
+  });
+  if (player.boat) return;
+  const k = tileKey(Math.round(player.gx), Math.round(player.gy));
+  checkpoints.forEach((cp) => {
+    if (!cp.tiles.has(k) || lastCheckpoint === cp) return;
+    lastCheckpoint = cp;
+    cp.visited = true;
+    cp.flashT = 110;
+    burst(
+      cp.gx,
+      cp.gy,
+      tileH(Math.round(cp.gx), Math.round(cp.gy)),
+      ["#7dffb0", "#ffffff", "#52b788", "#ffd166"],
+      16,
+    );
+  });
+}
+
 function checkCollect() {
+  // Espada: al recogerla se desbloquea el ataque (botón B) y sale su recuerdo
+  if (
+    swordItem &&
+    !swordItem.collected &&
+    !isPaused &&
+    Math.hypot(player.gx - swordItem.gx, player.gy - swordItem.gy) <= 0.9
+  ) {
+    swordItem.collected = true;
+    hasSword = true;
+    updateHUD();
+    burst(
+      swordItem.gx,
+      swordItem.gy,
+      tileH(swordItem.gx, swordItem.gy),
+      ["#ffffff", "#8fdcff", "#ffd166", "#f72585"],
+      20,
+    );
+    openMemoryModal(
+      {
+        image: makeSwordCardImage(),
+        title: "¡Encontraste la espada!",
+        message:
+          "¡Ahora ya tienes la función de ataque! Presiona el botón B (o X / K en el teclado) para atacar a los enemigos que tengas enfrente.",
+      },
+      "* ¡NUEVA HABILIDAD! *",
+    );
+  }
   collectibles.forEach((grp) => {
     grp.items.forEach((g) => {
       if (g.collected) return;
@@ -7814,7 +8098,7 @@ function checkDogFound() {
 
 /* ---------- Daño al jugador ---------- */
 function hurtPlayer(n, fromGx, fromGy) {
-  if (player.invuln > 0 || isPaused) return;
+  if (player.invuln > 0 || isPaused || playerSafe()) return;
   health = Math.max(0, health - n);
   player.invuln = 70;
   updateHUD();
@@ -7841,8 +8125,9 @@ function hurtPlayer(n, fromGx, fromGy) {
 // Sin corazones: la exploradora se desmaya y despierta en el punto de inicio
 function playerFaint() {
   health = MAX_HEALTH;
-  player.gx = START_TILE.gx;
-  player.gy = START_TILE.gy;
+  // Reaparece en el último checkpoint que pisó (o en el inicio si no pisó ninguno)
+  player.gx = lastCheckpoint ? lastCheckpoint.gx : START_TILE.gx;
+  player.gy = lastCheckpoint ? lastCheckpoint.gy : START_TILE.gy;
   player.z = 0;
   player.jumpT = 0;
   player.invuln = 120;
@@ -8011,6 +8296,7 @@ function updateAlux(o) {
   const targetable =
     inZone &&
     !player.boat &&
+    !playerSafe() &&
     (!o.monteOnly || tileAt(player.gx, player.gy) === T_MONTE);
 
   if (o.hitT > 0) o.hitT--;
@@ -9339,6 +9625,14 @@ function update() {
     dGy -= spd;
   }
 
+  // Normaliza la velocidad: en diagonal (dos teclas) va igual de rápido que en línea recta
+  const rawLen = Math.hypot(dGx, dGy);
+  if (rawLen > 0) {
+    const k = (spd * Math.SQRT2) / rawLen;
+    dGx *= k;
+    dGy *= k;
+  }
+
   player.moving = dGx !== 0 || dGy !== 0;
 
   if (player.moving) {
@@ -9429,6 +9723,7 @@ function update() {
   }
 
   checkCollect();
+  updateCheckpoints();
   checkDogFound();
 
   // Si algún kaskabal detectó al jugador, la oscuridad se cierra poco a poco;
@@ -10444,6 +10739,38 @@ function drawObj(o, x, y, now) {
       break;
     }
 
+    case "checkpoint": {
+      const cp = o.cp;
+      if (cp.visited) {
+        // Halo verde pulsante mientras está encendido
+        ctx.globalAlpha = 0.16 + 0.08 * Math.sin(now / 400);
+        ellipse(ctx, x, y - 30, 11, 13, "#7dffb0");
+        ctx.globalAlpha = 1;
+      }
+      blit(SP.checkpoint[cp.visited ? 1 : 0], x, y);
+      if (cp.flashT > 0) drawTag("¡CHECKPOINT!", x, y - 56, "#52b788");
+      break;
+    }
+
+    case "sword": {
+      // Flota, brilla con un halo y suelta destellos
+      const bob = Math.round(Math.sin(now / 350) * 2);
+      ellipse(ctx, x, y, 6, 2, "rgba(0,0,0,0.25)");
+      ctx.globalAlpha = 0.18 + 0.1 * Math.sin(now / 300);
+      ellipse(ctx, x, y - 18 + bob, 11, 14, "#ffe28a");
+      ctx.globalAlpha = 1;
+      blit(SP.sword, x, y - 4 + bob);
+      const tw = Math.sin(now / 240);
+      if (tw > 0.2) {
+        const sx = x + (tw > 0.6 ? -9 : 9);
+        const sy = y - 28 + Math.round(tw * 2);
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(sx, sy - 1, 1, 3);
+        ctx.fillRect(sx - 1, sy, 3, 1);
+      }
+      break;
+    }
+
     case "collectible": {
       // Flota suavemente y brilla
       const bob = Math.round(Math.sin(now / 350 + o.id) * 2);
@@ -10524,6 +10851,23 @@ function draw(now) {
     if (g.collected) return;
     g.h = tileH(Math.round(g.gx), Math.round(g.gy));
     pushObj(g);
+  });
+  if (swordItem && !swordItem.collected) {
+    swordItem.h = tileH(Math.round(swordItem.gx), Math.round(swordItem.gy));
+    pushObj(swordItem);
+  }
+  checkpoints.forEach((cp) => {
+    if (!cp.obj)
+      cp.obj = {
+        kind: "checkpoint",
+        cp,
+        gx: cp.gx,
+        gy: cp.gy,
+        h: 0,
+        depth: cp.gx + cp.gy + 0.01,
+      };
+    cp.obj.h = tileH(Math.round(cp.gx), Math.round(cp.gy));
+    pushObj(cp.obj);
   });
 
   treasures.forEach((t) => {
