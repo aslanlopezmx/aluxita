@@ -897,32 +897,59 @@ function drawHintArrow(x, y, now) {
 function drawBoatedPlayer(x, y, now) {
   const moving = player.moving;
   const flip = player.face < 0;
+  // Dirección real de navegación, en pantalla (misma fórmula isométrica que usa
+  // la cámara para adelantarse): así la estela y el balanceo del bote van
+  // congruentes con hacia dónde camina de verdad la exploradora, también
+  // cuando avanza hacia arriba o hacia abajo y no solo a los lados.
+  const dx = (player.aimGx - player.aimGy) * HW;
+  const dy = (player.aimGx + player.aimGy) * HH;
+  const dl = Math.hypot(dx, dy) || 1;
+  const ux = dx / dl;
+  const uy = dy / dl;
+
+  // Qué vista del casco usar: de lado (y voltea según hacia dónde mire) cuando
+  // el movimiento es sobre todo horizontal, o de punta (proa/popa, sin voltear)
+  // cuando es sobre todo vertical — la misma idea que ya usa drawPlayer() para
+  // elegir entre su vista de lado, de espalda o de frente.
+  const sx = player.aimGx - player.aimGy;
+  const sy = (player.aimGx + player.aimGy) / 2;
+  const boatView =
+    Math.abs(sx) > Math.abs(sy) + 0.05 ? "side" : sy < 0 ? "up" : "down";
+  const hull = boatView === "side" ? SP.boat : SP.boat[boatView];
+  const hullFlip = boatView === "side" ? flip : false;
+  const dogSpread = boatView === "side" ? 1 : 0.55;
+
   // Animación del bote: al avanzar cabecea y se balancea; quieto, flota suave.
   // El personaje no se anima: se mueve junto con el bote.
   const bob = moving
     ? Math.round(Math.sin(now / 150) * 1.6)
     : Math.round(Math.sin(now / 600));
-  const sway = moving ? Math.round(Math.sin(now / 320)) : 0;
-  const bx = x + sway;
+  // El bamboleo lateral ahora se inclina en el eje perpendicular a la marcha,
+  // en vez de ser siempre horizontal
+  const swayT = moving ? Math.sin(now / 320) : 0;
+  const bx = x + Math.round(swayT * -uy);
+  const by = y + Math.round(swayT * ux * 0.5);
 
   drawRipple(x, y + 5, now, moving);
 
-  // Estela de espuma detrás de la popa mientras navega
+  // Estela de espuma: sale de la popa en el sentido contrario a la marcha real
+  // del bote (antes solo salía hacia los lados, sin importar a dónde navegara)
   if (moving) {
-    const dir = flip ? 1 : -1;
     for (let k = 0; k < 4; k++) {
       const t = (now / 260 + k * 0.25) % 1;
       ctx.globalAlpha = (1 - t) * 0.8;
       ctx.fillStyle = "#ffffff";
-      const fx = Math.round(x + dir * (18 + t * 14));
-      const fy = Math.round(y + 7 + (k % 2 ? 1 : -1) * t * 2);
+      const spread = (k % 2 ? 1 : -1) * t * 2;
+      const reach = 18 + t * 14;
+      const fx = Math.round(x - ux * reach - uy * spread);
+      const fy = Math.round(y + 7 - uy * reach * 0.6 + ux * spread);
       ctx.fillRect(fx, fy, 3 - Math.floor(t * 2), 1);
     }
     ctx.globalAlpha = 1;
   }
 
-  blit(SP.boat.back, bx, y + bob, flip);
-  drawPlayer(bx, y + bob + 4, now, true);
+  blit(hull.back, bx, by + bob, hullFlip);
+  drawPlayer(bx, by + bob + 4, now, true);
   // Los perros van delante de la exploradora (se dibujan después de ella) moviendo la
   // cola, mirando hacia donde avanza el bote. El 1.º y el 2.º van a los lados;
   // el 3.º va en medio, un poco más abajo, para que se distingan los tres.
@@ -931,11 +958,16 @@ function drawBoatedPlayer(x, y, now) {
     .filter((d) => d.inBoat)
     .forEach((d, i) => {
       const fr = Math.floor(now / 150 + i) % 2;
-      const side = [-13, 13, 0][i] || 0;
+      const side = ([-13, 13, 0][i] || 0) * dogSpread;
       const feet = i === 2 ? 7 : 3;
-      blit(d.sp.happy[fr], bx + (flip ? -side : side), y + bob + feet, flip);
+      blit(
+        d.sp.happy[fr],
+        bx + (hullFlip ? -side : side),
+        by + bob + feet,
+        hullFlip,
+      );
     });
-  blit(SP.boat.front, bx, y + bob, flip);
+  blit(hull.front, bx, by + bob, hullFlip);
 
   if (player.msgT > 0) {
     drawTag("¡SOLO PUEDES DESEMBARCAR UN MUELLE!", x, y - 44, "#ffd166");

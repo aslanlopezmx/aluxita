@@ -32,6 +32,14 @@ const CINEMATICAS = {
     "assets/choco/escena4.jpg",
     "assets/choco/escena5.jpg",
   ],
+
+  // "cleo" → misma fórmula que "choco": al encontrar a Cleo por primera vez
+  cleo: [
+    "assets/cleo/escena1.jpg",
+    "assets/cleo/escena2.jpg",
+    "assets/cleo/escena3.jpg",
+    "assets/cleo/escena4.jpg",
+  ],
   // fin2: ["assets/nivel2/escena1.jpg", "assets/nivel2/escena2.jpg"],
 
   // fin4 = cinemática FINAL del juego: se dispara al rescatar al novio (que solo

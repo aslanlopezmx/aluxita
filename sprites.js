@@ -6616,6 +6616,95 @@ function makeBoat() {
   return { back, front };
 }
 
+// Bote visto de punta (de proa o de popa), para cuando navega hacia arriba o
+// hacia abajo en pantalla. Clave: en esta proyección isométrica, el eje
+// "arriba/abajo" en pantalla está DOS VECES más comprimido que el eje
+// "izquierda/derecha" (TILE_H es la mitad de TILE_W), así que el bote visto
+// por la punta se ve corto y ancho (el largo se acorta mucho, la manga casi
+// no se comprime) — por eso antes salía un palo largo y parado en vez de una
+// canoa. bowNear indica si la proa (con la cuerda enrollada) es la punta
+// cercana (el bote viene hacia la cámara) o la lejana (se aleja).
+function makeBoatEnd(bowNear) {
+  const W = 30;
+  const H = 24;
+  const CX = 15;
+  const CY = 12;
+  const RY = 9; // mitad del largo, ya acortado por la perspectiva
+  const woodD = "#3a2210";
+  const woodM = "#8a5a2e";
+  const woodL = "#b9824a";
+  const woodH = "#e0b070";
+  const inner = "#6b4423";
+  const innerD = "#4a2c14";
+
+  // Perfil a lo largo: angosto (pero romo, no en punta) en los dos extremos y
+  // panzón a la mitad, como el bote de lado pero girado; además un poco más
+  // angosto del lado lejano, para dar algo de profundidad.
+  const prof = (y) => {
+    const u = (y - CY) / RY;
+    if (Math.abs(u) > 1) return null;
+    const taper = Math.sqrt(1 - u * u); // 0 en las puntas, 1 a la mitad
+    const t = bowNear ? (u + 1) / 2 : (1 - u) / 2; // 0 = lejos, 1 = cerca
+    const persp = 0.75 + 0.25 * t;
+    const hw = Math.max(2, Math.round((4 + 8 * taper) * persp));
+    return hw;
+  };
+
+  const y0 = Math.round(CY - RY);
+  const y1 = Math.round(CY + RY);
+
+  const back = sprite(W, H, CX, CY, (c) => {
+    // Sombra: la misma silueta del casco (angosta-ancha-angosta), corrida
+    // unos píxeles hacia abajo, en vez de un solo borrón en una punta
+    // (eso era lo que hacía parecer que el bote estaba "parado").
+    c.fillStyle = "rgba(0,30,70,0.28)";
+    for (let y = y0; y <= y1; y++) {
+      const hw = prof(y);
+      if (hw === null) continue;
+      const shw = Math.max(1, Math.round(hw * 0.85));
+      c.fillRect(CX - shw, y + 5, shw * 2 + 1, 1);
+    }
+    for (let y = y0; y <= y1; y++) {
+      const hw = prof(y);
+      if (hw === null) continue;
+      for (let x = -hw; x <= hw; x++) {
+        let col = inner;
+        if (x === -hw || x === hw) col = woodD;
+        else if (x === -hw + 1 || x === hw - 1) col = woodL;
+        else if ((x + y) % 5 === 0) col = innerD;
+        px(c, CX + x, y, col);
+      }
+    }
+    // una banca de madera cruzada a la mitad
+    const hw = Math.max(2, prof(CY) - 2);
+    rect(c, CX - hw, CY, hw * 2, 2, woodM);
+    rect(c, CX - hw, CY, hw * 2, 1, woodH);
+  });
+
+  const front = sprite(W, H, CX, CY, (c) => {
+    for (let y = y0; y <= y1; y++) {
+      const hw = prof(y);
+      if (hw === null) continue;
+      px(c, CX + hw, y, woodH);
+      px(c, CX + hw + 1, y, woodM);
+    }
+    // las dos puntas (proa y popa), apenas levantadas; bowY es la que
+    // corresponde a la proa (abajo si el bote viene hacia la cámara,
+    // arriba si se aleja)
+    px(c, CX, y0, woodD);
+    px(c, CX, y1, woodD);
+    const bowY = bowNear ? y1 : y0;
+    px(c, CX - 1, bowY, woodL);
+    px(c, CX + 1, bowY, woodL);
+    // cuerda enrollada junto a la proa, hacia el centro del bote
+    const ropeY = bowNear ? bowY - 4 : bowY + 4;
+    rect(c, CX - 2, ropeY, 4, 3, "#d8c8a0");
+    px(c, CX - 1, ropeY + 1, "#a8946a");
+  });
+
+  return { back, front };
+}
+
 function buildSprites() {
   SP.ceiba = makeCeiba();
   SP.mangle = makeMangle();
@@ -6745,6 +6834,10 @@ function buildSprites() {
   SP.lighthouse = makeLighthouse();
   SP.crop = makeCropPatch();
   SP.boat = makeBoat();
+  // Vistas de punta, para cuando el bote navega hacia arriba (popa cerca,
+  // se aleja) o hacia abajo (proa cerca, viene hacia la cámara)
+  SP.boat.up = makeBoatEnd(false);
+  SP.boat.down = makeBoatEnd(true);
   SP.monteGrass = [0, 1, 2, 3].map(makeMonteGrass);
   SP.sword = makeSwordSprite();
   SP.boomerang = makeBoomerangSprite();

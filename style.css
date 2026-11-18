@@ -1154,3 +1154,48 @@ html.arranque-carga .loading-screen.hidden {
         margin: 1.5dvh 5px 0 0;
     }
 }
+
+
+/* Letras y colores finales de los botones de acción */
+.action-buttons .action-btn,
+.action-buttons .action-btn.action-btn-c,
+.action-buttons .action-btn.action-btn-d {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff !important;
+    font-family: 'Outfit', sans-serif;
+    font-size: clamp(17px, 2.1vw, 21px) !important;
+    font-weight: 600;
+    line-height: 1;
+    text-shadow: 0 1px 1px rgba(0, 0, 0, 0.18);
+    background-image: none !important;
+}
+
+/* Izquierda: X rojo | Arriba: Y amarillo | Abajo: B azul | Derecha: A verde */
+.action-buttons #btnC {
+    background: #e34b4b !important;
+}
+
+.action-buttons #btnD {
+    background: #f0cf45 !important;
+    color: #554719 !important;
+    text-shadow: none;
+}
+
+.action-buttons #btnB {
+    background: #3478d4 !important;
+}
+
+.action-buttons #btnA {
+    background: #39b98b !important;
+}
+
+@media (max-width: 768px) {
+
+    .action-buttons .action-btn,
+    .action-buttons .action-btn.action-btn-c,
+    .action-buttons .action-btn.action-btn-d {
+        font-size: clamp(16px, 4.5vw, 20px) !important;
+    }
+}
