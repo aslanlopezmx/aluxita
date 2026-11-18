@@ -14,6 +14,7 @@ function levelMissing() {
     if (n > 0) falta.push(n + " " + g.def.emoji);
   });
   if (swordItem && !swordItem.collected) falta.push("la espada ⚔️");
+  if (boomerangItem && !boomerangItem.collected) falta.push("el boomerang 🪃");
   return falta;
 }
 const levelComplete = () => levelMissing().length === 0;
@@ -52,6 +53,7 @@ function beginLevelExit() {
 function irANivel(n) {
   const carry = {
     sword: !!hasSword,
+    boomerang: !!hasBoomerang,
     dogs: dogs.filter((d) => d.found).map((d) => d.cfg.key),
     mem: MEM_OFFSET + treasures.length, // recuerdos ya usados: el siguiente nivel sigue desde ahí
   };
@@ -91,10 +93,14 @@ function autoStart() {
   isPaused = false;
   health = MAX_HEALTH;
   updateHUD();
-  saveGame(); // autoguardado al llegar al nivel nuevo
+  // Autoguardado al llegar al nivel nuevo (no en el modo desarrollo: así el selector
+  // de nivel no pisa la partida guardada)
+  if (ARRANQUE !== "dev") saveGame();
   // Fundido desde la pantalla de carga
   const load = document.getElementById("loadingScreen");
   load.classList.remove("hidden", "fading");
+  // La pantalla de carga ya se veía desde el HTML; ahora la controla el JS
+  document.documentElement.classList.remove("arranque", "arranque-carga");
   setTimeout(() => {
     load.classList.add("fading");
     setTimeout(() => load.classList.add("hidden"), 500);

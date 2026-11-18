@@ -297,6 +297,31 @@ const swordItem =
     : null;
 let hasSword = !swordItem;
 
+/* ---------- Boomerang (ataque a distancia) ---------- */
+// Objeto "boomerang" del editor (solo cuenta el primero). Sin boomerang en el mapa
+// y sin traerlo de un nivel anterior, simplemente no se tiene.
+const boomerangSpot = MAP_OBJECTS.find((o) => o[0] === "boomerang");
+// Si el mapa trae un boomerang, SIEMPRE se coloca (aunque llegue un "boomerang" en
+// CARRY, p. ej. del selector de nivel de desarrollo): no se tiene hasta recogerlo.
+const boomerangItem = boomerangSpot
+  ? {
+      kind: "boomerang",
+      gx: boomerangSpot[1],
+      gy: boomerangSpot[2],
+      h: 0,
+      depth: boomerangSpot[1] + boomerangSpot[2] + 0.01,
+      collected: false,
+    }
+  : null;
+let hasBoomerang = !boomerangItem && !!(CARRY && CARRY.boomerang);
+const BOOMERANG_RANGE = 6; // casillas que avanza antes de regresar
+const BOOMERANG_SPEED = 0.3; // casillas por cuadro al ir
+const BOOMERANG_BACK_SPEED = 0.34; // al volver (un poco más rápido)
+const BOOMERANG_DAMAGE = 1;
+const BOOMERANG_HIT_R = 0.8; // radio de impacto sobre enemigos
+// Proyectil en vuelo (null = en la mano). Solo puede haber uno a la vez.
+let boomerang = null;
+
 /* ---------- Checkpoints (zona segura de concreto) ---------- */
 // Se colocan en el editor de mapas (objeto "checkpoint"). Alrededor de cada uno hay
 // un piso de concreto: dentro de él los hostiles no detectan ni lastiman a la
@@ -332,6 +357,24 @@ const hammocks = MAP_OBJECTS.filter((o) => o[0] === "hamaca").map((o) => ({
   gx: o[1],
   gy: o[2],
 }));
+
+/* ---------- Novio (personaje a rescatar) ---------- */
+// Se coloca en el editor de mapas (objeto "novio"): aunque el mapa traiga más de
+// uno, solo se usa el primero (igual que la espada). Está amarrado sobre una
+// plataforma de piedra y hojas de palma; al acercarse y presionar A, la
+// exploradora lo libera.
+const novioSpot = MAP_OBJECTS.find((o) => o[0] === "novio");
+const novio = novioSpot
+  ? {
+      kind: "novio",
+      gx: novioSpot[1],
+      gy: novioSpot[2],
+      h: 0,
+      depth: novioSpot[1] + novioSpot[2] + 0.01,
+      rescued: false,
+    }
+  : null;
+const NOVIO_RANGE = 1.3; // distancia para poder liberarlo con A
 
 // Alux: espíritu hostil que vive dentro de una zona circular alrededor de su punto
 // de origen. Ajusta estos valores para cambiar su comportamiento (en casillas):
@@ -384,7 +427,7 @@ const XTABAY_ZONE = 12; // radio de desplazamiento alrededor de su punto
 const XTABAY_REACH = 1.1; // alcance de su golpe
 const XTABAY_SPEED = 0.09; // velocidad al perseguir (el jugador camina a 0.075)
 const XTABAY_WINDUP = 10; // frames que tarda en preparar el golpe (se esquiva saltando)
-const XTABAY_DAMAGE = 3; // corazones que quita cada golpe
+const XTABAY_DAMAGE = 2; // corazones que quita cada golpe
 const XTABAY_SEP = 1.5; // distancia mínima entre xtabays
 
 // Combate: con B la exploradora agita la espada y lastima a los enemigos de enfrente.

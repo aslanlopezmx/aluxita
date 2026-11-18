@@ -144,7 +144,7 @@ function drawRipple(x, y, now, moving = player.moving) {
 // Exploradora maya (inspirada en la ilustración de referencia): corona de flores,
 // trenzas con plumas, huipil bordado, collar de jade, falda con flecos y sandalias.
 // Se dibuja con rectángulos/píxeles, sin imágenes.
-function drawPlayer(x, y, now, onBoat) {
+function drawPlayerFront(x, y, now, onBoat) {
   const f = player.face;
   if (onBoat) {
     // la sombra y las ondas las pone el bote
@@ -357,6 +357,288 @@ function drawPlayer(x, y, now, onBoat) {
   px(ctx, x + 3, H - 20, FR_D);
 }
 
+// Vista según la dirección en que camina (la última, si está parada):
+// de frente (hacia abajo en pantalla), de espalda (hacia arriba) o de perfil.
+function drawPlayer(x, y, now, onBoat) {
+  const sx = player.aimGx - player.aimGy; // dirección en pantalla (isométrica)
+  const sy = (player.aimGx + player.aimGy) / 2;
+  if (Math.abs(sx) > Math.abs(sy) + 0.05)
+    return drawPlayerSide(x, y, now, onBoat);
+  if (sy < 0) return drawPlayerBack(x, y, now, onBoat);
+  return drawPlayerFront(x, y, now, onBoat);
+}
+
+// Sombra, ondas en aguas bajas y parpadeo al ser herida (común a las vistas nuevas)
+function playerViewBase(x, y, now, onBoat) {
+  if (onBoat) {
+    // la sombra y las ondas las pone el bote
+  } else if (isShallow(tileAt(Math.round(player.gx), Math.round(player.gy)))) {
+    drawRipple(x, y, now || 0);
+  } else {
+    ellipse(ctx, x, y, 6, 2, "rgba(0,0,0,0.3)");
+  }
+  if (player.invuln > 0 && Math.floor(player.invuln / 4) % 2 === 0) return null;
+  const py = y - Math.round(player.z);
+  const air = player.z > 0.5;
+  const stepping = player.moving && !onBoat;
+  const walk = stepping ? (player.step >> 3) & 1 : 0;
+  const bob = stepping ? (player.step >> 2) & 1 : 0;
+  return { py, air, stepping, walk, bob, H: py - bob };
+}
+
+const PV = {
+  SKIN: "#f1c8a8",
+  SKIN_D: "#d6a07c",
+  SKIN_L: "#fbe0c8",
+  JADE: "#2fbf71",
+  BROWN: "#8a5a2e",
+  BROWN_D: "#5e3a1a",
+  HR: ["#22130c", "#3d2416", "#5e3a22", "#8a5a34", "#b98652"],
+  FR: "#b4501e",
+  FR_D: "#5a2410",
+  LENS: "#6e2a1a",
+  LENS_L: "#c0704a",
+  EYE: "#86a04e",
+  LIP: "#d98c7a",
+  KH: "#c8b88a",
+  KH_D: "#a89868",
+  KH_L: "#dccfa2",
+  BT: "#7a4a26",
+  BT_D: "#42240f",
+  BT_L: "#a06a38",
+  BL: "#3a8a3c",
+  BL_D: "#276a2c",
+  BL_L: "#5cab57",
+};
+
+// De espalda: cabello largo cubriendo la cabeza y la espalda, sin cara
+function drawPlayerBack(x, y, now, onBoat) {
+  const b = playerViewBase(x, y, now, onBoat);
+  if (!b) return;
+  const { py, air, stepping, walk, H } = b;
+  const {
+    SKIN,
+    SKIN_D,
+    JADE,
+    BROWN,
+    BROWN_D,
+    HR,
+    KH,
+    KH_D,
+    KH_L,
+    BT,
+    BT_D,
+    BT_L,
+    BL,
+    BL_D,
+    BL_L,
+  } = PV;
+  const sway = stepping ? (player.step >> 3) & 1 : 0;
+  const WV = [0, 0, -1, -1, 0, 1, 1, 0, -1, -1, 0, 1, 1, 0, -1, -1];
+  const wv = (r) => WV[(r + (sway ? 2 : 0)) % WV.length];
+  const hairTone = (xx, yy, eL, eR) => {
+    const u = (xx - eL) / (eR - eL + 1);
+    let t = u < 0.22 ? 3 : u < 0.62 ? 2 : 1;
+    const k = (xx + yy + wv(yy)) % 5;
+    if (k === 0 && u < 0.8) t = Math.min(4, t + 1);
+    else if (k === 3) t = Math.max(0, t - 1);
+    return HR[t];
+  };
+  const legL = air ? 4 : walk ? 4 : 5;
+  const legR = air ? 4 : walk ? 5 : 4;
+  const liftL = air ? 1 : stepping ? 5 - legL : 0;
+  const liftR = air ? 1 : stepping ? 5 - legR : 0;
+  [
+    [x - 4, liftL],
+    [x + 1, liftR],
+  ].forEach(([lx, lift]) => {
+    const top = H - 5;
+    const bootY = py - 3 - lift;
+    const h = Math.max(0, bootY - top);
+    rect(ctx, lx, top, 3, h, KH);
+    rect(ctx, lx + 2, top, 1, h, KH_D);
+    px(ctx, lx, top, KH_L);
+    rect(ctx, lx, bootY, 3, 2, BT);
+    px(ctx, lx, bootY, BT_L);
+    rect(ctx, lx - 1, bootY + 2, 5, 1, BT_D);
+  });
+  // cadera y cinturón
+  for (let i = 0; i < 5; i++) {
+    for (let xx = -4; xx < 4; xx++) {
+      let col = xx >= 2 ? KH_D : xx === -4 ? KH_L : KH;
+      if (i === 0) col = xx >= 2 ? BROWN_D : BROWN;
+      px(ctx, x + xx, H - 10 + i, col);
+    }
+  }
+  px(ctx, x - 3, H - 8, KH_D); // bolsillos traseros
+  px(ctx, x + 2, H - 8, KH_D);
+  // blusa
+  for (let j = 0; j < 6; j++)
+    for (let xx = -4; xx < 4; xx++)
+      px(ctx, x + xx, H - 16 + j, xx >= 2 ? BL_D : xx === -4 ? BL_L : BL);
+  // brazos
+  [-1, 1].forEach((d) => {
+    const ax = d < 0 ? x - 6 : x + 4;
+    rect(ctx, ax, H - 16, 2, 3, d < 0 ? BL : BL_D);
+    px(ctx, ax, H - 16, BL_L);
+    rect(ctx, ax, H - 13, 2, 3, SKIN);
+    px(ctx, d < 0 ? ax : ax + 1, H - 12, SKIN_D);
+    rect(ctx, ax, H - 10, 2, 1, JADE);
+  });
+  // cuello
+  rect(ctx, x - 1, H - 17, 2, 2, SKIN_D);
+  // cabeza (toda de cabello) y cabellera larga que cae por la espalda
+  for (let r = 0; r < 17; r++) {
+    const yy = H - 24 + r;
+    const hw = r < 2 ? 4 : r < 6 ? 5 : 6;
+    const w1 = r > 5 ? wv(r) : 0;
+    const w2 = r > 5 ? -wv(r + 4) : 0;
+    const eL = x - hw + w1;
+    const eR = x + hw - 1 + w2;
+    for (let xx = eL; xx <= eR; xx++) {
+      if (r >= 15 && hash2(xx, r, 17) < 0.5) continue;
+      px(ctx, xx, yy, hairTone(xx, yy, eL, eR));
+    }
+  }
+  px(ctx, x, H - 24, HR[4]); // brillo en la coronilla
+  px(ctx, x - 1, H - 23, HR[3]);
+}
+
+// De perfil (mira a la derecha; si va a la izquierda se refleja)
+function drawPlayerSide(x, y, now, onBoat) {
+  const b = playerViewBase(x, y, now, onBoat);
+  if (!b) return;
+  const { py, air, stepping, walk, H } = b;
+  const {
+    SKIN,
+    SKIN_D,
+    SKIN_L,
+    JADE,
+    BROWN,
+    BROWN_D,
+    HR,
+    FR,
+    FR_D,
+    LENS,
+    LENS_L,
+    EYE,
+    LIP,
+    KH,
+    KH_D,
+    KH_L,
+    BT,
+    BT_D,
+    BT_L,
+    BL,
+    BL_D,
+    BL_L,
+  } = PV;
+  const f = player.sideFace || (player.aimGx - player.aimGy >= 0 ? 1 : -1);
+  // dx = desplazamiento hacia donde mira; el sprite se refleja si f < 0
+  const sr = (dx, yy, w, h, col) =>
+    rect(ctx, f > 0 ? x + dx : x - dx - w + 1, yy, w, h, col);
+  const sp = (dx, yy, col) => sr(dx, yy, 1, 1, col);
+  const sway = stepping ? (player.step >> 3) & 1 : 0;
+  const WV = [0, 0, -1, -1, 0, 1, 1, 0, -1, -1, 0, 1, 1, 0, -1, -1];
+  const wv = (r) => WV[(r + (sway ? 2 : 0)) % WV.length];
+
+  // piernas: una adelante y otra atrás, alternando
+  const sw = air ? 0 : stepping ? (walk ? 2 : -2) : 0;
+  const legs = [
+    { dx: -1 + sw, lift: air ? 1 : stepping ? (walk ? 0 : 2) : 0, far: true },
+    { dx: -1 - sw, lift: air ? 1 : stepping ? (walk ? 2 : 0) : 0, far: false },
+  ];
+  legs.forEach((l) => {
+    const top = H - 5;
+    const bootY = py - 3 - l.lift;
+    const h = Math.max(0, bootY - top);
+    const kh = l.far ? KH_D : KH;
+    sr(l.dx, top, 3, h, kh);
+    sp(l.dx, top, KH_L);
+    sr(l.dx, bootY, 3, 2, l.far ? BT_D : BT);
+    sp(l.dx, bootY, BT_L);
+    sr(l.dx, bootY + 2, 4, 1, BT_D); // suela con punta hacia delante
+  });
+
+  // cabellera larga que cae por detrás
+  for (let r = 0; r < 16; r++) {
+    const yy = H - 24 + r;
+    const back = r < 2 ? 4 : r < 5 ? 6 : 6 + (r > 6 ? wv(r) : 0);
+    const front = r < 4 ? 2 : -1;
+    for (let dx = -back; dx <= front; dx++) {
+      if (r >= 14 && hash2(dx + 20, r, 17) < 0.5) continue;
+      const k = (dx + yy + wv(yy) + 40) % 5;
+      let t = dx > -2 ? 3 : dx > -4 ? 2 : 1;
+      if (k === 0 && dx > -5) t = Math.min(4, t + 1);
+      else if (k === 3) t = Math.max(0, t - 1);
+      sp(dx, yy, HR[t]);
+    }
+  }
+
+  // cadera con cinturón
+  for (let i = 0; i < 5; i++) {
+    for (let dx = -3; dx <= 2; dx++) {
+      let col = dx >= 1 ? KH_L : dx <= -3 ? KH_D : KH;
+      if (i === 0) col = dx <= -3 ? BROWN_D : BROWN;
+      sp(dx, H - 10 + i, col);
+    }
+  }
+  sp(1, H - 10, "#d9b44a"); // hebilla
+  sp(1, H - 7, KH_D); // bolsillo
+
+  // blusa
+  for (let j = 0; j < 6; j++)
+    for (let dx = -3; dx <= 2; dx++)
+      sp(dx, H - 16 + j, dx <= -3 ? BL_D : dx >= 1 ? BL_L : BL);
+  sp(2, H - 16, BL_D); // cuello de la blusa
+
+  // cuello y cabeza de perfil
+  sr(-1, H - 17, 2, 2, SKIN_D);
+  sr(-3, H - 23, 6, 6, SKIN);
+  sr(-2, H - 17, 3, 1, SKIN);
+  sp(3, H - 20, SKIN_D); // nariz
+  sp(2, H - 18, LIP); // labios
+  sp(1, H - 18, SKIN_D);
+  sp(0, H - 19, SKIN_D); // mejilla
+  sp(2, H - 22, SKIN_L); // luz en la frente
+
+  // cabello sobre la cabeza y la nuca, con flequillo
+  sr(-5, H - 24, 8, 1, HR[1]);
+  sr(-4, H - 23, 7, 1, HR[2]);
+  sr(-4, H - 22, 3, 4, HR[2]);
+  sr(-5, H - 21, 2, 3, HR[1]);
+  sp(2, H - 23, HR[2]); // flequillo
+  sp(1, H - 24, HR[4]);
+  sp(-1, H - 24, HR[3]);
+  sp(-2, H - 23, HR[3]);
+
+  // ojo y lentes de perfil
+  sp(1, H - 22, HR[0]); // pestaña
+  sp(1, H - 21, EYE);
+  sr(0, H - 22, 3, 1, FR); // marco superior
+  sr(0, H - 20, 3, 1, FR_D); // marco inferior
+  sp(0, H - 21, LENS);
+  sp(2, H - 21, LENS_L);
+  sp(3, H - 21, FR);
+  sr(-3, H - 21, 3, 1, FR); // patilla hacia la oreja
+
+  // mechón al frente sobre el hombro
+  for (let r = 0; r < 9; r++) {
+    const dx = -1 + (r > 3 ? wv(r + 1) : 0);
+    sp(dx, H - 17 + r, HR[r % 2 ? 2 : 3]);
+    sp(dx + 1, H - 17 + r, HR[3]);
+  }
+
+  // brazo: se balancea al caminar
+  const as = air ? 0 : stepping ? (walk ? -2 : 2) : 0;
+  const ax = -1 + as;
+  sr(ax, H - 16, 2, 3, BL); // manga
+  sp(ax, H - 16, BL_L);
+  sr(ax, H - 13, 2, 3, SKIN);
+  sp(ax + 1, H - 12, SKIN_D);
+  sr(ax, H - 10, 2, 1, JADE);
+}
+
 // Corazones sobre un enemigo (aparecen al pelear o al estar herido)
 const HEART_ROWS = [".X.X.", "XXXXX", "XXXXX", ".XXX.", "..X.."];
 function drawEnemyHearts(o) {
@@ -440,10 +722,10 @@ function drawSword(x, y) {
       for (let r = inner; r <= outer; r++) {
         const k = (r - inner) / (outer - inner); // 0 = borde interno, 1 = externo
         // borde externo cian brillante, centro blanco, interior azulado tenue
-        let col = "#8fdcff";
+        let col = "#4fe0c8";
         if (k > 0.72) col = "#ffffff";
-        else if (k > 0.45) col = "#d8f4ff";
-        else if (k < 0.2) col = "#5aa9e6";
+        else if (k > 0.45) col = "#c8fff3";
+        else if (k < 0.2) col = "#1f9e8f";
         ctx.globalAlpha = Math.min(1, (0.15 + 0.85 * t * t) * fade);
         ctx.fillStyle = col;
         ctx.fillRect(Math.round(cx + ca * r), Math.round(cy + sa * r), 1, 1);
@@ -475,15 +757,15 @@ function drawSword(x, y) {
     const sa = Math.sin(a) * YS;
     const nx = -sa; // perpendicular, para dar grosor
     const ny = ca;
-    // hoja de 2 px: borde oscuro, cuerpo claro y filo brillante
+    // paleta de madera de 5 px: contorno, cuerpo y luz
     pline(
       ctx,
       cx + ca * 4,
       cy + sa * 4,
       cx + ca * BL,
       cy + sa * BL,
-      "#5d6e7c",
-      3,
+      "#2a1608",
+      5,
     );
     pline(
       ctx,
@@ -491,18 +773,26 @@ function drawSword(x, y) {
       cy + sa * 4,
       cx + ca * (BL - 1),
       cy + sa * (BL - 1),
-      "#cfdbe4",
-      2,
+      "#b5793a",
+      3,
     );
     pline(
       ctx,
-      cx + ca * 5 + nx * 0.6,
-      cy + sa * 5 + ny * 0.6,
-      cx + ca * (BL - 1) + nx * 0.6,
-      cy + sa * (BL - 1) + ny * 0.6,
-      "#ffffff",
+      cx + ca * 5 + nx * 0.8,
+      cy + sa * 5 + ny * 0.8,
+      cx + ca * (BL - 1) + nx * 0.8,
+      cy + sa * (BL - 1) + ny * 0.8,
+      "#d9a05b",
       1,
     );
+    // filos de obsidiana a ambos lados
+    for (let rr = 6; rr <= BL - 1; rr += 3) {
+      const bx = cx + ca * rr;
+      const by = cy + sa * rr;
+      px(ctx, Math.round(bx + nx * 3), Math.round(by + ny * 3), "#16162b");
+      px(ctx, Math.round(bx - nx * 3), Math.round(by - ny * 3), "#16162b");
+      px(ctx, Math.round(bx + nx * 2.6), Math.round(by + ny * 2.6), "#7b7bc4");
+    }
     // destello en la punta (más fuerte justo al impactar)
     const flash = swing > 0.85 && p < HIT + 0.12 ? 1 : 0;
     const tx = Math.round(cx + ca * BL);
@@ -528,7 +818,7 @@ function drawSword(x, y) {
       gy - ny * 2.2,
       gx + nx * 2.2,
       gy + ny * 2.2,
-      "#8a5a1a",
+      "#0f6b61",
       2,
     );
     pline(
@@ -537,7 +827,7 @@ function drawSword(x, y) {
       gy - ny * 2,
       gx + nx * 2,
       gy + ny * 2,
-      "#ffd166",
+      "#2ec4b6",
       1,
     );
     // empuñadura y pomo
@@ -547,10 +837,10 @@ function drawSword(x, y) {
       cy + sa * 1,
       cx + ca * 3,
       cy + sa * 3,
-      "#6b3f1e",
+      "#c1121f",
       2,
     );
-    px(ctx, Math.round(cx), Math.round(cy), "#ffd166");
+    px(ctx, Math.round(cx), Math.round(cy), "#2ec4b6");
     ctx.globalAlpha = 1;
   }
 }
@@ -1115,6 +1405,51 @@ function drawObj(o, x, y, now) {
       break;
     }
 
+    case "novio": {
+      blit(SP.novio[o.o.rescued ? 1 : 0], x, y);
+      if (!o.o.rescued) {
+        const near =
+          !isPaused &&
+          Math.hypot(player.gx - o.o.gx, player.gy - o.o.gy) < NOVIO_RANGE;
+        if (near) {
+          drawHintArrow(x, y - 41, now);
+          const hb = Math.round(Math.sin(now / 160) * 1.5);
+          drawButtonHintA(x, y - 52 + hb);
+        }
+      }
+      break;
+    }
+
+    case "boomerang": {
+      const bob = Math.round(Math.sin(now / 350) * 2);
+      ellipse(ctx, x, y, 6, 2, "rgba(0,0,0,0.25)");
+      ctx.globalAlpha = 0.18 + 0.1 * Math.sin(now / 300);
+      ellipse(ctx, x, y - 10 + bob, 10, 10, "#ffe28a");
+      ctx.globalAlpha = 1;
+      blit(SP.boomerang, x, y - 4 + bob);
+      const tw = Math.sin(now / 240);
+      if (tw > 0.2) {
+        const sx = x + (tw > 0.6 ? -9 : 9);
+        const sy = y - 20 + Math.round(tw * 2);
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(sx, sy - 1, 1, 3);
+        ctx.fillRect(sx - 1, sy, 3, 1);
+      }
+      break;
+    }
+
+    case "boomerangFly": {
+      // Proyectil girando, con sombra en el suelo
+      ellipse(ctx, x, y, 5, 2, "rgba(0,0,0,0.3)");
+      const a = boomerang ? boomerang.spin : 0;
+      ctx.save();
+      ctx.translate(x, y - 10);
+      ctx.rotate(a);
+      ctx.drawImage(SP.boomerang.cv, -8, -8);
+      ctx.restore();
+      break;
+    }
+
     case "sword": {
       // Flota, brilla con un halo y suelta destellos
       const bob = Math.round(Math.sin(now / 350) * 2);
@@ -1223,6 +1558,19 @@ function draw(now) {
     swordItem.h = tileH(Math.round(swordItem.gx), Math.round(swordItem.gy));
     pushObj(swordItem);
   }
+  if (boomerangItem && !boomerangItem.collected) {
+    boomerangItem.h = tileH(
+      Math.round(boomerangItem.gx),
+      Math.round(boomerangItem.gy),
+    );
+    pushObj(boomerangItem);
+  }
+  if (boomerang) {
+    boomerang.kind = "boomerangFly";
+    boomerang.h = tileH(Math.round(boomerang.gx), Math.round(boomerang.gy));
+    boomerang.depth = boomerang.gx + boomerang.gy + 0.5;
+    pushObj(boomerang);
+  }
   checkpoints.forEach((cp) => {
     if (!cp.obj)
       cp.obj = {
@@ -1276,6 +1624,20 @@ function draw(now) {
       };
     pushObj(s.obj);
   });
+
+  if (novio) {
+    if (!novio.obj)
+      novio.obj = {
+        kind: "novio",
+        o: novio,
+        gx: novio.gx,
+        gy: novio.gy,
+        h: tileH(novio.gx, novio.gy),
+        depth: novio.gx + novio.gy + 0.01,
+      };
+    novio.obj.h = tileH(Math.round(novio.gx), Math.round(novio.gy));
+    pushObj(novio.obj);
+  }
 
   if (!draw.playerObj) draw.playerObj = { kind: "player" };
   const po = draw.playerObj;

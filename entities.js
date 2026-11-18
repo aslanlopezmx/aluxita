@@ -10,7 +10,8 @@ const boxes = [];
 function inBox(gx, gy) {
   for (let i = 0; i < boxes.length; i++) {
     const b = boxes[i];
-    if (gx >= b.x0 && gx <= b.x1 && gy >= b.y0 && gy <= b.y1) return true;
+    // Borde semiabierto: cada casilla [t-0.5, t+0.5) queda cubierta sin huecos
+    if (gx >= b.x0 && gx < b.x1 && gy >= b.y0 && gy < b.y1) return true;
   }
   return false;
 }
@@ -70,6 +71,8 @@ function spawnEntities() {
   hammocks.forEach((h) => reserved.push({ gx: h.gx, gy: h.gy, r: 1.5 }));
   collectItems.forEach((g) => reserved.push({ gx: g.gx, gy: g.gy, r: 1.2 }));
   if (swordItem) reserved.push({ gx: swordItem.gx, gy: swordItem.gy, r: 1.5 });
+  if (boomerangItem)
+    reserved.push({ gx: boomerangItem.gx, gy: boomerangItem.gy, r: 1.5 });
   checkpoints.forEach((cp) =>
     reserved.push({ gx: cp.gx, gy: cp.gy, r: CHECKPOINT_R + 0.8 }),
   );
@@ -77,6 +80,10 @@ function spawnEntities() {
     blockers.push({ gx: s.gx, gy: s.gy, r: 0.32 });
     reserved.push({ gx: s.gx, gy: s.gy, r: 1.3 });
   });
+  if (novio) {
+    blockers.push({ gx: novio.gx, gy: novio.gy, r: 0.9 });
+    reserved.push({ gx: novio.gx, gy: novio.gy, r: 1.8 });
+  }
 
   const byType = (type) => MAP_OBJECTS.filter((o) => o[0] === type);
 
@@ -444,6 +451,7 @@ function spawnEntities() {
     o.damage = XTABAY_DAMAGE;
     o.sep = XTABAY_SEP;
     o.monteOnly = false;
+    o.noBeach = true; // nunca pisa la playa (agua somera) y no detecta al jugador si él está en ella
     o.usePath = true; // como los perros: calcula una ruta (A*) y rodea el agua/obstáculos
     o.free = true; // sin zona ni punto de regreso: su visión la acompaña a donde vaya
     reserved.push({ gx, gy, r: 1.5 });
@@ -522,7 +530,7 @@ function spawnEntities() {
   byType("tronco").forEach(([, gx, gy, n, d], k) => {
     const len = Math.max(1, Math.min(4, n | 0 || 1));
     const dir = d === 1 ? 1 : 0;
-    const HW_LOG = 0.45; // medio ancho de la caja (un poco menos que la casilla)
+    const HW_LOG = 0.5; // medio ancho = casilla completa (colisión absoluta)
     boxes.push(
       dir
         ? { x0: gx - HW_LOG, x1: gx + HW_LOG, y0: gy - 0.5, y1: gy + len - 0.5 }
@@ -536,7 +544,16 @@ function spawnEntities() {
     for (let i = 0; i < len; i++) {
       const tx = gx + (dir ? 0 : i);
       const ty = gy + (dir ? i : 0);
-      const spr = (i === len - 1 ? SP.logs.end : SP.logs.mid)[(k + i) % 3];
+      const L = SP.logs;
+      const set =
+        i === 0 && len === 1
+          ? L.single
+          : i === 0
+            ? L.start
+            : i === len - 1
+              ? L.end
+              : L.mid;
+      const spr = set[(k + i) % 3];
       addStatic(spr, tx, ty, { flip: dir === 1 });
       reserved.push({ gx: tx, gy: ty, r: 0.8 });
     }
@@ -627,6 +644,9 @@ function spawnEntities() {
 // (golpea a los enemigos que estén al frente y al alcance).
 function attack() {
   if (cutActive) return cutSkip();
+  // (typeof: así el ataque nunca depende de que menu.js sea la versión con selector de nivel)
+  if (typeof levelPickOpen !== "undefined" && levelPickOpen)
+    return closeLevelPicker();
   if (menuOpen) return menuBack();
   if (!dialogOverlay.classList.contains("hidden")) {
     closeSignDialog();
@@ -656,6 +676,74 @@ function attack() {
       SWORD_DAMAGE,
       d > 0.001 ? dx / d : ax,
       d > 0.001 ? dy / d : ay,
+    );
+  });
+}
+
+// Botón C (tecla C / J): lanza el boomerang hacia donde mira la exploradora.
+// Va en línea recta hasta su alcance (sin colisiones: atraviesa todo), golpea a
+// los enemigos que cruza y regresa a su mano.
+function throwBoomerang() {
+  if (cutActive || menuOpen || isPaused) return;
+  if (typeof levelPickOpen !== "undefined" && levelPickOpen) return;
+  if (!dialogOverlay.classList.contains("hidden")) return;
+  if (!hasBoomerang || boomerang || player.faintT > 0 || player.boat) return;
+  const ax = player.aimGx;
+  const ay = player.aimGy;
+  const n = Math.hypot(ax, ay) || 1;
+  boomerang = {
+    gx: player.gx,
+    gy: player.gy,
+    dx: ax / n,
+    dy: ay / n,
+    dist: 0,
+    back: false,
+    spin: 0,
+    hit: new Set(),
+  };
+}
+
+function updateBoomerang() {
+  const b = boomerang;
+  if (!b) return;
+  if (player.boat || player.faintT > 0) {
+    boomerang = null; // se "recoge" solo si ella no puede atraparlo
+    return;
+  }
+  b.spin += 0.55;
+  if (!b.back) {
+    const nx = b.gx + b.dx * BOOMERANG_SPEED;
+    const ny = b.gy + b.dy * BOOMERANG_SPEED;
+    // Sin colisiones: atraviesa obstáculos y agua; solo importa el alcance
+    b.gx = nx;
+    b.gy = ny;
+    b.dist += BOOMERANG_SPEED;
+    if (b.dist >= BOOMERANG_RANGE) {
+      b.back = true;
+      b.hit.clear(); // en el regreso puede volver a golpear a los mismos enemigos
+    }
+  } else {
+    const dx = player.gx - b.gx;
+    const dy = player.gy - b.gy;
+    const d = Math.hypot(dx, dy);
+    if (d < 0.7) {
+      boomerang = null; // atrapado
+      return;
+    }
+    b.gx += (dx / d) * BOOMERANG_BACK_SPEED;
+    b.gy += (dy / d) * BOOMERANG_BACK_SPEED;
+  }
+  // Golpea a cada enemigo una vez a la ida y otra al regreso, sin detenerse
+  statics.forEach((o) => {
+    if (!o.maxHp || o.dead) return;
+    if (b.hit.has(o)) return;
+    if (Math.hypot(o.gx - b.gx, o.gy - b.gy) > BOOMERANG_HIT_R) return;
+    b.hit.add(o);
+    damageEnemy(
+      o,
+      BOOMERANG_DAMAGE,
+      b.back ? -b.dx : b.dx,
+      b.back ? -b.dy : b.dy,
     );
   });
 }
@@ -1053,6 +1141,18 @@ function checkDogFound() {
   dog.barkLeft = 0;
   burst(dog.gx, dog.gy, tileH(dog.gx, dog.gy), dog.cfg.sparks, 18);
 
+  // Si el perro tiene cinemática propia (CINEMATICAS[<key>], p. ej. "choco"), primero
+  // se ve la cinemática y al terminar (o al saltarla con B) sale el recuerdo
+  const cuts = CINEMATICAS[dog.cfg.key];
+  if (cuts && cuts.length) {
+    isPaused = true;
+    keys = { up: false, down: false, left: false, right: false };
+    startCutscene(dog.cfg.key, () => showDogMemory(dog), { sinCarga: true });
+  } else showDogMemory(dog);
+}
+
+// Ventana del recuerdo al encontrar a un perro
+function showDogMemory(dog) {
   // Imagen del recuerdo: el perro en grande sobre un fondo de pasto
   // (Choco usa su foto; si no hay foto, se usa este dibujo)
   const W = 200;
@@ -1144,7 +1244,8 @@ function aluxWalkable(o, gx, gy) {
   return (
     walkable(gx, gy) &&
     (o.free || Math.hypot(gx - o.homeGx, gy - o.homeGy) <= o.zone) &&
-    (!o.monteOnly || tileAt(gx, gy) === T_MONTE)
+    (!o.monteOnly || tileAt(gx, gy) === T_MONTE) &&
+    (!o.noBeach || !isShallow(tileAt(gx, gy)))
   );
 }
 
@@ -1192,7 +1293,8 @@ function aluxPathStep(o, tx, ty, speed) {
       ty,
       (x, y) =>
         (o.free || Math.hypot(x - o.homeGx, y - o.homeGy) <= o.zone) &&
-        (o.monteOnly ? monteTileOK(x, y) : dogTileOK(x, y)),
+        (o.monteOnly ? monteTileOK(x, y) : dogTileOK(x, y)) &&
+        (!o.noBeach || !isShallow(tileAt(x, y))),
     );
     o.pathIdx = 0;
     o.pathGx = gtx;
@@ -1285,7 +1387,8 @@ function updateAlux(o) {
     inZone &&
     !player.boat &&
     !playerSafe() &&
-    (!o.monteOnly || tileAt(player.gx, player.gy) === T_MONTE);
+    (!o.monteOnly || tileAt(player.gx, player.gy) === T_MONTE) &&
+    (!o.noBeach || !isShallow(tileAt(player.gx, player.gy)));
 
   if (o.hitT > 0) o.hitT--;
   if (o.spotT > 0) o.spotT--;

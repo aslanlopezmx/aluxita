@@ -22,7 +22,21 @@ const CINEMATICAS = {
     "assets/intro/escena6.jpg",
   ],
   fin1: [],
+
+  // "choco" → al encontrar a Choco por primera vez (dentro del nivel, sin pantalla
+  // de carga; después sale el recuerdo del nuevo amigo)
+  choco: [
+    "assets/choco/escena1.jpg",
+    "assets/choco/escena2.jpg",
+    "assets/choco/escena3.jpg",
+    "assets/choco/escena4.jpg",
+    "assets/choco/escena5.jpg",
+  ],
   // fin2: ["assets/nivel2/escena1.jpg", "assets/nivel2/escena2.jpg"],
+
+  // fin4 = cinemática FINAL del juego: se dispara al rescatar al novio (que solo
+  // debe colocarse en el nivel 4). Agrega aquí tus imágenes cuando las tengas:
+  // fin4: ["assets/final/escena1.jpg", "assets/final/escena2.jpg", ...],
 };
 
 /* ---------- Qué nivel se carga ---------- */

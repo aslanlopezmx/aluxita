@@ -66,6 +66,7 @@ function buildSave() {
     health,
     foundCount,
     hasSword,
+    hasBoomerang,
     player: {
       gx: player.gx,
       gy: player.gy,
@@ -78,6 +79,8 @@ function buildSave() {
       got: g.items.map((it) => it.collected),
     })),
     sword: swordItem ? swordItem.collected : false,
+    boomerang: boomerangItem ? boomerangItem.collected : false,
+    novio: novio ? novio.rescued : false,
     checkpoints: checkpoints.map((c) => c.visited),
     lastCheckpoint: lastCheckpoint ? checkpoints.indexOf(lastCheckpoint) : -1,
     dogs: dogs.map((d) => ({
@@ -117,6 +120,11 @@ function loadGame() {
     foundCount = d.foundCount | 0;
     hasSword = !!d.hasSword;
     if (swordItem) swordItem.collected = !!d.sword;
+    if (boomerangItem) {
+      boomerangItem.collected = !!d.boomerang;
+      hasBoomerang = boomerangItem.collected;
+    } else hasBoomerang = !!d.hasBoomerang || hasBoomerang;
+    if (novio) novio.rescued = !!d.novio;
 
     treasures.forEach((t, i) => {
       const s = d.treasures && d.treasures[i];

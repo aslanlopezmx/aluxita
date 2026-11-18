@@ -748,9 +748,9 @@ body {
     position: absolute;
     top: 8px;
     left: 10px;
-    font-size: clamp(9px, 3cqw, 15px);
-    color: #ffe28a;
-    text-shadow: 2px 2px 0 #000;
+    font-size: clamp(14px, 5cqw, 24px);
+    color: #fff;
+    text-shadow: 2px 2px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000;
 }
 
 .map-hint {
@@ -758,7 +758,9 @@ body {
     left: 0;
     right: 0;
     bottom: 8px;
-    text-shadow: 1px 1px 0 #000;
+    font-size: clamp(10px, 3.2cqw, 16px);
+    color: #fff;
+    text-shadow: 2px 2px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000;
 }
 
 /* ---------- Cinemática de introducción ---------- */
@@ -909,5 +911,246 @@ body {
 @keyframes loadingFill {
     to {
         width: 100%;
+    }
+}
+
+/* ---------- Arranque desde otro nivel (sin parpadeo del menú inicial) ---------- */
+html.arranque .title-screen {
+    display: none;
+}
+
+html.arranque-carga .loading-screen.hidden {
+    display: flex;
+}
+
+/* ---------- Selector de nivel (modo desarrollo) ---------- */
+.level-picker {
+    z-index: 30;
+    background: rgba(5, 10, 8, 0.9);
+}
+
+.level-picker .pause-msg {
+    color: #ffd166;
+}
+
+.title-select {
+    margin-top: -1cqh;
+    color: #7ed9a0;
+}
+
+/* Botón C (boomerang): siempre visible; sin boomerang no hace nada */
+.action-btn-c {
+    width: 13vw;
+    max-width: 56px;
+    height: 13vw;
+    max-height: 56px;
+    background: radial-gradient(circle at 35% 30%, #f5d596, #a8723a);
+    box-shadow: 0 5px 0 #4a2b12, inset 0 3px 0 #ffffff55;
+}
+
+/* Botón D: reservado para una función futura (por ahora no hace nada) */
+.action-btn-d {
+    background: radial-gradient(circle at 35% 30%, #8fdcff, #2a6fb0);
+    box-shadow: 0 5px 0 #153d66, inset 0 3px 0 #ffffff55;
+}
+
+.action-btn-d:active {
+    box-shadow: 0 1px 0 #153d66, inset 0 3px 0 #ffffff55;
+}
+
+
+/* ============================================================
+   AJUSTE FINAL: botones planos y carcasa con relieve sutil
+   ============================================================ */
+
+/* Carcasa: acabado mate con relieve neumórfico discreto. */
+.gameboy-body {
+    background: #d5d1c5;
+    border: 1px solid rgba(255, 255, 255, 0.42);
+    border-top: 0;
+    box-shadow:
+        8px 8px 18px rgba(48, 43, 34, 0.13),
+        -6px -6px 16px rgba(255, 255, 255, 0.16),
+        inset 1px 1px 2px rgba(255, 255, 255, 0.42);
+}
+
+/* Los grupos quedan paralelos, rectos y con separación uniforme. */
+.action-buttons {
+    align-items: center;
+    justify-content: center;
+    gap: clamp(22px, 3.2vw, 34px);
+    margin-top: 14px;
+    padding: 0 10px 10px;
+}
+
+.action-group {
+    align-items: center;
+    justify-content: center;
+    gap: clamp(13px, 1.8vw, 17px);
+}
+
+.action-group:last-child {
+    margin-bottom: 0;
+}
+
+/* Color completamente plano: sin gradientes ni sombras internas. */
+.action-btn,
+.action-btn.action-btn-c,
+.action-btn.action-btn-d {
+    width: clamp(48px, 6vw, 66px);
+    height: clamp(48px, 6vw, 66px);
+    max-width: none;
+    max-height: none;
+    padding: 0;
+    border: 1px solid rgba(65, 62, 55, 0.42);
+    border-radius: 50%;
+    color: transparent;
+    font-size: 0;
+    background-image: none !important;
+    box-shadow:
+        3px 4px 7px rgba(75, 69, 58, 0.22),
+        -2px -2px 6px rgba(255, 255, 255, 0.52);
+    transition: transform 0.09s ease, box-shadow 0.09s ease;
+}
+
+/* Usar background completo elimina también cualquier degradado heredado. */
+#btnC {
+    background: #42bd94 !important;
+}
+
+#btnB {
+    background: #f1d34f !important;
+}
+
+#btnD {
+    background: #3978d5 !important;
+}
+
+#btnA {
+    background: #e9574e !important;
+}
+
+.action-btn:active,
+.action-btn.action-btn-c:active,
+.action-btn.action-btn-d:active {
+    transform: translateY(2px);
+    box-shadow:
+        1px 2px 3px rgba(75, 69, 58, 0.18),
+        -1px -1px 3px rgba(255, 255, 255, 0.35);
+}
+
+@media (max-width: 768px) {
+    .action-buttons {
+        gap: clamp(18px, 4vw, 28px);
+        margin-top: 1.5dvh;
+        padding: 0 6px 6px;
+    }
+
+    .action-group {
+        gap: clamp(12px, 1.8dvh, 16px);
+    }
+
+    .action-btn,
+    .action-btn.action-btn-c,
+    .action-btn.action-btn-d {
+        width: min(16vw, 10.5dvh);
+        height: min(16vw, 10.5dvh);
+    }
+
+    .action-group:last-child {
+        margin-bottom: 0;
+    }
+}
+
+@media (min-width: 769px) {
+    .action-buttons {
+        gap: 30px;
+        margin-top: 12px;
+    }
+
+    .action-group {
+        gap: 15px;
+    }
+
+    .action-btn,
+    .action-btn.action-btn-c,
+    .action-btn.action-btn-d {
+        width: 64px;
+        height: 64px;
+    }
+}
+
+/* Distribución diagonal inclinada 25°: estilo botones Super Nintendo. */
+.action-buttons {
+    --action-size: clamp(48px, 6vw, 64px);
+    --action-major: clamp(42px, 4.9vw, 52px);
+    --action-minor: clamp(18px, 2.1vw, 22px);
+    position: relative;
+    display: block;
+    flex: 0 0 calc(var(--action-size) + var(--action-major) + var(--action-major));
+    width: calc(var(--action-size) + var(--action-major) + var(--action-major));
+    height: calc(var(--action-size) + var(--action-major) + var(--action-major));
+    margin: 14px 8px 0 0;
+    padding: 0;
+    transform: none;
+}
+
+.action-group {
+    display: contents;
+}
+
+.action-group:last-child {
+    margin: 0;
+}
+
+.action-buttons .action-btn,
+.action-buttons .action-btn.action-btn-c,
+.action-buttons .action-btn.action-btn-d {
+    position: absolute;
+    width: var(--action-size);
+    height: var(--action-size);
+    min-width: 0;
+    min-height: 0;
+    margin: 0;
+}
+
+/* Se conserva el orden de colores, pero el rombo queda girado 25° y con aire entre botones. */
+#btnC {
+    left: calc(50% - var(--action-major));
+    top: calc(50% - var(--action-minor));
+    transform: translate(-50%, -50%);
+}
+
+#btnD {
+    left: calc(50% + var(--action-minor));
+    top: calc(50% - var(--action-major));
+    transform: translate(-50%, -50%);
+}
+
+#btnB {
+    left: calc(50% - var(--action-minor));
+    top: calc(50% + var(--action-major));
+    transform: translate(-50%, -50%);
+}
+
+#btnA {
+    left: calc(50% + var(--action-major));
+    top: calc(50% + var(--action-minor));
+    transform: translate(-50%, -50%);
+}
+
+.action-buttons #btnC:active,
+.action-buttons #btnD:active,
+.action-buttons #btnB:active,
+.action-buttons #btnA:active {
+    transform: translate(-50%, calc(-50% + 2px));
+}
+
+@media (max-width: 768px) {
+    .action-buttons {
+        --action-size: min(16vw, 10.5dvh);
+        --action-major: min(13vw, 8.6dvh);
+        --action-minor: min(5.5vw, 3.6dvh);
+        margin: 1.5dvh 5px 0 0;
     }
 }

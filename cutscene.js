@@ -12,6 +12,7 @@ let cutLoading = false; // mostrando la pantalla de carga
 let cutIdx = 0;
 let cutLockUntil = 0;
 let cutSwapT = null;
+let cutNoLoad = false; // true: al terminar no sale "CARGANDO" (cinemática dentro del nivel)
 
 function cutShow(i) {
   const img = document.getElementById("cutImg");
@@ -37,8 +38,11 @@ function cutShow(i) {
 
 // nombre: clave de CINEMATICAS. onDone(): se llama al terminar la pantalla de carga;
 // si devuelve true, las pantallas se quedan puestas (porque la página se va a recargar).
-function startCutscene(nombre, onDone) {
+// opts.sinCarga: true → sin pantalla de carga: la cinemática se desvanece y llama a
+// onDone() (para cinemáticas dentro del nivel, como la de encontrar a Choco).
+function startCutscene(nombre, onDone, opts) {
   if (cutActive) return;
+  cutNoLoad = !!(opts && opts.sinCarga);
   cutScenes = (CINEMATICAS[nombre] || []).slice();
   cutDone = onDone || null;
   cutActive = true;
@@ -69,6 +73,20 @@ function cutFinish() {
   cutLoading = true;
   clearTimeout(cutSwapT);
   const cut = document.getElementById("cutscene");
+  if (cutNoLoad) {
+    // Sin pantalla de carga: fundido de salida y se continúa con onDone()
+    cut.classList.add("fading");
+    setTimeout(() => {
+      cut.classList.add("hidden");
+      const cb = cutDone;
+      cutDone = null;
+      cutActive = false;
+      cutLoading = false;
+      cutNoLoad = false;
+      if (cb) cb();
+    }, 500);
+    return;
+  }
   const load = document.getElementById("loadingScreen");
   load.classList.remove("hidden", "fading");
   setTimeout(() => {

@@ -11,7 +11,9 @@ function updateHUD() {
     .map((g) => ` | ${g.def.emoji} ${g.count}/${g.items.length}`)
     .join("");
   const sw = swordItem ? ` | ⚔️ ${hasSword ? 1 : 0}/1` : "";
-  itemDisplay.innerText = `🥐 ${foundCount}/${treasures.length}${gl}${sw}`;
+  const bm = boomerangItem ? ` | 🪃 ${hasBoomerang ? 1 : 0}/1` : "";
+  const nv = novio ? ` | 🤗 ${novio.rescued ? 1 : 0}/1` : "";
+  itemDisplay.innerText = `🥐 ${foundCount}/${treasures.length}${gl}${sw}${bm}${nv}`;
 }
 
 /* ---------- Controles ---------- */
@@ -42,6 +44,13 @@ function startGame(load) {
   const t = document.getElementById("titleScreen");
   t.classList.add("closing");
   setTimeout(() => t.remove(), 400);
+}
+
+// SELECT: selector de nivel en el título / zoom en el juego (pressSelect está en menu.js;
+// si ese archivo es una versión anterior, cae al zoom de siempre)
+function selectPressed() {
+  if (typeof pressSelect === "function") pressSelect();
+  else cycleZoom();
 }
 
 function setupControls() {
@@ -85,7 +94,8 @@ function setupControls() {
 
   bindPress("btnA", actionA);
   bindPress("btnB", attack);
-  bindPress("btnSelect", cycleZoom);
+  bindPress("btnC", throwBoomerang);
+  bindPress("btnSelect", selectPressed);
   bindPress("btnStart", pressStart);
   document
     .getElementById("titleScreen")
@@ -105,13 +115,20 @@ function setupControls() {
     if (e.code === "ArrowLeft" || e.code === "KeyA") keys.left = true;
     if (e.code === "ArrowRight" || e.code === "KeyD") keys.right = true;
     if (e.repeat) return;
+    if (
+      e.code === "Escape" &&
+      typeof levelPickOpen !== "undefined" &&
+      levelPickOpen
+    )
+      return closeLevelPicker();
     if (e.code === "ArrowUp" || e.code === "KeyW") uiNav("up");
     if (e.code === "ArrowDown" || e.code === "KeyS") uiNav("down");
     if (e.code === "Enter" || e.code === "Escape" || e.code === "KeyP")
       pressStart();
     if (e.code === "Space" || e.code === "KeyE") actionA();
     if (e.code === "KeyX" || e.code === "KeyK") attack();
-    if (e.code === "KeyZ") cycleZoom();
+    if (e.code === "KeyC" || e.code === "KeyJ") throwBoomerang();
+    if (e.code === "KeyZ") selectPressed();
   });
 
   window.addEventListener("keyup", (e) => {
@@ -259,6 +276,7 @@ function actionA() {
   if (tryBoat()) return;
   if (checkChestInteraction()) return;
   if (checkSignInteraction()) return;
+  if (checkNovioInteraction()) return;
   if (player.jumpT === 0) player.jumpT = 1;
 }
 
@@ -277,6 +295,36 @@ function checkSignInteraction() {
   return found;
 }
 
+// Novio atado: con A cerca de él la exploradora lo libera (solo una vez)
+function checkNovioInteraction() {
+  if (isPaused || !novio || novio.rescued) return false;
+  const dist = Math.hypot(player.gx - novio.gx, player.gy - novio.gy);
+  if (dist >= NOVIO_RANGE) return false;
+  novio.rescued = true;
+  updateHUD();
+  burst(
+    novio.gx,
+    novio.gy,
+    tileH(Math.round(novio.gx), Math.round(novio.gy)),
+    ["#ffd166", "#f72585", "#ffffff", "#8fdcff"],
+    20,
+  );
+  // Encontrar al novio es el final del juego: al cerrar el modal, se reutiliza
+  // el mismo mecanismo de "salir de nivel" (cinemática "finN" + pantalla de
+  // carga); como solo existe en el último nivel, esto termina el juego.
+  openMemoryModal(
+    {
+      image: makeNovioCardImage(),
+      title: "¡Por fin lo encontraste!",
+      message:
+        "Desatas las cuerdas y lo abrazas fuerte. Juntos, ya nada los puede separar, bombón.",
+    },
+    "* ¡LO RESCATASTE! *",
+    beginLevelExit,
+  );
+  return true;
+}
+
 function openSignDialog(text) {
   isPaused = true;
   keys = { up: false, down: false, left: false, right: false };
@@ -289,9 +337,13 @@ function closeSignDialog() {
   isPaused = false;
 }
 
-function openMemoryModal(chest, badge) {
+// onClose (opcional): se llama una sola vez, justo después de cerrar este
+// modal con el botón CONTINUAR (p. ej. para encadenar la cinemática final).
+let memoryModalOnClose = null;
+function openMemoryModal(chest, badge, onClose) {
   isPaused = true;
   keys = { up: false, down: false, left: false, right: false };
+  memoryModalOnClose = onClose || null;
   memoryBadge.innerText = badge || "* TESORO ENCONTRADO *";
   const alts = chest.alts || [];
   let altI = 0;
@@ -359,9 +411,37 @@ function checkCollect() {
     openMemoryModal(
       {
         image: makeSwordCardImage(),
-        title: "¡Encontraste la espada!",
+        title: "¡Encontraste el macuahuitl!",
         message:
-          "¡Ahora ya tienes la función de ataque! Presiona el botón B (o X / K en el teclado) para atacar a los enemigos que tengas enfrente.",
+          "La espada maya, con filos de obsidiana. ¡Ahora ya tienes la función de ataque! Presiona el botón B (o X / K en el teclado) para atacar a los enemigos que tengas enfrente.",
+      },
+      "* ¡NUEVA HABILIDAD! *",
+    );
+  }
+  // Boomerang: al recogerlo se desbloquea el ataque a distancia (botón C)
+  if (
+    boomerangItem &&
+    !boomerangItem.collected &&
+    !isPaused &&
+    Math.hypot(player.gx - boomerangItem.gx, player.gy - boomerangItem.gy) <=
+      0.9
+  ) {
+    boomerangItem.collected = true;
+    hasBoomerang = true;
+    updateHUD();
+    burst(
+      boomerangItem.gx,
+      boomerangItem.gy,
+      tileH(boomerangItem.gx, boomerangItem.gy),
+      ["#ffffff", "#e0b070", "#ffd166", "#f72585"],
+      20,
+    );
+    openMemoryModal(
+      {
+        image: makeBoomerangCardImage(),
+        title: "¡Encontraste el boomerang!",
+        message:
+          "¡Ahora puedes atacar a distancia! Presiona el botón C (o C / J en el teclado) para lanzarlo hacia donde mires: golpea a los enemigos y regresa a ti.",
       },
       "* ¡NUEVA HABILIDAD! *",
     );
@@ -395,11 +475,26 @@ function checkCollect() {
 closeModalBtn.addEventListener("click", () => {
   memoryModal.classList.add("hidden");
   isPaused = false;
+  if (memoryModalOnClose) {
+    const cb = memoryModalOnClose;
+    memoryModalOnClose = null;
+    cb();
+  }
 });
 
 // Mueve a la exploradora (dx, dy) sin que se atore: si choca contra un obstáculo
 // redondo, resbala por su borde y lo rodea; contra orillas o troncos, resbala por
 // el eje libre. Si por algún motivo quedó dentro de un obstáculo, se la empuja afuera.
+// ¿El paso (a→b) en diagonal cruza la esquina de una casilla de caja (troncos/rocas)?
+function cornerCut(ax, ay, bx, by) {
+  const ax0 = Math.round(ax),
+    ay0 = Math.round(ay);
+  const bx0 = Math.round(bx),
+    by0 = Math.round(by);
+  if (ax0 === bx0 || ay0 === by0) return false;
+  return inBox(bx0, ay0) || inBox(ax0, by0);
+}
+
 function movePlayer(dx, dy, canGo) {
   const x0 = player.gx;
   const y0 = player.gy;
@@ -429,8 +524,8 @@ function movePlayer(dx, dy, canGo) {
     }
   }
 
-  // 1. Camino libre
-  if (canGo(x0 + dx, y0 + dy)) {
+  // 1. Camino libre (sin colarse por la esquina entre dos casillas bloqueadas)
+  if (canGo(x0 + dx, y0 + dy) && !cornerCut(x0, y0, x0 + dx, y0 + dy)) {
     player.gx = x0 + dx;
     player.gy = y0 + dy;
     return;
@@ -633,6 +728,7 @@ function update() {
   if (bloodFear < 0.003) bloodFear = 0;
 
   if (player.attackT > 0) player.attackT--;
+  updateBoomerang();
   if (player.invuln > 0) player.invuln--;
 
   hammocks.forEach((h) => {

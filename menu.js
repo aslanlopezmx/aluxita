@@ -137,6 +137,7 @@ function menuNav(name) {
 
 // Flecha pulsada en cualquier pantalla (título o menú de pausa)
 function uiNav(name) {
+  if (levelPickOpen) return levelPickNav(name);
   if (!gameStarted) titleNav(name);
   else if (menuOpen) menuNav(name);
 }
@@ -289,6 +290,7 @@ function refreshTitleList() {
 function titleStart() {
   if (gameStarted) return;
   if (cutActive) return cutNext();
+  if (levelPickOpen) return levelPickA();
   if (titleStage === "press") {
     titleStage = "choose";
     titleSel = hasSave() ? 1 : 0; // si hay guardado, se propone continuarlo
@@ -300,7 +302,7 @@ function titleStart() {
 }
 
 function titleNav(name) {
-  if (cutActive || titleStage !== "choose") return;
+  if (cutActive || levelPickOpen || titleStage !== "choose") return;
   const dir = name === "down" ? 1 : name === "up" ? -1 : 0;
   if (!dir) return;
   const n = TITLE_ITEMS.length;
@@ -317,6 +319,7 @@ function titleNav(name) {
 // Botón A en el título: acepta la opción (o abre la elección)
 function titleA() {
   if (cutActive) return cutNext();
+  if (levelPickOpen) return levelPickA();
   if (titleStage === "choose") titleAccept();
   else titleStart();
 }
@@ -327,3 +330,90 @@ function titleAccept() {
   if (it.act === "load") startGame(true);
   else nuevaPartida();
 }
+
+/* ---------- Selector de nivel (para desarrollo) ---------- */
+// SELECT (o Z) en la pantalla principal abre una ventana con todos los niveles.
+// Al elegir uno, la página se recarga y entra directo a ese nivel (sin cinemática,
+// sin tocar la partida guardada). Con "ESPADA Y PERROS: SÍ" llega como si ya
+// hubiera pasado los niveles anteriores (con la espada y los perros).
+let levelPickOpen = false;
+let levelPickSel = 0;
+let levelPickKit = true;
+
+function openLevelPicker() {
+  if (gameStarted || cutActive || levelPickOpen) return;
+  levelPickOpen = true;
+  levelPickSel = Math.max(0, Math.min(NIVELES_TOTAL - 1, NIVEL - 1)); // el nivel actual
+  renderLevelPicker();
+  document.getElementById("levelPicker").classList.remove("hidden");
+}
+
+function closeLevelPicker() {
+  levelPickOpen = false;
+  document.getElementById("levelPicker").classList.add("hidden");
+}
+
+// SELECT: en el título abre/cierra el selector; durante el juego cambia el zoom
+function pressSelect() {
+  if (cutActive) return;
+  if (!gameStarted)
+    return levelPickOpen ? closeLevelPicker() : openLevelPicker();
+  cycleZoom();
+}
+
+function levelPickNav(name) {
+  const dir = name === "down" ? 1 : name === "up" ? -1 : 0;
+  if (!dir) return;
+  const n = NIVELES_TOTAL + 1; // niveles + la opción de espada y perros
+  levelPickSel = (levelPickSel + dir + n) % n;
+  renderLevelPicker();
+}
+
+function levelPickA() {
+  if (levelPickSel < NIVELES_TOTAL) return irANivelDev(levelPickSel + 1);
+  levelPickKit = !levelPickKit;
+  renderLevelPicker();
+}
+
+function irANivelDev(n) {
+  const carry =
+    n > 1 && levelPickKit
+      ? {
+          sword: true,
+          boomerang: true,
+          dogs: DOG_KINDS.map((d) => d.key),
+          mem: 0,
+        }
+      : null;
+  setPendiente({ nivel: n, modo: "dev", carry });
+}
+
+function renderLevelPicker() {
+  const list = document.getElementById("levelList");
+  list.innerHTML = "";
+  const rows = [];
+  for (let i = 1; i <= NIVELES_TOTAL; i++)
+    rows.push("NIVEL " + i + (i === NIVEL ? " (ACTUAL)" : ""));
+  rows.push("ESPADA Y PERROS: " + (levelPickKit ? "SÍ" : "NO"));
+  rows.forEach((label, i) => {
+    const li = document.createElement("li");
+    li.textContent = label;
+    if (i === levelPickSel) li.className = "sel";
+    li.addEventListener("pointerdown", (e) => {
+      e.stopPropagation();
+      levelPickSel = i;
+      levelPickA();
+    });
+    list.appendChild(li);
+  });
+}
+
+// El aviso "SELECT: ELEGIR NIVEL" del título también se puede tocar
+(function () {
+  const el = document.getElementById("titleSelect");
+  if (!el) return;
+  el.addEventListener("pointerdown", (e) => {
+    e.stopPropagation();
+    openLevelPicker();
+  });
+})();

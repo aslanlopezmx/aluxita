@@ -7,6 +7,19 @@
       content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
     />
     <title>Zelda Retro: Aventura en Yucatán</title>
+    <script>
+      // Si se llega desde otro nivel, evita que parpadee el menú inicial
+      (function () {
+        try {
+          var p = JSON.parse(localStorage.getItem("zelda-yucatan-pendiente"));
+          if (p && p.nivel) {
+            var c = document.documentElement.classList;
+            c.add("arranque");
+            if (p.modo === "carry" || p.modo === "dev") c.add("arranque-carga");
+          }
+        } catch (e) {}
+      })();
+    </script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -39,6 +52,21 @@
             <ul id="titleList" class="menu-list hidden"></ul>
             <div id="titleHint" class="pause-hint hidden">
               ▲▼ ELEGIR &nbsp; A / START ACEPTAR
+            </div>
+            <div id="titleSelect" class="pause-hint title-select">
+              SELECT: ELEGIR NIVEL
+            </div>
+          </div>
+
+          <!-- Selector de nivel (SELECT en la pantalla principal; para desarrollo) -->
+          <div id="levelPicker" class="pause-menu level-picker hidden">
+            <div class="pause-panel">
+              <div class="pause-title">ELEGIR NIVEL</div>
+              <ul id="levelList" class="menu-list"></ul>
+              <div class="pause-msg">MODO DESARROLLO</div>
+              <div class="pause-hint">
+                ▲▼ ELEGIR &nbsp; A ACEPTAR &nbsp; B / SELECT VOLVER
+              </div>
             </div>
           </div>
 
@@ -117,10 +145,14 @@
           <!-- Botones de Acción (A y B) -->
           <div class="action-buttons">
             <div class="action-group">
+              <button class="action-btn action-btn-c" id="btnC">C</button>
               <button class="action-btn" id="btnB">B</button>
               <!-- Se ha eliminado el label ESPADA -->
             </div>
             <div class="action-group">
+              <button class="action-btn action-btn-c action-btn-d" id="btnD">
+                D
+              </button>
               <button class="action-btn" id="btnA">A</button>
               <!-- Se ha eliminado el label SALTAR -->
             </div>

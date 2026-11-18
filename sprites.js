@@ -3800,7 +3800,7 @@ function makeRock() {
 // profundidad con el jugador funciona bien en toda su longitud).
 // La rebanada corre hacia +gx (abajo-derecha en pantalla); el tronco que corre
 // hacia +gy usa el mismo sprite espejado. cap = tapa visible en el extremo final.
-function makeLogSlice(cap, seed) {
+function makeLogSlice(cap, seed, start) {
   const G = 18; // fila del suelo (centro de la casilla)
   const R = 6; // radio visual del tronco
   return sprite(20, 28, 8, G, (c) => {
@@ -3808,16 +3808,25 @@ function makeLogSlice(cap, seed) {
     for (let X = 0; X < 20; X++) {
       const xr = X - 8 + 0.5;
       if (xr > 9) continue;
+      if (start && X < 2) continue;
       rect(c, X, Math.round(G + xr / 2) - 1, 1, 5, "rgba(0,0,0,0.22)");
     }
     // Cuerpo cilíndrico: banda diagonal con pendiente 1/2 (como el borde de una casilla)
     for (let X = 0; X < 16; X++) {
       const xr = X - 8 + 0.5;
       const yc = -R + xr / 2;
-      const y0 = Math.round(G + yc - R);
-      const y1 = Math.round(G + yc + R);
+      let y0 = Math.round(G + yc - R);
+      let y1 = Math.round(G + yc + R);
+      // Extremo trasero redondeado (en vez de un corte vertical recto)
+      if (start && X < 5) {
+        const k = (5 - X) / 5;
+        const inset = Math.round(R * (1 - Math.sqrt(1 - k * k)));
+        y0 += inset;
+        y1 -= inset;
+      }
+      const f0 = y0;
       for (let Y = y0; Y <= y1; Y++) {
-        const f = (Y - y0) / (y1 - y0);
+        const f = y1 === y0 ? 0 : (Y - y0) / (y1 - y0);
         // luz desde arriba: brillo arriba, sombra abajo (da volumen redondo)
         const col =
           f < 0.1
@@ -3834,6 +3843,12 @@ function makeLogSlice(cap, seed) {
                       ? "#52301a"
                       : "#38200e";
         px(c, X, Y, col);
+      }
+      // Borde oscuro del extremo trasero
+      if (start && X < 5) {
+        px(c, X, y0, "#38200e");
+        px(c, X, y1, "#38200e");
+        if (X === 0) for (let Y = y0; Y <= y1; Y++) px(c, X, Y, "#38200e");
       }
       // Vetas de la corteza (siguen la dirección del tronco)
       const h = (X * 7 + seed * 5) % 9;
@@ -5803,6 +5818,308 @@ function makeHammock() {
   });
 }
 
+// Novio: personaje a rescatar. Plataforma baja de piedra con un petate de hojas
+// de palma encima; el novio está acostado y amarrado (muñecas, pecho y tobillos),
+// con una mordaza de tela. freed = true dibuja la misma escena ya sin las cuerdas
+// (cortadas sobre el petate), con los ojos abiertos, sonrisa, mejillas sonrojadas,
+// una mano saludando y un corazón flotando (se usa cuando la exploradora lo rescata).
+function makeNovio(freed) {
+  return sprite(46, 37, 23, 35, (c) => {
+    c.translate(0, 9); // 9 filas extra arriba (pelo, mano que saluda, corazón)
+    const OL = "#1a1310";
+    const STONE_D = "#4a4a44";
+    const STONE = "#7d7d70";
+    const STONE_L = "#a3a396";
+    const MOSS = "#4f7a3a";
+    const MOSS_L = "#7aa84e";
+    const LEAF_D = "#3f6b2e";
+    const LEAF = "#5c8f3d";
+    const LEAF_L = "#86b85a";
+    const STRAW = "#7a6a3a";
+    const STRAW_L = "#9c8a4e";
+    const ROPE = "#a07a44";
+    const ROPE_L = "#c9a566";
+    const ROPE_D = "#573e1e";
+    const SKIN = "#e3ad82";
+    const SKIN_D = "#c48860";
+    const SKIN_L = "#f6d2ab";
+    const HAIR = "#2b1a12";
+    const HAIR_L = "#5a3a26";
+    const SHIRT = "#efe6cc";
+    const SHIRT_D = "#cbbf99";
+    const SHIRT_DD = "#a99d78";
+    const PANTS = "#8a5a33";
+    const PANTS_D = "#6b4423";
+    const PANTS_L = "#a8744a";
+    const SOLE = "#3b2614";
+    const STRAP = "#7a4a22";
+    const CLOTH = "#d8cfb0";
+    const CLOTH_D = "#b3a984";
+
+    // Contorno oscuro + relleno
+    const box = (x, y, w, h, fill) => {
+      rect(c, x - 1, y - 1, w + 2, h + 2, OL);
+      rect(c, x, y, w, h, fill);
+    };
+
+    // Sombra en el suelo
+    ellipse(c, 23, 26, 21, 3, "rgba(0,0,0,0.30)");
+
+    // Piedrecitas y hierba en el suelo
+    px(c, 1, 24, "#6b6b60");
+    px(c, 2, 24, "#8f8f82");
+    px(c, 44, 23, "#6b6b60");
+    px(c, 43, 23, "#8f8f82");
+    [
+      [2, 22],
+      [43, 21],
+      [21, 22],
+    ].forEach(([gx, gy]) => {
+      px(c, gx, gy, MOSS);
+      px(c, gx - 1, gy - 1, MOSS_L);
+      px(c, gx + 1, gy - 2, MOSS_L);
+      px(c, gx, gy - 1, MOSS);
+    });
+
+    // Sombra bajo la plataforma (entre las patas)
+    rect(c, 13, 14, 20, 6, "rgba(0,0,0,0.28)");
+
+    // Patas de piedra (bloques con juntas, grietas y musgo)
+    [5, 33].forEach((lx) => {
+      rect(c, lx - 1, 10, 10, 11, OL);
+      rect(c, lx, 11, 8, 9, STONE_D);
+      rect(c, lx, 11, 8, 3, STONE);
+      rect(c, lx + 1, 12, 3, 1, STONE_L);
+      rect(c, lx, 14, 8, 1, "#3a3a35"); // junta entre bloques
+      rect(c, lx + 4, 15, 1, 4, "#3a3a35");
+      rect(c, lx + 1, 15, 2, 1, STONE);
+      rect(c, lx + 5, 16, 2, 1, STONE);
+      px(c, lx + 2, 18, "#33332e"); // grieta
+      px(c, lx + 3, 17, "#33332e");
+      rect(c, lx, 19, 8, 2, "#2c2c29");
+      // musgo
+      px(c, lx, 17, MOSS);
+      px(c, lx, 18, MOSS);
+      px(c, lx + 1, 18, MOSS_L);
+      px(c, lx + 7, 15, MOSS);
+      px(c, lx + 6, 14, MOSS_L);
+    });
+
+    // Petate de hojas de palma trenzadas
+    rect(c, 0, 7, 46, 8, OL);
+    rect(c, 1, 8, 44, 6, LEAF_D);
+    for (let x = 1; x <= 44; x++) {
+      const band = Math.floor((x - 1) / 3) % 2;
+      rect(c, x, 9, 1, 4, band ? LEAF : STRAW);
+      px(c, x, 9, band ? LEAF_L : STRAW_L);
+      if (x % 3 === 1) px(c, x, 11, band ? LEAF_D : "#5f512a"); // trenzado
+    }
+    rect(c, 1, 8, 44, 1, LEAF_L);
+    rect(c, 1, 13, 44, 1, "#2b4a20");
+    // Flecos deshilachados en las puntas
+    [
+      [0, 14],
+      [1, 15],
+      [2, 14],
+      [43, 14],
+      [44, 15],
+      [45, 14],
+    ].forEach(([fx, fy]) => px(c, fx, fy, LEAF_D));
+    px(c, 0, 15, STRAW);
+    px(c, 45, 15, STRAW);
+
+    // ---- El novio, acostado de espaldas sobre el petate (cabeza a la izquierda) ----
+
+    // Piernas (pantalón con pliegues y rodilla)
+    box(24, 3, 15, 7, PANTS);
+    rect(c, 24, 3, 15, 1, PANTS_L);
+    rect(c, 24, 8, 15, 2, PANTS_D);
+    px(c, 30, 5, PANTS_D);
+    px(c, 31, 6, PANTS_D);
+    px(c, 32, 5, PANTS_D);
+    rect(c, 31, 3, 3, 1, "#c08a5c"); // rodilla
+    px(c, 27, 6, PANTS_D);
+    px(c, 28, 7, PANTS_D);
+    // Parche en el pantalón
+    rect(c, 35, 5, 2, 2, "#b3875a");
+    px(c, 35, 5, PANTS_D);
+
+    // Huaraches (con tirantes) y dedos
+    box(39, 2, 5, 8, SOLE);
+    rect(c, 40, 2, 3, 3, SKIN); // dedos
+    px(c, 40, 2, SKIN_L);
+    px(c, 42, 2, SKIN_D);
+    rect(c, 39, 5, 5, 1, STRAP);
+    rect(c, 39, 7, 5, 1, STRAP);
+    rect(c, 40, 8, 4, 1, "#5c3a1c");
+
+    // Torso: guayabera clara con cuello, pliegues, bolsillos y botones
+    box(11, 0, 14, 10, SHIRT);
+    rect(c, 11, 0, 14, 1, "#fffaf0");
+    rect(c, 11, 8, 14, 2, SHIRT_D);
+    [16, 22].forEach((x) => rect(c, x, 2, 1, 6, SHIRT_D)); // alforzas
+    rect(c, 13, 3, 3, 3, SHIRT_D); // bolsillo
+    rect(c, 14, 3, 2, 2, SHIRT);
+    rect(c, 20, 3, 3, 3, SHIRT_D);
+    rect(c, 21, 3, 2, 2, SHIRT);
+    px(c, 17, 2, "#8a7a52"); // botones
+    px(c, 17, 5, "#8a7a52");
+    px(c, 17, 8, "#8a7a52");
+    // Cuello en V
+    rect(c, 11, 1, 2, 3, SKIN_D);
+    px(c, 11, 2, SKIN);
+    px(c, 12, 0, "#fffaf0");
+    px(c, 12, 4, SHIRT_DD);
+    // Cinturón con hebilla
+    rect(c, 22, 8, 3, 2, "#4a2d16");
+    px(c, 23, 8, "#f2c13d");
+    px(c, 23, 9, "#c9971e");
+    // Manchas de suciedad
+    px(c, 14, 7, SHIRT_DD);
+
+    // Cabeza (de perfil hacia arriba): cuello, cara, oreja y nariz
+    rect(c, 10, 6, 3, 3, SKIN_D); // cuello
+    box(2, -1, 10, 10, SKIN);
+    rect(c, 2, 7, 10, 2, SKIN_D); // sombra de la mandíbula
+    rect(c, 3, 0, 8, 1, SKIN_L);
+    px(c, 2, 1, SKIN_L);
+    rect(c, 10, 3, 2, 3, SKIN_D); // oreja
+    px(c, 11, 4, "#a8704c");
+    px(c, 7, 5, SKIN_D); // nariz
+    px(c, 6, 6, SKIN_D);
+    px(c, 8, 6, SKIN_D);
+    px(c, 7, 4, SKIN_L);
+
+    // Pelo (con volumen, brillo y mechones)
+    rect(c, 1, -4, 11, 4, HAIR);
+    rect(c, 2, -5, 9, 1, HAIR);
+    rect(c, 0, -2, 3, 5, HAIR); // patilla izquierda
+    rect(c, 10, -2, 2, 3, HAIR);
+    px(c, 3, -6, HAIR);
+    px(c, 7, -6, HAIR);
+    px(c, 9, -5, HAIR);
+    px(c, 5, -5, HAIR_L);
+    px(c, 6, -4, HAIR_L);
+    px(c, 3, -3, HAIR_L);
+    px(c, 8, -3, HAIR_L);
+    px(c, 10, -3, HAIR_L);
+    px(c, 1, 1, HAIR);
+    px(c, 4, 0, HAIR);
+    px(c, 7, 0, HAIR);
+    px(c, 9, 0, HAIR);
+    px(c, 6, -1, HAIR_L);
+
+    if (freed) {
+      // Cejas relajadas y ojos abiertos (con brillo)
+      rect(c, 3, 1, 3, 1, HAIR);
+      rect(c, 8, 1, 2, 1, HAIR);
+      rect(c, 3, 2, 3, 2, "#ffffff");
+      rect(c, 8, 2, 2, 2, "#ffffff");
+      px(c, 4, 2, "#2a1a10");
+      px(c, 4, 3, "#2a1a10");
+      px(c, 9, 2, "#2a1a10");
+      px(c, 9, 3, "#2a1a10");
+      px(c, 3, 2, "#9a6a40");
+      // Mejillas sonrojadas
+      px(c, 3, 5, "#ee8f8f");
+      px(c, 4, 5, "#ee8f8f");
+      px(c, 9, 5, "#ee8f8f");
+      // Sonrisa con dientes
+      rect(c, 4, 7, 5, 1, "#ffffff");
+      px(c, 3, 6, "#8a4a3a");
+      px(c, 9, 6, "#8a4a3a");
+      rect(c, 4, 8, 5, 1, "#8a4a3a");
+
+      // Una mano libre saluda: antebrazo en alto con manga y mano abierta
+      box(16, -1, 3, 5, SHIRT_D);
+      rect(c, 16, 3, 3, 1, SHIRT);
+      rect(c, 14, -5, 7, 5, OL);
+      rect(c, 15, -4, 5, 3, SKIN);
+      rect(c, 15, -7, 1, 3, SKIN); // dedos
+      rect(c, 17, -8, 1, 4, SKIN);
+      rect(c, 19, -7, 1, 3, SKIN);
+      rect(c, 14, -3, 1, 2, SKIN); // pulgar
+      px(c, 15, -8, OL);
+      px(c, 17, -9, OL);
+      px(c, 19, -8, OL);
+      px(c, 16, -3, SKIN_L);
+      px(c, 18, -2, SKIN_D);
+      // Cuerdas cortadas sobre el petate
+      pline(c, 26, 9, 31, 8, ROPE, 1);
+      px(c, 29, 8, ROPE_L);
+      pline(c, 36, 10, 44, 10, ROPE, 1);
+      px(c, 40, 10, ROPE_D);
+      px(c, 6, 9, ROPE);
+      px(c, 7, 10, ROPE_D);
+      // Corazoncito flotando
+      rect(c, 29, -6, 2, 2, "#f72585");
+      rect(c, 32, -6, 2, 2, "#f72585");
+      rect(c, 29, -5, 5, 2, "#f72585");
+      rect(c, 30, -3, 3, 1, "#f72585");
+      px(c, 31, -2, "#f72585");
+      px(c, 30, -6, "#ff8fc0");
+    } else {
+      // Cejas fruncidas y ojos cerrados (con pestañas)
+      rect(c, 3, 1, 3, 1, HAIR);
+      rect(c, 8, 1, 2, 1, HAIR);
+      px(c, 5, 2, HAIR);
+      px(c, 8, 2, HAIR);
+      rect(c, 3, 3, 3, 1, OL);
+      rect(c, 8, 3, 2, 1, OL);
+      px(c, 3, 4, SKIN_D);
+      px(c, 9, 4, SKIN_D);
+      // Moretón y rasguño en la cara
+      px(c, 3, 5, "#9a6a8a");
+      px(c, 4, 5, "#8a5a7a");
+      pline(c, 9, 4, 10, 5, "#a8453a", 1);
+      // Gota de sudor
+      px(c, 1, 4, "#bfe6ff");
+      px(c, 1, 5, "#8fd0f5");
+      // Mordaza de tela con nudo y cabos
+      rect(c, 2, 6, 10, 2, OL);
+      rect(c, 3, 6, 8, 2, CLOTH);
+      rect(c, 3, 7, 8, 1, CLOTH_D);
+      px(c, 5, 6, "#ffffff");
+      rect(c, 11, 5, 3, 3, OL);
+      rect(c, 11, 6, 2, 2, CLOTH_D); // nudo
+      px(c, 12, 5, CLOTH);
+      pline(c, 12, 8, 10, 10, CLOTH_D, 1); // cabos colgando
+      px(c, 13, 8, CLOTH);
+
+      // Brazos amarrados al frente: manga + antebrazo + muñecas con nudo
+      rect(c, 12, 5, 9, 4, SHIRT_D);
+      rect(c, 12, 5, 9, 1, SHIRT);
+      rect(c, 21, 5, 5, 4, SKIN);
+      rect(c, 21, 8, 5, 1, SKIN_D);
+      px(c, 22, 5, SKIN_L);
+      rect(c, 25, 5, 2, 4, SKIN_D); // manos juntas
+      px(c, 25, 5, SKIN);
+
+      // Cuerdas: muñecas, pecho (en X con nudo) y tobillos
+      rect(c, 21, 4, 4, 6, ROPE_D);
+      rect(c, 22, 4, 2, 6, ROPE);
+      px(c, 22, 4, ROPE_L);
+      px(c, 22, 6, ROPE_D);
+      px(c, 23, 8, ROPE_D);
+      pline(c, 13, 1, 24, 8, ROPE_D, 2); // cuerda en diagonal por el pecho
+      pline(c, 13, 1, 24, 8, ROPE, 1);
+      rect(c, 17, 4, 3, 3, ROPE_D); // nudo central
+      px(c, 18, 5, ROPE_L);
+      rect(c, 36, 3, 4, 7, ROPE_D); // tobillos amarrados
+      rect(c, 37, 3, 2, 7, ROPE);
+      px(c, 37, 3, ROPE_L);
+      px(c, 37, 6, ROPE_D);
+      px(c, 38, 8, ROPE_D);
+      // Cabos de la cuerda atados al petate, a los lados
+      pline(c, 14, 8, 6, 10, ROPE_D, 1);
+      pline(c, 26, 9, 12, 12, ROPE_D, 1);
+      pline(c, 37, 9, 43, 11, ROPE_D, 1);
+      px(c, 6, 10, ROPE);
+      px(c, 43, 11, ROPE);
+    }
+  });
+}
+
 const SP = {};
 
 // Sprite de coleccionable: se carga desde su imagen (con fondo transparente) y se
@@ -5826,30 +6143,47 @@ function makeCollectSprite(src, keyWhite) {
 
 // Sprite de la espada (en vertical, apoyada en el suelo), dibujada con píxeles
 function makeSwordSprite() {
+  // Macuahuitl: la espada maya, una paleta de madera con filos de obsidiana
   return sprite(24, 36, 12, 34, (c) => {
-    const D = "#2b3646"; // contorno
-    // Hoja: punta y cuerpo
-    rect(c, 11, 2, 2, 1, D);
-    rect(c, 10, 3, 4, 2, D);
-    rect(c, 9, 5, 6, 19, D);
-    rect(c, 11, 3, 2, 1, "#eaf6ff");
-    rect(c, 10, 4, 4, 1, "#cfe3f3");
-    rect(c, 10, 5, 4, 18, "#cfe3f3");
-    rect(c, 10, 4, 1, 19, "#ffffff"); // brillo
-    rect(c, 13, 5, 1, 18, "#8aa5bb"); // sombra
-    // Guarda dorada
-    rect(c, 5, 24, 14, 4, D);
-    rect(c, 6, 25, 12, 2, "#f2c13d");
-    rect(c, 6, 25, 12, 1, "#ffe28a");
-    px(c, 11, 26, "#f72585"); // gema
-    px(c, 12, 26, "#f72585");
-    // Empuñadura y pomo
-    rect(c, 10, 28, 4, 4, D);
-    rect(c, 11, 28, 2, 4, "#7a4519");
-    px(c, 11, 29, "#c07b36");
-    px(c, 12, 31, "#c07b36");
-    rect(c, 9, 32, 6, 3, D);
-    rect(c, 10, 33, 4, 1, "#f2c13d");
+    const D = "#2a1608"; // contorno
+    const W1 = "#d9a05b"; // madera clara
+    const W2 = "#b5793a"; // madera
+    const W3 = "#7a4a1e"; // madera sombra
+    const OB = "#16162b"; // obsidiana
+    const OH = "#7b7bc4"; // brillo de la obsidiana
+    const JD = "#2ec4b6"; // jade
+    const RD = "#c1121f"; // cordón rojo
+    // Paleta de madera con la punta redondeada
+    rect(c, 10, 1, 4, 1, D);
+    rect(c, 9, 2, 6, 1, D);
+    rect(c, 8, 3, 8, 21, D);
+    rect(c, 10, 2, 4, 1, W1);
+    rect(c, 9, 3, 6, 21, W2);
+    rect(c, 9, 3, 2, 21, W1); // luz
+    rect(c, 14, 3, 1, 21, W3); // sombra
+    rect(c, 12, 5, 1, 17, W3); // veta
+    // Filos de obsidiana: dientes en ambos bordes
+    for (let y = 4; y < 23; y += 3) {
+      rect(c, 6, y, 2, 2, D);
+      rect(c, 7, y, 1, 2, OB);
+      px(c, 7, y, OH);
+      rect(c, 16, y, 2, 2, D);
+      rect(c, 16, y, 1, 2, OB);
+      px(c, 16, y, OH);
+    }
+    // Empuñadura envuelta con cordón rojo y bandas de jade
+    rect(c, 9, 24, 6, 9, D);
+    rect(c, 10, 24, 4, 9, W3);
+    for (let y = 25; y < 32; y += 2)
+      rect(c, 10, y, 4, 1, y % 4 === 1 ? RD : "#ff6b6b");
+    rect(c, 9, 23, 6, 1, JD); // banda de jade
+    rect(c, 9, 24, 6, 1, D);
+    // Pomo de jade con plumas
+    rect(c, 8, 33, 8, 3, D);
+    rect(c, 9, 33, 6, 2, JD);
+    rect(c, 10, 33, 2, 1, "#b8fff2");
+    px(c, 7, 34, RD);
+    px(c, 16, 34, RD);
   });
 }
 
@@ -5900,6 +6234,153 @@ function makeSignSprite() {
     rect(c, 5, 4, 12, 1, "#5c3a1e");
     rect(c, 5, 6, 9, 1, "#5c3a1e");
   });
+}
+
+// Imagen del recuerdo "¡Lo rescataste!" (se dibuja en un canvas, sin depender
+// de ninguna foto): el novio ya liberado, sobre un fondo cálido con corazones.
+function makeNovioCardImage() {
+  const W = 160;
+  const H = 120;
+  const cv = makeCanvas(W, H);
+  const c = cv.getContext("2d");
+  c.imageSmoothingEnabled = false;
+  const g = c.createLinearGradient(0, 0, 0, H);
+  g.addColorStop(0, "#5c2a3a");
+  g.addColorStop(1, "#c0617a");
+  c.fillStyle = g;
+  c.fillRect(0, 0, W, H);
+  const heart = (hx, hy, s, color) => {
+    c.fillStyle = color;
+    c.fillRect(hx - s, hy - s, s, s);
+    c.fillRect(hx + 1, hy - s, s, s);
+    c.fillRect(hx - s, hy, 2 * s + 1, s);
+    c.fillRect(hx - Math.round(s / 2), hy + s, s + 1, Math.round(s / 2));
+  };
+  [
+    [20, 20, 3],
+    [138, 26, 2],
+    [26, 96, 2],
+    [132, 92, 3],
+    [80, 14, 2],
+  ].forEach(([hx, hy, s]) => heart(hx, hy, s, "rgba(255,214,102,0.55)"));
+  const nw = SP.novio[1].cv.width;
+  const nh = SP.novio[1].cv.height;
+  const k = 3;
+  c.drawImage(
+    SP.novio[1].cv,
+    0,
+    0,
+    nw,
+    nh,
+    (W - nw * k) / 2,
+    (H - nh * k) / 2,
+    nw * k,
+    nh * k,
+  );
+  return cv.toDataURL("image/png");
+}
+
+// Sprite del boomerang (en forma de V, de madera con vetas); 16x16
+function makeBoomerangSprite() {
+  return sprite(16, 16, 8, 14, (c) => {
+    const D = "#4a2b12";
+    const M = "#e0b070";
+    const L = "#f5d596";
+    const S = "#a8723a";
+    // Brazo izquierdo (sube a la izquierda) y brazo derecho (sube a la derecha)
+    const arm = [
+      [2, 3],
+      [3, 4],
+      [4, 5],
+      [5, 6],
+      [6, 7],
+      [7, 8],
+    ];
+    arm.forEach(([x, y]) => {
+      rect(c, x - 1, y - 1, 3, 3, D);
+    });
+    arm.forEach(([x, y]) => {
+      rect(c, x, y, 1, 1, M);
+    });
+    [
+      [8, 8],
+      [9, 7],
+      [10, 6],
+      [11, 5],
+      [12, 4],
+      [13, 3],
+    ].forEach(([x, y]) => {
+      rect(c, x - 1, y - 1, 3, 3, D);
+    });
+    [
+      [8, 8],
+      [9, 7],
+      [10, 6],
+      [11, 5],
+      [12, 4],
+      [13, 3],
+    ].forEach(([x, y]) => {
+      rect(c, x, y, 1, 1, M);
+    });
+    // Codo
+    rect(c, 6, 8, 4, 3, D);
+    rect(c, 7, 8, 2, 2, M);
+    // Brillos y vetas
+    rect(c, 3, 3, 1, 1, L);
+    rect(c, 12, 3, 1, 1, L);
+    rect(c, 8, 8, 1, 1, L);
+    rect(c, 5, 6, 1, 1, S);
+    rect(c, 10, 6, 1, 1, S);
+    rect(c, 7, 10, 2, 1, S);
+  });
+}
+
+// Imagen del recuerdo "¡Encontraste el boomerang!" (se dibuja en un canvas)
+function makeBoomerangCardImage() {
+  const W = 160;
+  const H = 120;
+  const cv = makeCanvas(W, H);
+  const c = cv.getContext("2d");
+  c.imageSmoothingEnabled = false;
+  const g = c.createLinearGradient(0, 0, 0, H);
+  g.addColorStop(0, "#2b1d49");
+  g.addColorStop(1, "#8c5a3a");
+  c.fillStyle = g;
+  c.fillRect(0, 0, W, H);
+  c.save();
+  c.translate(W / 2, H / 2);
+  for (let i = 0; i < 12; i++) {
+    c.rotate(Math.PI / 6);
+    c.fillStyle = "rgba(255,226,138,0.14)";
+    c.beginPath();
+    c.moveTo(0, 0);
+    c.lineTo(-12, -110);
+    c.lineTo(12, -110);
+    c.closePath();
+    c.fill();
+  }
+  c.restore();
+  // Estela circular del vuelo
+  c.strokeStyle = "rgba(255,246,200,0.5)";
+  c.lineWidth = 2;
+  c.setLineDash([6, 5]);
+  c.beginPath();
+  c.arc(W / 2, H / 2, 46, 0.3, Math.PI * 1.6);
+  c.stroke();
+  c.setLineDash([]);
+  const k = 5;
+  c.drawImage(
+    SP.boomerang.cv,
+    0,
+    0,
+    16,
+    16,
+    (W - 16 * k) / 2,
+    (H - 16 * k) / 2,
+    16 * k,
+    16 * k,
+  );
+  return cv.toDataURL("image/png");
 }
 
 // Imagen del recuerdo "¡Encontraste la espada!" (se dibuja en un canvas)
@@ -6155,6 +6636,8 @@ function buildSprites() {
   SP.logs = {
     mid: [0, 1, 2].map((v) => makeLogSlice(false, v)),
     end: [0, 1, 2].map((v) => makeLogSlice(true, v)),
+    start: [0, 1, 2].map((v) => makeLogSlice(false, v, true)),
+    single: [0, 1, 2].map((v) => makeLogSlice(true, v, true)),
   };
   SP.flamingo = [makeFlamingo(false), makeFlamingo(true)];
   SP.flamingoFly = [makeFlamingoFly(0), makeFlamingoFly(1), makeFlamingoFly(2)];
@@ -6253,6 +6736,7 @@ function buildSprites() {
   SP.deerGraze = makeDeer(true);
   SP.chest = [makeChest(false), makeChest(true)];
   SP.hammock = makeHammock();
+  SP.novio = [makeNovio(false), makeNovio(true)];
   SP.pyramid = makePyramid();
   SP.stoneBlock = makeStoneBlock();
   SP.cathedral = makeCathedral();
@@ -6263,6 +6747,7 @@ function buildSprites() {
   SP.boat = makeBoat();
   SP.monteGrass = [0, 1, 2, 3].map(makeMonteGrass);
   SP.sword = makeSwordSprite();
+  SP.boomerang = makeBoomerangSprite();
   SP.checkpoint = [makeCheckpointSprite(false), makeCheckpointSprite(true)];
   SP.sign = makeSignSprite();
   SP.collect = {};

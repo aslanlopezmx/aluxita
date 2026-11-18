@@ -78,6 +78,7 @@ function buildMap() {
   dogSpots.forEach((d) => ensureLand(d[1], d[2], 0));
   collectItems.forEach((g) => ensureLand(g.gx, g.gy, 0));
   if (swordItem) ensureLand(swordItem.gx, swordItem.gy, 0);
+  if (boomerangItem) ensureLand(boomerangItem.gx, boomerangItem.gy, 0);
   // Checkpoints: terreno firme en el centro y piso de concreto en la zona segura
   checkpoints.forEach((cp) => {
     ensureLand(cp.gx, cp.gy, 1);
