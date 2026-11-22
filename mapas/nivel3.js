@@ -802,19 +802,8 @@ const MAP_OBJECTS = [
   ["mangle", 101, 9],
   ["mangle", 94, 12],
   ["mangle", 99, 3],
-  [
-    "letrero",
-    84,
-    117,
-    "Genial, al fin podemos ver algo de civilización, talvez por aquí podamos encontrar algo para frenar a los enemigos y tener tiempo para correr o enfrentarlos, al menos por alugnos segundos...",
-  ],
-  [
-    "letrero",
-    68,
-    34,
-    "¡Cuidado! Si ves un Kaskabal es mejor correr, no son seres con los que uno quisiera tener problemas...",
-  ],
   ["salida", 3, 124],
   ["piramide", 87, 23],
   ["queso", 117, 10],
+  ["perrochelita", 36, 98],
 ];
