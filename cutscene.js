@@ -4,7 +4,7 @@
 // Muestra las viñetas de CINEMATICAS[nombre] una por una (A, START o un toque
 // avanzan; B salta todo). Después sale la pantalla de carga y se llama a onDone.
 const CUT_LOCK_MS = 450; // evita saltarse una viñeta por un doble toque
-const LOADING_MS = 3000; // duración de la pantalla de carga
+const LOADING_MS = 600; // duración de la pantalla de carga
 let cutScenes = [];
 let cutDone = null;
 let cutActive = false;
@@ -13,6 +13,7 @@ let cutIdx = 0;
 let cutLockUntil = 0;
 let cutSwapT = null;
 let cutNoLoad = false; // true: al terminar no sale "CARGANDO" (cinemática dentro del nivel)
+let cutKeep = false; // true (con sinCarga): al terminar NO se desvanece; onDone() tapa la pantalla y se encarga de ocultarla
 
 function cutShow(i) {
   const img = document.getElementById("cutImg");
@@ -43,6 +44,7 @@ function cutShow(i) {
 function startCutscene(nombre, onDone, opts) {
   if (cutActive) return;
   cutNoLoad = !!(opts && opts.sinCarga);
+  cutKeep = !!(opts && opts.mantener);
   cutScenes = (CINEMATICAS[nombre] || []).slice();
   cutDone = onDone || null;
   cutActive = true;
@@ -73,6 +75,18 @@ function cutFinish() {
   cutLoading = true;
   clearTimeout(cutSwapT);
   const cut = document.getElementById("cutscene");
+  if (cutNoLoad && cutKeep) {
+    // Sin fundido de salida: la cinemática se queda a la vista y onDone() muestra
+    // otra pantalla encima (p. ej. el collage final), así nunca se ve el juego
+    const cb = cutDone;
+    cutDone = null;
+    cutActive = false;
+    cutLoading = false;
+    cutNoLoad = false;
+    cutKeep = false;
+    if (cb) cb();
+    return;
+  }
   if (cutNoLoad) {
     // Sin pantalla de carga: fundido de salida y se continúa con onDone()
     cut.classList.add("fading");

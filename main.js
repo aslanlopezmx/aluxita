@@ -6,14 +6,16 @@ function updateHUD() {
     i < health ? "❤️" : "🖤",
   ).join(" ");
 
-  const gl = collectibles
+  // Cada contador va en su propio bloque: si no caben en una línea (celular),
+  // pasan a la siguiente completos en vez de salirse de la pantalla
+  const items = [`🥐 ${foundCount}/${treasures.length}`];
+  collectibles
     .filter((g) => g.items.length)
-    .map((g) => ` | ${g.def.emoji} ${g.count}/${g.items.length}`)
+    .forEach((g) => items.push(`${g.def.emoji} ${g.count}/${g.items.length}`));
+  if (novio) items.push(`🤗 ${novio.rescued ? 1 : 0}/1`);
+  itemDisplay.innerHTML = items
+    .map((t) => `<span class="hud-item">${t}</span>`)
     .join("");
-  const sw = swordItem ? ` | ⚔️ ${hasSword ? 1 : 0}/1` : "";
-  const bm = boomerangItem ? ` | 🪃 ${hasBoomerang ? 1 : 0}/1` : "";
-  const nv = novio ? ` | 🤗 ${novio.rescued ? 1 : 0}/1` : "";
-  itemDisplay.innerText = `🥐 ${foundCount}/${treasures.length}${gl}${sw}${bm}${nv}`;
 }
 
 /* ---------- Controles ---------- */
@@ -27,6 +29,7 @@ let keys = {
 // START: en la pantalla principal empieza; durante el juego abre/cierra el menú
 function pressStart() {
   if (cutActive) return cutNext();
+  if (dismissSignDialog()) return;
   if (!gameStarted) titleStart();
   else togglePauseMenu();
 }
@@ -49,6 +52,7 @@ function startGame(load) {
 // SELECT: selector de nivel en el título / zoom en el juego (pressSelect está en menu.js;
 // si ese archivo es una versión anterior, cae al zoom de siempre)
 function selectPressed() {
+  if (dismissSignDialog()) return;
   if (typeof pressSelect === "function") pressSelect();
   else cycleZoom();
 }
@@ -95,6 +99,7 @@ function setupControls() {
   bindPress("btnA", actionA);
   bindPress("btnB", attack);
   bindPress("btnC", throwBoomerang);
+  bindPress("btnD", throwRed);
   bindPress("btnSelect", selectPressed);
   bindPress("btnStart", pressStart);
   document
@@ -128,6 +133,7 @@ function setupControls() {
     if (e.code === "Space" || e.code === "KeyE") actionA();
     if (e.code === "KeyX" || e.code === "KeyK") attack();
     if (e.code === "KeyC" || e.code === "KeyJ") throwBoomerang();
+    if (e.code === "KeyY" || e.code === "KeyV") throwRed();
     if (e.code === "KeyZ") selectPressed();
   });
 
@@ -272,6 +278,7 @@ function actionA() {
   if (cutActive) return cutNext();
   if (!gameStarted) return titleA();
   if (menuOpen) return menuA();
+  if (dismissSignDialog()) return;
   if (isPaused) return;
   if (tryBoat()) return;
   if (checkChestInteraction()) return;
@@ -309,19 +316,9 @@ function checkNovioInteraction() {
     ["#ffd166", "#f72585", "#ffffff", "#8fdcff"],
     20,
   );
-  // Encontrar al novio es el final del juego: al cerrar el modal, se reutiliza
-  // el mismo mecanismo de "salir de nivel" (cinemática "finN" + pantalla de
-  // carga); como solo existe en el último nivel, esto termina el juego.
-  openMemoryModal(
-    {
-      image: makeNovioCardImage(),
-      title: "¡Por fin lo encontraste!",
-      message:
-        "Desatas las cuerdas y lo abrazas fuerte. Juntos, ya nada los puede separar, bombón.",
-    },
-    "* ¡LO RESCATASTE! *",
-    beginLevelExit,
-  );
+  // Encontrar al novio es el final del juego: sin tarjeta, entra directo la
+  // cinemática "fin4" (4 escenas) + pantalla de carga, y se termina el juego.
+  beginLevelExit();
   return true;
 }
 
@@ -335,6 +332,14 @@ function openSignDialog(text) {
 function closeSignDialog() {
   dialogOverlay.classList.add("hidden");
   isPaused = false;
+}
+
+// Si hay un letrero abierto, cualquier botón lo cierra. Devuelve true si lo cerró
+// (así esa pulsación no hace nada más: no salta, no ataca, etc.)
+function dismissSignDialog() {
+  if (dialogOverlay.classList.contains("hidden")) return false;
+  closeSignDialog();
+  return true;
 }
 
 // onClose (opcional): se llama una sola vez, justo después de cerrar este
@@ -418,6 +423,33 @@ function checkCollect() {
       "* ¡NUEVA HABILIDAD! *",
     );
   }
+  // Red: al recogerla se desbloquea el botón Y (atrapar NPC hostiles)
+  if (
+    redItem &&
+    !redItem.collected &&
+    !isPaused &&
+    Math.hypot(player.gx - redItem.gx, player.gy - redItem.gy) <= 0.9
+  ) {
+    redItem.collected = true;
+    hasRed = true;
+    updateHUD();
+    burst(
+      redItem.gx,
+      redItem.gy,
+      tileH(redItem.gx, redItem.gy),
+      ["#ffffff", "#9aa0aa", "#c9a86a", "#f72585"],
+      20,
+    );
+    openMemoryModal(
+      {
+        image: makeRedCardImage(),
+        title: "¡Encontraste la red con pesas!",
+        message:
+          "Una red de pesca con pesas en las esquinas. ¡Puedes inmobilizar a los enemigos por unos segundos! Presiona el botón Y (o V / Y en el teclado) para lanzarla hacia donde mires: si cae sobre un hostil, lo inmoviliza un momento.",
+      },
+      "* ¡NUEVA HABILIDAD! *",
+    );
+  }
   // Boomerang: al recogerlo se desbloquea el ataque a distancia (botón C)
   if (
     boomerangItem &&
@@ -441,7 +473,7 @@ function checkCollect() {
         image: makeBoomerangCardImage(),
         title: "¡Encontraste el boomerang!",
         message:
-          "¡Ahora puedes atacar a distancia! Presiona el botón C (o C / J en el teclado) para lanzarlo hacia donde mires: golpea a los enemigos y regresa a ti.",
+          "¡Ahora puedes atacar a distancia! Presiona el botón X (o C / J en el teclado) para lanzarlo hacia donde mires: golpea a los enemigos y regresa a ti.",
       },
       "* ¡NUEVA HABILIDAD! *",
     );
@@ -598,6 +630,17 @@ function update() {
     dGy *= k;
   }
 
+  // Retroceso de un golpe fuerte (huaychivo): empuja a la exploradora y la va frenando;
+  // mientras dura, los controles no mueven al personaje
+  if (player.kbX || player.kbY) {
+    movePlayer(player.kbX, player.kbY, player.boat ? sailable : walkable);
+    player.kbX *= PLAYER_KB_DECAY;
+    player.kbY *= PLAYER_KB_DECAY;
+    if (Math.hypot(player.kbX, player.kbY) < 0.01) player.kbX = player.kbY = 0;
+    dGx = 0;
+    dGy = 0;
+  }
+
   player.moving = dGx !== 0 || dGy !== 0;
 
   if (player.moving) {
@@ -729,6 +772,7 @@ function update() {
 
   if (player.attackT > 0) player.attackT--;
   updateBoomerang();
+  updateRedNet();
   if (player.invuln > 0) player.invuln--;
 
   hammocks.forEach((h) => {

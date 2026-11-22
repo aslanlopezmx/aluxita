@@ -1,6 +1,6 @@
 // mapas/nivel1.js - generado por el Editor de Mapa Yucatán
 // Cuadrícula 128x128: fila = gy (0-127), columna = gx (0-127)
-// Leyenda: ~ agua  . arena  # pasto  L laguna  = camino  P laguna rosa  M monte  S playa mar  G playa laguna  R playa laguna rosa  W muelle
+// Leyenda: ~ agua  . arena  # pasto  L laguna  = camino  P laguna rosa  M monte  S playa mar  G playa laguna  R playa laguna rosa  W muelle  C camino maya
 const MAP_ROWS = [
   "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~", // 000
   "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~", // 001
@@ -60,54 +60,54 @@ const MAP_ROWS = [
   "..################.WWW~~~~~~~~~~~~~~~~~~~~~~~~~~~~SSSSSSSSSSSSSSSSSSSSSSSSS........##################...SSSSSSSSSSSSSSSSSSSSSS~~", // 055
   "MMMMMMMMM##########WWW~~~~~~~~~~~~~~~~~~~~~~~~~~SSSSSSSSSSSSSSSSSSSSSSSSSSS.......#####################..SSSSSSSSSSSSSSSSSSSS~~~", // 056
   "MMMMMMMMM##########WWW~~~~~~~~~~~~~~~~~~~~~~~SSSSSSSSSSSSSSSSSSSSSSSSSSSSS......#############==####MMM##...SSSSSSSSSSSSSSSSSSS~~", // 057
-  "MMMMMMMMM#####===##WWWWWWWWWWWW~~~~~~~~~~~~~SSSSSSSSSSSSSSSSSSSSSSSSSSSSSS.....#####MMMM####===###MMMMM###..SSSSSSSSSSSSSSSSSS~~", // 058
-  "MMMMMMMMMMMM##====#WWWWWWWWWWWW~~~~~~~~~~~~~SSSSSSSSSSSSSSSSSSSSSSSSSSSSS.....#####MMMMM##=====###MMMMMMM##..SSSSSSSSSSSSSSSSSS~", // 059
-  "MMMMMMMMMMMM###====WWWWWWWWWWWW~~~~~~~~~~~~SSSSSSSSSSSSSSSSSSSSSSSSSSSSSS....######MMMM##=====###MMMMMMMMM##..SSSSSSSSS...SSSSS~", // 060
-  "MMMMMMMMMMMM####====####.S~~~~~~~~~~~~~~~~~SSSSSSSSSSSSSSSSSSSSSSSSSSSSS....########M###===######MMMMMMMMMM##..SSSSSSS..#...SSS~", // 061
-  "MMMMMMMMMMM#####=====###.SS~~~~~~~~~~~~~~~~SSSSSSSSSSSSSSSSSSSSSSSSSSSSS...#############==######MMMMMMMMMMM###..SSSSSS..###..SSS", // 062
-  "MMMMMMMMMMM#####======##..S~~~~~~~~~~~~~~~~~SSSSSSSSSSSSSSSSSSSSSSSSSSS...#############===####MMMMMMMMMMMMMM##..SSSSSSS.####.SSS", // 063
-  "MMMMMMMMMMM######=====###.S~~~~~~~~~~~~~~~~~SSSSSSSSSSSSSSSSSSSSSSSSSS...######MMMM###===###MMMMMMMMMMMMMMMM##...SSSSSS.####.SSS", // 064
-  "MMMMMMMMMMM#######====###.SS~~~~~~~~~~~~~~~~SSSSSSSSSSSSSSSSSSSSSSSSS...#####MMMMMMM##===##MMMMMMMMMMMMMMMMM##...SSSSSS.####..SS", // 065
-  "MMMMMMMMMMM#######=====##..S~~~~~~~~~~~~~~~~SSSSSSSSSSSSSSSSSSSSSSS.....####MMMMMMMM##==##MMMMMMMMMMMMMMMMMM##....SSSSS..####.SS", // 066
-  "MMMMMMMMMMM########====###.S~~~~~~~~~~~~~~~~SSSSSSSSSSSSSSS.............###MMMMMMMMM##==###MMMMMMMMMMMMMMMMM###...SSSSSS..##..SS", // 067
-  "MMMMMMMMMMMM#######====###.SS~~~~~~~~~~~~~~SSSSSSSSSSSSSS..............####MMMMMMMMM##===##MMMMMMMMMMMMMMMMMM##....SSSSSS....SSS", // 068
-  "MMMMMMMMMMMM######=====###..SS~~~~~~~~~~~~~SSSSSSSSSSSSS..............#####MMMMMMMMM###==###MMMMMMMMMMMMMMMMMM##...SSSSSSSSSSSSS", // 069
-  "MMMMMMMMMMMMM#####=====####..S~~~~~~~~~~~~~SSSSSSSSSSSSS...GGG......#####MMMMMMMMMMM###===#####MMMMMMMMMMMMMMM###...SSSSSSSSSSSS", // 070
-  "MMMMMMMMMMMMMM###====#######.SSS~~~~~~~~~~SSSSSSSSSSSSSS..GGGGGG...######MMMMMMMMMMM###====######MMMMMMMMMMMMMM##...SSSSSSSSSSS~", // 071
-  "MMMMMMMMMMMMMMM##===########..SSS~~~~~~~~SSSSSSSSSSSSSS...GGGGGG...######MMMMMMMMMM#####=====#####MMMMMMMMMMMMMM##...SSSSSSSSS~~", // 072
-  "MMMMMMMMMMMMM#M##==###MMM####..SSS~~~~~~SSSSSSSSSSSSSSS...GGLLGG...######MMMMMMMMM########======####MMMMMMMMMMMM##...SSSSSSSS~~~", // 073
-  "MMMMMMMMMMMMMMM#===###MMMMM###..SSSS~~~SSSSSSSSSSSSSSSS...GGLLLGG..#MM###MMMMMMM###########========##MMMMMMMMMMM##....SSSSSSS~~~", // 074
-  "MMMMMMMMMMMMMMMM===##MMMMMM####..SSSSSSSSSSSSSSSSSSSSSSS..GGGLLGG..#MMM###MMMMMM####MM####MM##=====###MMMMMMMMMM##....SSSSSS~~~~", // 075
-  "MMMMMMMMMMMMMMMM===##MMMMMM#####..SSSSSSSSSSSSSSSSSSSSSS..GGGLLGG..#MMMM###########MMM##MMMMMM##====###MMMMMMMMMM##=..SSSSSS~~~~", // 076
-  "MMMMMMMMMMMMMMM#====##MMMM#######..SSSSSSSSSSSSSSSSSSSSS..GGGLLGG..##MMM###########MMM##MMMMMMM###===###MMMMMMMM##===..SSSSS~~~~", // 077
-  "MMMMMMMMMMMMMM###=====MMM#########..SSSSSSSSSSSSSSSSSSSS...GGGLGG...#MMM############MM##MMMMMMMM###===##MMMMMMMM#====...SSSS~~~~", // 078
-  "MMMMMMMMMMMMM#####=====############..SSSSSSSSSSSSSSSSSSSS..GGGLLGG..#######=======######MMMMMMMM###===##MMMMMMM##====...SSSS~~~~", // 079
-  "MMMMMMMMMMMMM#######====############.SSSSSSSSSSSSSSSSSSSS...GGGLGG..######=========######MMMMMMM####==####MMMM##====##...SSS~~~~", // 080
-  "MMMMMMMMMMMMM########====###########..SSSSSSSSSSSSSSSSSSSS...GGLLG...#####===###====#####MMMMMM#####==######M##===#####..SSS~~~~", // 081
-  "MMMMMMMMMMMMM######MM#====#MMMMM#####.SSSSSSSSSSSSSSSSSSSS...GGGLGG..#####==#####======####MMMM####=======####===##MM###.SSS~~~~", // 082
-  "MMMMMMMMMMMMM#####MMMM#===#MMMMMMM###..SSSSSSSSSSSSSSSSSSS....GGGGG...####==#######======########================#MMM###..SS~~~~", // 083
-  "MMMMMMMMMMMM######MMMMMM==#MMMMMMMM###..SSSSSSSSSSSSSSSSSSS...GGGGG...####==###MMM####===#######=====###=========#MMM####.SS~~~~", // 084
-  "MMMMMMMMMMMM######MMMMMM===#M#MMMMMM###.SSSSSSSSSSSSSSSSSSS....GGGG...####===##MMMM####===#####====#########====##MMM####..S~~~~", // 085
-  "MMMMMMMMMMMMM#####MMMMM#===#MMMMMMMM###..SSSSSSSSSSSSSSSSSSS...........###===##MMMMM###===========##MMMM#####====##MMMM###.S~~~~", // 086
-  "MMMMMMMMMMMMM#######MMM##==##MMMMMMMM###.SSSSSSSSSSSSSSSSSSS...........####===#MMMMMM###=========###MMMMMMMM##====##MMM###.S~~~~", // 087
-  "MMMMMMMMMMMMMM###########==##MMMMMMMM###..SSSSSSSSSSSSSSSSSSS...GGG....####====#MMMMMM############MMMMMMMMMMM##===###MM###.S~~~~", // 088
-  "MMMMMMMMMMMMMMMM#########==###MMMMMMMM###..SSSSSSSSSSSSSSSSSS...GGGG....####===##MMMMMM#####MMMMMMMMMMMMMMMMMM##==###MMM##.S~~~~", // 089
-  "MMMMMMMMMMMMMMMMM#######===###MMMMMMMM####.SSSSSSSSSSSSSSSSSS...GGGG....#####===#MMMMMMM###MMMMMMMMMMMMMMMMMMM##==###MMM##.S~~~~", // 090
-  "MMMMMMMMMMMMMMMMM##========####MMMMMMM####..SSSSSSSSSSSSSSSSSS..GGGGG....#####==##MMMMMM###MMMMMMMMMMMMMMMMMM###===##MMM##.S~~~~", // 091
-  "MMMMMMMMMMMMMMMM##=========#####MMMMMM#####..SSSSSSSSSSSSSSSSS..GGLLG....#####==####MMM#####MMMMMMMM#MMMMMMM####===##MM###.S~~~~", // 092
-  "MMMMMMMMMMMMMMMM##===##=====######MMMM######.SSSSSSSSSSSSSSSS...GGGLGG...#####====######################MMM#####===##MM##..S~~~~", // 093
-  "MMMMMMMMMMMMMMM##===######=====#############.SSSSSSSSSSSSSSSS...GGGLGG....#####===###############################==##MM##.SS~~~~", // 094
-  "MMMMMMMMMMMMMMM##===######======############..SSSSSSSSSSSSSSS....GGLLG....######===##################MMMM#######===##MM##.SS~~~~", // 095
-  "MMMMMMMMMMMMMMM##==##########===========#####.SSSSSSSSSSSSSSS....GGGLGG...######====######MMMMM#####MMMMMM######===##MM##.SS~~~~", // 096
-  "MMMMMMMMMMMMMMM##==###MMMM#####=========#####..SSSSSSSSSSSSSS....GGGLGG....######===#####MMMMMMM####MMMMMM#####===##MMM#..SS~~~~", // 097
-  "MMMMMMMMMMMMMMM##==###MMMMM#########====######.SSSSSSSSSSSSSS....GGLLGG....######===#####MMMMMMM####MMMMMM####====#MMMM#.SSSS~~~", // 098
-  "MMMMMMMMMMMMMMM##==###MMMMMM##################.SSSSSSSSSSSSSSS...GGLLGGG...###M###===####MMMMMMM####MMMMM#####===##MMM##.SSSS~~~", // 099
-  "MMMMMMMMMMMMMMM##===##MMMMMM#########M########.SSSSSSSSSSSSSSS...GGGLGGG...###MM##===####MMMMMMM####MMMMM##=====###MM###.SSSS~~~", // 100
-  "MMMMMMMMMMMMMM####==##MMMMMMM#######MMMM######..SSSSSSSSSSSSSS...GGGLGGG...###MMM##====##MMMMMMM####MMMMM#======##MM###..SSSSS~~", // 101
-  "MMMMMMMMMMMMMM###===##MMMMMMMM#######MMM#######..SSSSSSSSSSSSS...GGGLGGG...###MMM###====#MMMMMMM###MMMMMM#====###MMM##..SSSSSS~~", // 102
-  "MMMMMMMMMMMMMM###===##MMMMMMMM#####MMMMMM######..SSSSSSSSSSSSS...GGGLGGG...###MMMM###====#MMMMM####MMMMM##==#####MMM##.SSSSSSS~~", // 103
-  "MMMMMMMMMMMMMM###===###MMMMMMM#####M#MMMM######...SSSSSSSSSSSSS..GGGLLGG....###MMMM###======#######MMMMM##===##MMMM###..SSSSSSS~", // 104
-  "MMMMMMMMMMMMM#####==###MMMMMMM#####MM#MMMM#####...SSSSSSSSSSSSSS.GGGLLGG....###MMMMM###=======#####MMMM###===#MMMMM###..SSSSSSS~", // 105
+  "MMMMMMMMM###=====##WWWWWWWWWWWW~~~~~~~~~~~~~SSSSSSSSSSSSSSSSSSSSSSSSSSSSSS.....#####MMMM####===###MMMMM###..SSSSSSSSSSSSSSSSSS~~", // 058
+  "MMMMMMMM==========#WWWWWWWWWWWW~~~~~~~~~~~~~SSSSSSSSSSSSSSSSSSSSSSSSSSSSS.....#####MMMMM##=====###MMMMMMM##..SSSSSSSSSSSSSSSSSS~", // 059
+  "MMMMMMM#======#====WWWWWWWWWWWW~~~~~~~~~~~~SSSSSSSSSSSSSSSSSSSSSSSSSSSSSS....######MMMM##=====###MMMMMMMMM##..SSSSSSSSS...SSSSS~", // 060
+  "MMMMMM#===######====####.S~~~~~~~~~~~~~~~~~SSSSSSSSSSSSSSSSSSSSSSSSSSSSS....########M###===######MMMMMMMMMM##..SSSSSSS..#...SSS~", // 061
+  "MMMMMM====######=====###.SS~~~~~~~~~~~~~~~~SSSSSSSSSSSSSSSSSSSSSSSSSSSSS...#############==######MMMMMMMMMMM###..SSSSSS..###..SSS", // 062
+  "MMMMM#===#M#####======##..S~~~~~~~~~~~~~~~~~SSSSSSSSSSSSSSSSSSSSSSSSSSS...#############===####MMMMMMMMMMMMMM##..SSSSSSS.####.SSS", // 063
+  "MMM##===#MM######=====###.S~~~~~~~~~~~~~~~~~SSSSSSSSSSSSSSSSSSSSSSSSSS...######MMMM###===###MMMMMMMMMMMMMMMM##...SSSSSS.####.SSS", // 064
+  "MMM#===##MM#######====###.SS~~~~~~~~~~~~~~~~SSSSSSSSSSSSSSSSSSSSSSSSS...#####MMMMMMM##===##MMMMMMMMMMMMMMMMM##...SSSSSS.####..SS", // 065
+  "MMM#===##MM#######=====##..S~~~~~~~~~~~~~~~~SSSSSSSSSSSSSSSSSSSSSSS.....####MMMMMMMM##==##MMMMMMMMMMMMMMMMMM##....SSSSS..####.SS", // 066
+  "MM##==##MMM########====###.S~~~~~~~~~~~~~~~~SSSSSSSSSSSSSSS.............###MMMMMMMMM##==###MMMMMMMMMMMMMMMMM###...SSSSSS..##..SS", // 067
+  "MM#===#MMMMM#######====###.SS~~~~~~~~~~~~~~SSSSSSSSSSSSSS..............####MMMMMMMMM##===##MMMMMMMMMMMMMMMMMM##....SSSSSS....SSS", // 068
+  "MM#===#MMMMM######=====###..SS~~~~~~~~~~~~~SSSSSSSSSSSSS..............#####MMMMMMMMM###==###MMMMMMMMMMMMMMMMMM##...SSSSSSSSSSSSS", // 069
+  "MM#===#MMMMMM#####=====####..S~~~~~~~~~~~~~SSSSSSSSSSSSS...GGG......#####MMMMMMMMMMM###===#####MMMMMMMMMMMMMMM###...SSSSSSSSSSSS", // 070
+  "MM#===#MMMMMMM###====#######.SSS~~~~~~~~~~SSSSSSSSSSSSSS..GGGGGG...######MMMMMMMMMMM###====######MMMMMMMMMMMMMM##...SSSSSSSSSSS~", // 071
+  "MM##===#MMMMMMM##===########..SSS~~~~~~~~SSSSSSSSSSSSSS...GGGGGG...######MMMMMMMMMM#####=====#####MMMMMMMMMMMMMM##...SSSSSSSSS~~", // 072
+  "MM##===##MMM#####==###MMM####..SSS~~~~~~SSSSSSSSSSSSSSS...GGLLGG...######MMMMMMMMM########======####MMMMMMMMMMMM##...SSSSSSSS~~~", // 073
+  "MM###===#########==###MMMMM###..SSSS~~~SSSSSSSSSSSSSSSS...GGLLLGG..#MM###MMMMMMM###########========##MMMMMMMMMMM##....SSSSSSS~~~", // 074
+  "MMMM#=====#######==##MMMMMM####..SSSSSSSSSSSSSSSSSSSSSSS..GGGLLGG..#MMM###MMMMMM####MM####MM##=====###MMMMMMMMMM##....SSSSSS~~~~", // 075
+  "MMMMM#=============##MMMMMM#####..SSSSSSSSSSSSSSSSSSSSSS..GGGLLGG..#MMMM###########MMM##MMMMMM##====###MMMMMMMMMM##=..SSSSSS~~~~", // 076
+  "MMMMM###============##MMMM#######..SSSSSSSSSSSSSSSSSSSSS..GGGLLGG..##MMM###########MMM##MMMMMMM###===###MMMMMMMM##===..SSSSS~~~~", // 077
+  "MMMM#############=====MMM#########..SSSSSSSSSSSSSSSSSSSS...GGGLGG...#MMM############MM##MMMMMMMM###===##MMMMMMMM#====...SSSS~~~~", // 078
+  "MMM#####MMMMM#####=====############..SSSSSSSSSSSSSSSSSSSS..GGGLLGG..#######=======######MMMMMMMM###===##MMMMMMM##====...SSSS~~~~", // 079
+  "MM#####MMMMMM#######====############.SSSSSSSSSSSSSSSSSSSS...GGGLGG..######=========######MMMMMMM####==####MMMM##====##...SSS~~~~", // 080
+  "MM#####MMMMMM########====###########..SSSSSSSSSSSSSSSSSSSS...GGLLG...#####===###====#####MMMMMM#####==######M##===#####..SSS~~~~", // 081
+  "MM#####MMMMMM######MM#====#MMMMM#####.SSSSSSSSSSSSSSSSSSSS...GGGLGG..#####==#####======####MMMM####=======####===##MM###.SSS~~~~", // 082
+  "MM#####MMMMMM#####MMMM#===#MMMMMMM###..SSSSSSSSSSSSSSSSSSS....GGGGG...####==#######======########================#MMM###..SS~~~~", // 083
+  "MM#####MMMMM######MMMMMM==#MMMMMMMM###..SSSSSSSSSSSSSSSSSSS...GGGGG...####==###MMM####===#######=====###=========#MMM####.SS~~~~", // 084
+  "MM#####MMMMM######MMMMMM===#M#MMMMMM###.SSSSSSSSSSSSSSSSSSS....GGGG...####===##MMMM####===#####====#########====##MMM####..S~~~~", // 085
+  "MM####MMMMMMM#####MMMMM#===#MMMMMMMM###..SSSSSSSSSSSSSSSSSSS...........###===##MMMMM###===========##MMMM#####====##MMMM###.S~~~~", // 086
+  "MM####MMMMMMM#######MMM##==##MMMMMMMM###.SSSSSSSSSSSSSSSSSSS...........####===#MMMMMM###=========###MMMMMMMM##====##MMM###.S~~~~", // 087
+  "MM####MMMMMMMM###########==##MMMMMMMM###..SSSSSSSSSSSSSSSSSSS...GGG....####====#MMMMMM############MMMMMMMMMMM##===###MM###.S~~~~", // 088
+  "MMM###MMMMMMMMMM#########==###MMMMMMMM###..SSSSSSSSSSSSSSSSSS...GGGG....####===##MMMMMM#####MMMMMMMMMMMMMMMMMM##==###MMM##.S~~~~", // 089
+  "MMM####MMMMMMMMMM#######===###MMMMMMMM####.SSSSSSSSSSSSSSSSSS...GGGG....#####===#MMMMMMM###MMMMMMMMMMMMMMMMMMM##==###MMM##.S~~~~", // 090
+  "MMM####MMMMMMMMMM##========####MMMMMMM####..SSSSSSSSSSSSSSSSSS..GGGGG....#####==##MMMMMM###MMMMMMMMMMMMMMMMMM###===##MMM##.S~~~~", // 091
+  "MMM#####MMMMMMMM##=========#####MMMMMM#####..SSSSSSSSSSSSSSSSS..GGLLG....#####==####MMM#####MMMMMMMM#MMMMMMM####===##MM###.S~~~~", // 092
+  "MMMM####MMMMMMMM##===##=====######MMMM######.SSSSSSSSSSSSSSSS...GGGLGG...#####====######################MMM#####===##MM##..S~~~~", // 093
+  "MMMM#####MMMMMM##===######=====#############.SSSSSSSSSSSSSSSS...GGGLGG....#####===###############################==##MM##.SS~~~~", // 094
+  "MMMMM####MMMMMM##===######======############..SSSSSSSSSSSSSSS....GGLLG....######===##################MMMM#######===##MM##.SS~~~~", // 095
+  "MMMMM####MMMMMM##==##########===========#####.SSSSSSSSSSSSSSS....GGGLGG...######====######MMMMM#####MMMMMM######===##MM##.SS~~~~", // 096
+  "MMMMMM####MMMMM##==###MMMM#####=========#####..SSSSSSSSSSSSSS....GGGLGG....######===#####MMMMMMM####MMMMMM#####===##MMM#..SS~~~~", // 097
+  "MMMMMM######MMM##==###MMMMM#########====######.SSSSSSSSSSSSSS....GGLLGG....######===#####MMMMMMM####MMMMMM####====#MMMM#.SSSS~~~", // 098
+  "MMMMMMM######MM##==###MMMMMM##################.SSSSSSSSSSSSSSS...GGLLGGG...###M###===####MMMMMMM####MMMMM#####===##MMM##.SSSS~~~", // 099
+  "MMMMMMMM#####MM##===##MMMMMM#########M########.SSSSSSSSSSSSSSS...GGGLGGG...###MM##===####MMMMMMM####MMMMM##=====###MM###.SSSS~~~", // 100
+  "MMMMMMMMM####M####==##MMMMMMM#######MMMM######..SSSSSSSSSSSSSS...GGGLGGG...###MMM##====##MMMMMMM####MMMMM#======##MM###..SSSSS~~", // 101
+  "MMMMMMMMMM#######===##MMMMMMMM#######MMM#######..SSSSSSSSSSSSS...GGGLGGG...###MMM###====#MMMMMMM###MMMMMM#====###MMM##..SSSSSS~~", // 102
+  "MMMMMMMMMM#######===##MMMMMMMM#####MMMMMM######..SSSSSSSSSSSSS...GGGLGGG...###MMMM###====#MMMMM####MMMMM##==#####MMM##.SSSSSSS~~", // 103
+  "MMMMMMMMMM#######===###MMMMMMM#####M#MMMM######...SSSSSSSSSSSSS..GGGLLGG....###MMMM###======#######MMMMM##===##MMMM###..SSSSSSS~", // 104
+  "MMMMMMMMMMM#######==###MMMMMMM#####MM#MMMM#####...SSSSSSSSSSSSSS.GGGLLGG....###MMMMM###=======#####MMMM###===#MMMMM###..SSSSSSS~", // 105
   "MMMMMMMMMMM#######==#####MMMM#######MMMMMM#####....SSSSSSSSSSSSS..GGGGGG.....###MMMMM#####====######MM#####==#MMMMM###..SSSSSSS~", // 106
   "MMMMMMMMMM######====################MMMMMMM####....SSSSSSSSSSSSSS..GGGGG.....###MMMMMMM#####===############==#MMMMM###..SSSSSSS~", // 107
   "MMMMMMMMMM####======################MMMMMMM####....SSSSSSSSSSSSSS...GGGG......####MMMMM#####=======########==##MMMM###..SSSSSSSS", // 108
@@ -132,8 +132,10 @@ const MAP_ROWS = [
   "===#MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMSSSSSSSSSSSSSSS~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~", // 127
 ];
 
-// [tipo, gx, gy] (casa: variante 0-4; casamaya: variante 0-2; tronco: largo 1-4, dir 0 = hacia +gx / 1 = hacia +gy; letrero: texto entre comillas)
+// [tipo, gx, gy] (casa: variante 0-4; casamaya: variante 0-2; ruina: variante 0-2; tronco: largo 1-4, dir 0 = hacia +gx / 1 = hacia +gy; letrero: texto entre comillas)
 const MAP_OBJECTS = [
+  ["letrero", 48, 105, "¡CUIDADO! \nEn esta zona se parace la Xtabay"],
+  ["letrero", 17, 58, "¡CUIDADO! \nEn esta zona se parace la Xtabay"],
   ["piramide", 106, 71],
   ["bote", 96, 43],
   ["bote", 92, 46],
@@ -496,7 +498,6 @@ const MAP_OBJECTS = [
   ["roca", 9, 56],
   ["ceiba", 8, 63],
   ["ceiba", 9, 69],
-  ["ceiba", 8, 77],
   ["ceiba", 8, 72],
   ["ceiba", 9, 91],
   ["ceiba", 8, 93],
@@ -537,14 +538,11 @@ const MAP_OBJECTS = [
   ["guanacaste", 9, 95],
   ["guanacaste", 9, 87],
   ["guanacaste", 9, 81],
-  ["guanacaste", 8, 75],
   ["guanacaste", 9, 66],
   ["guanacaste", 8, 70],
   ["guanacaste", 2, 57],
-  ["guanacaste", 5, 65],
   ["guanacaste", 1, 64],
   ["guanacaste", 4, 78],
-  ["guanacaste", 3, 72],
   ["guanacaste", 2, 89],
   ["guanacaste", 4, 97],
   ["guanacaste", 0, 110],
@@ -572,7 +570,6 @@ const MAP_OBJECTS = [
   ["ceiba", 6, 83],
   ["ceiba", 2, 74],
   ["ceiba", 7, 71],
-  ["ceiba", 3, 67],
   ["ceiba", 5, 60],
   ["chaka", 2, 61],
   ["chaka", 6, 72],
@@ -609,8 +606,6 @@ const MAP_OBJECTS = [
   ["roca", 10, 91],
   ["roca", 8, 83],
   ["roca", 9, 85],
-  ["roca", 8, 76],
-  ["roca", 8, 74],
   ["roca", 9, 71],
   ["roca", 9, 67],
   ["roca", 8, 64],
@@ -636,7 +631,6 @@ const MAP_OBJECTS = [
   ["guanacaste", 10, 11],
   ["guanacaste", 26, 7],
   ["chaka", 34, 35],
-  ["chaka", 25, 33],
   ["chaka", 33, 13],
   ["chaka", 37, 11],
   ["chaka", 11, 19],
@@ -663,12 +657,6 @@ const MAP_OBJECTS = [
   ["flamenco", 50, 72],
   ["cofre", 90, 93],
   ["inicio", 108, 112],
-  [
-    "letrero",
-    105,
-    108,
-    "¡Hola, bienvenida a Yucatán! Es un lugar hermoso, pero ten cuidado,, hay muchos peligros... te recomiendo conseguir un arma para protegerte.\nPuedes ver el mapa en el menú START.",
-  ],
   ["ceiba", 43, 110],
   ["ceiba", 26, 103],
   ["ceiba", 35, 88],
@@ -792,7 +780,6 @@ const MAP_OBJECTS = [
   ["globito", 121, 30],
   ["globito", 11, 8],
   ["globito", 37, 8],
-  ["globito", 14, 84],
   ["globito", 24, 110],
   ["globito", 61, 86],
   ["globito", 37, 96],
@@ -889,12 +876,36 @@ const MAP_OBJECTS = [
   ["tronco", 71, 70, 4, 1],
   ["tronco", 84, 68, 2, 0],
   ["tronco", 89, 63, 2, 0],
-  ["letrero", 48, 105, "¡CUIDADO! \nEn esta zona se parace la Xtabay"],
-  ["letrero", 17, 58, "¡CUIDADO! \nEn esta zona se parace la Xtabay"],
+  ["globito", 4, 84],
   [
     "letrero",
-    43,
-    35,
-    "Dicen que en esta isla han encontrado artefactos mayas, sería genial encontrar una espada maya, o mejor conocida como Macahuitl. Son armas letales a las que  los españoles temian.",
+    105,
+    107,
+    "¡Hola, viajera! Yucatán es hermoso, pero hay peligros de los que deberás cuidarte. Hay muchas cosas por descubrir, puedes ver el mapa abriendo el menú con START. Con SELECT puedes modificar el zoom",
   ],
+  [
+    "letrero",
+    89,
+    54,
+    "La aventura apenas comienza, puedes tomar un bote para navegar por el agua profunda.",
+  ],
+  [
+    "letrero",
+    61,
+    8,
+    "Esta isla es muy peligrosa, deberías conseguir un arma antes de explorar esta zona.",
+  ],
+  [
+    "letrero",
+    42,
+    36,
+    "En esta isla han encontrado artefactos mayas, sería genial que encontraramos un arma.",
+  ],
+  ["xtabay", 15, 103],
+  ["alux", 61, 68],
+  ["alux", 50, 114],
+  ["alux", 7, 79],
+  ["alux", 1, 83],
+  ["alux", 7, 91],
+  ["piramide", 22, 30],
 ];

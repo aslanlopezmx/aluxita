@@ -1,6 +1,6 @@
 // mapas/nivel2.js - generado por el Editor de Mapa Yucatán
 // Cuadrícula 128x128: fila = gy (0-127), columna = gx (0-127)
-// Leyenda: ~ agua  . arena  # pasto  L laguna  = camino  P laguna rosa  M monte  S playa mar  G playa laguna  R playa laguna rosa  W muelle
+// Leyenda: ~ agua  . arena  # pasto  L laguna  = camino  P laguna rosa  M monte  S playa mar  G playa laguna  R playa laguna rosa  W muelle  C camino maya
 const MAP_ROWS = [
   "MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM#===###MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM####==", // 000
   "MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM#===###MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM#####===", // 001
@@ -12,43 +12,43 @@ const MAP_ROWS = [
   "MMM######MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM#####===####MMMMMMMMMM###MMMMMMM#########MMMMMMMMMMMM####====######", // 007
   "MMM#######MMMMMMMMMM##MMMMMMMMMMM#####MMM#######MM#MMMMMMMM#######===#####MMMMMMMM#####MMM###############MMMMMMMMM####===#####MM", // 008
   "MMMMM####MMMMMMMM##########MMM#####################################==#######M########################################===#####MMM", // 009
-  "MMMMMMMMMMMMMMM####################################################==################################################===###MMMMM", // 010
-  "MMMMMMMMMMMMMMM####################################################===##############################################===###MMMMMM", // 011
-  "MMMMMMMMMMMMMMM#####################################################===#########################################=======###MMMMMM", // 012
-  "MMMMMMMMMMMMM###############################====####################====#####################################=========####MMMMMM", // 013
-  "MMMMMMMMMMMMMM#############################========##################====####################################====##==###MMMMMMMM", // 014
-  "MMMMMMMMMMMMMM###########################=============################===###################################===#########MMMMMMMM", // 015
-  "MMMMMMMMMMMMM###########################====######=======##############===##################################==##########MMMMMMMM", // 016
-  "MMMMMMMMMMMMM########===##############=====##########=====#############====#################################==##########MMMMMMMM", // 017
-  "MMMMMMMMMMMMM########=====#########=======#############====#############===========#########################==##########MMMMMMMM", // 018
-  "MMMMMMMMMMMMMM########=======##=========################=====########===============#######################===#########MMMMMMMMM", // 019
+  "MMMMMMMMMMMMMMM####################################################==###############################MMMMM############===###MMMMM", // 010
+  "MMMMMMMMMMMMMMM############################################MMMM####===####################MMMM##MMMMMMMMMM##########===###MMMMMM", // 011
+  "MMMMMMMMMMMMMMM###########################################MMMMMM####===#######MMMMM######MMMMMMMMMMMMMMMMM######=======###MMMMMM", // 012
+  "MMMMMMMMMMMMM###############################====##########MMMMMMMM##====#######MMMMMMMMMMMMMMMMMMMMMMMMMMM###=========####MMMMMM", // 013
+  "MMMMMMMMMMMMMM#############################========#######MMMMMMMM###====######MMMMMMMMMMMMMMMMMMMMMMMMMM####====##==###MMMMMMMM", // 014
+  "MMMMMMMMMMMMMM###########################=============####MMMMMMMMM###===#######MMMMMMMMMMMMMMMMMMMMMMMMM###===#########MMMMMMMM", // 015
+  "MMMMMMMMMMMMM###########################====######=======##MMMMMMMM####===#########MMMMMMMMMMMMMMMMMMMMM####==##########MMMMMMMM", // 016
+  "MMMMMMMMMMMMM########===##############=====##########=====#####MMM#####====###########MMMMMMMMMMMMMMMMM#####==##########MMMMMMMM", // 017
+  "MMMMMMMMMMMMM########=====#########=======#############====#############===========####MMMMMMM####MMM#######==##########MMMMMMMM", // 018
+  "MMMMMMMMMMMMMM########=======##=========################=====########===============#######MM##############===#########MMMMMMMMM", // 019
   "MMMMMMMMMMMMMM###########=====#======#####################====######======##==###=====#####################===#########MMMMMMMMM", // 020
-  "MMMMMMMMMMMMMMM############======##########################====####====###########=====###################===#########MMMMMMMMMM", // 021
-  "MMMMMMMMMMMMMMMMM############===################MMMM########=====##===##############====#################===##########MMMMMMMMMM", // 022
-  "MMM###MMMMMMMMMMMM#############################MMMMMMM########=======################===========########====###########MMMMMMMMM", // 023
-  "MMM####MMMMMMMMMMMM###########################MMMMMMMMM#########=====#################================#====############MMMMMMMMM", // 024
-  "MMM####MMMMMMMMMMMMM##########################MMMMMMMMMM##########====######################==============#############MMMMMMMMM", // 025
-  "MMM#####MMMMMMMMMMMMMM########################MMMMMMMMMMM##########====#############################=====###############MMMMMMMM", // 026
-  "MMM#######MMMMMMMMMMMMMM######################MMMMMMMMMMMM##########===#################################################MMMMMMMM", // 027
-  "MMMM########MMMMMMMMMMMMM######################MMMMMMMMMMMMM#########===################################################MMMMMMMM", // 028
-  "MMMMM#######MMMMMMMMMMMMMMMM####################MMMMMMMMMMMM#########===################################################MMMMMMMM", // 029
-  "MMMMMM#######MMMMMMMMMMMMMMMM####################MMMMMMMMMMM##########==################################################MMMMMMMM", // 030
-  "MMMMMM#######MMMMMMMMMMMMMMMMM####################MMMMMMMMMMM#########==#################################################MMMMMMM", // 031
-  "MMMMMMM######MMMMMMMMMMMMMMMMMM###################MMMMMMMMMMM#########==##################################################MMMMMM", // 032
-  "MMMMMMMM#####MMMMMMMMMMMMMMMMMM###################MMMMMMMMMMM#########==#####################################################MMM", // 033
-  "MMMMMMMMM####MMMMMMMMMMMMMMMMMM#####################MMMMMMMMM#########==#####################################################.SS", // 034
-  "MMMMMMMMMM###MMMMMMMMMMMMMMMMMM######################MMMMMMMM#########==####################################################..SS", // 035
-  "MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM######################MMMMMMM#########===###################################################.SSS", // 036
-  "MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM########################MMMMM#########===##################################################..SSS", // 037
-  "MMMMMMMMMMMMMMMMMMMMMMMMMMM############################################==##################################################.SSSS", // 038
-  "MMMMMMMMMMMMMMMMMMMMMMMMMMM############################################===#################################################.SSS~", // 039
-  "MMMMMMMMMMMMMMMMMMMMMMMMMMM############################################===####################MMM##########################.SSS~", // 040
-  "MMMMMMMMMMMMMMMMMMMMMMMMMMMM############################################==###################MMMMMM########################.SS~~", // 041
-  "MMMMMMMMMMMMMMMMMMMMMMMMMMMM############################################===##################MMMMMMM######################..SS~~", // 042
-  "MMMMMMMMMMMMMMMMMMMMMMMMMMM############===========######################===##################MMMMMMM#########M############.SSS~~", // 043
-  "MMMMMMMMMMMMMMMMMMMMMMMM###############===============##################==###################MMMMMMM#######MMMMMM########..SSS~~", // 044
-  "MMMMMMMMMMMMMMMMMMMMMMMM##########=======####============##############===###################MMMMM.......##MMMMMMMM#####..SSSS~~", // 045
-  "MMMMMMMMMMMMMMMM#####MMM#########========########========#############====#####################MM#..........MMMMMMM#####.SSSSSS~", // 046
+  "MMMMMMMMMMMMMMM############======##########################====####====###########=====###################===###MMM###MMMMMMMMMM", // 021
+  "MMMMMMMMMMMMMMMMM############===################MMMM########=====##===##############====#################===####MMM###MMMMMMMMMM", // 022
+  "MMM###MMMMMMMMMMMM#############################MMMMMMM########=======#####MM#########===========########====####MMMM###MMMMMMMMM", // 023
+  "MMM####MMMMMMMMMMMM###########################MMMMMMMMM#########=====####MMMMMMMM#####================#====####MMMMM###MMMMMMMMM", // 024
+  "MMM####MMMMMMMMMMMMM##########################MMMMMMMMMM##########====#MMMMMMMMMMMMMM#######==============#####MMMM####MMMMMMMMM", // 025
+  "MMM#####MMMMMMMMMMMMMM########################MMMMMMMMMMM##########====#MMMMMMMMMMMMMM##############=====####MMMMMM#####MMMMMMMM", // 026
+  "MMM#######MMMMMMMMMMMMMM######################MMMMMMMMMMMM##########===#MMMMMMMMMMMMMMM#####################MMMMMMM#####MMMMMMMM", // 027
+  "MMMM########MMMMMMMMMMMMM######################MMMMMMMMMMMMM#########===#MMMMMMMMMMMMMMM####################MMMMMMM#####MMMMMMMM", // 028
+  "MMMMM#######MMMMMMMMMMMMMMMM####################MMMMMMMMMMMM#########===#MMMMMMMMMMMMMMMM###################MMMMMMM#####MMMMMMMM", // 029
+  "MMMMMM#######MMMMMMMMMMMMMMMM####################MMMMMMMMMMM##########==#MM#MMMM#MMMMMMMM###################MMMMMMM#####MMMMMMMM", // 030
+  "MMMMMM#######MMMMMMMMMMMMMMMMM####################MMMMMMMMMMM#########==#M####M###MMMMMMMM##################MMMMMMMM#####MMMMMMM", // 031
+  "MMMMMMM######MMMMMMMMMMMMMMMMMM###################MMMMMMMMMMM#########==#MM#######MMMMMMMM##########MMMM####MMMMMMMM######MMMMMM", // 032
+  "MMMMMMMM#####MMMMMMMMMMMMMMMMMM###################MMMMMMMMMMM#########==#MMM#######MMMMMMM##########MMMMMMMMMMMMMMMM#########MMM", // 033
+  "MMMMMMMMM####MMMMMMMMMMMMMMMMMM#####################MMMMMMMMM#########==##MMMMM#####MMMMMM##########MMMMMMMMMMMMMMMM#########.SS", // 034
+  "MMMMMMMMMM###MMMMMMMMMMMMMMMMMM######################MMMMMMMM#########==###MMMMMM######################MMMMMMMMMM###########..SS", // 035
+  "MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM######################MMMMMMM#########===###MMMMMM#####################MMMMMMMMM############.SSS", // 036
+  "MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM########################MMMMM#########===########MM#####################MM#################..SSS", // 037
+  "MMMMMMMMMMMMMMMMMMMMMMMMMMM############################################==########MMM#######################################.SSSS", // 038
+  "MMMMMMMMMMMMMMMMMMMMMMMMMMM############################################===#######MMMMM#####################################.SSS~", // 039
+  "MMMMMMMMMMMMMMMMMMMMMMMMMMM############################################===#######MMMMMM#######MMM##########################.SSS~", // 040
+  "MMMMMMMMMMMMMMMMMMMMMMMMMMMM############################################==########MMMMMM#####MMMMMM########################.SS~~", // 041
+  "MMMMMMMMMMMMMMMMMMMMMMMMMMMM############################################===#######MMMMMM#####MMMMMMM######################..SS~~", // 042
+  "MMMMMMMMMMMMMMMMMMMMMMMMMMM############===========######################===#######MMMMMMM####MMMMMMM#########M############.SSS~~", // 043
+  "MMMMMMMMMMMMMMMMMMMMMMMM###############===============##################==########MMMMMMM####MMMMMMM#######MMMMMM########..SSS~~", // 044
+  "MMMMMMMMMMMMMMMMMMMMMMMM##########=======####============##############===########MMMMM######MMMMM.......##MMMMMMMM#####..SSSS~~", // 045
+  "MMMMMMMMMMMMMMMM#####MMM#########========########========#############====##########M##########MM#..........MMMMMMM#####.SSSSSS~", // 046
   "MMMMMMMMMMMMMMM###############======###################======#########===########################................#######.SSSSSS~", // 047
   "MMMMMMMMMMMMMM################=====#####################================########################...................#####.SSSSS~~", // 048
   "MMMMMMMMMMMMM###################==#########################============#########################.....................##..SSSSS~~", // 049
@@ -132,7 +132,7 @@ const MAP_ROWS = [
   "MMMMMMMMMM..........SSSSSSSSSSSSSSSSSSSS~~~~~~~~~~~~~~~~~~~~~~~~~SSSSSSSSSSSS~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~SSSSS~~~~~~~~~~~~~~~~", // 127
 ];
 
-// [tipo, gx, gy] (casa: variante 0-4; casamaya: variante 0-2; tronco: largo 1-4, dir 0 = hacia +gx / 1 = hacia +gy; letrero: texto entre comillas)
+// [tipo, gx, gy] (casa: variante 0-4; casamaya: variante 0-2; ruina: variante 0-2; tronco: largo 1-4, dir 0 = hacia +gx / 1 = hacia +gy; letrero: texto entre comillas)
 const MAP_OBJECTS = [
   ["mangle", 54, 111],
   ["mangle", 59, 106],
@@ -205,7 +205,6 @@ const MAP_OBJECTS = [
   ["ceiba", 85, 15],
   ["ceiba", 102, 20],
   ["ceiba", 81, 24],
-  ["ceiba", 83, 36],
   ["ceiba", 64, 14],
   ["ceiba", 31, 12],
   ["ceiba", 36, 27],
@@ -236,7 +235,6 @@ const MAP_OBJECTS = [
   ["ceiba", 15, 7],
   ["ceiba", 5, 7],
   ["ceiba", 23, 37],
-  ["ceiba", 6, 46],
   ["ceiba", 8, 57],
   ["ceiba", 0, 50],
   ["ceiba", 14, 47],
@@ -299,7 +297,6 @@ const MAP_OBJECTS = [
   ["arbusto", 68, 34],
   ["arbusto", 61, 43],
   ["arbusto", 91, 37],
-  ["arbusto", 85, 45],
   ["arbusto", 107, 37],
   ["arbusto", 116, 36],
   ["arbusto", 117, 30],
@@ -308,7 +305,6 @@ const MAP_OBJECTS = [
   ["arbusto", 107, 17],
   ["arbusto", 114, 18],
   ["arbusto", 107, 10],
-  ["arbusto", 88, 43],
   ["arbusto", 72, 55],
   ["arbusto", 64, 42],
   ["arbusto", 44, 38],
@@ -323,7 +319,6 @@ const MAP_OBJECTS = [
   ["arbusto", 20, 31],
   ["arbusto", 16, 40],
   ["arbusto", 6, 35],
-  ["arbusto", 6, 47],
   ["arbusto", 104, 43],
   ["arbusto", 100, 38],
   ["arbusto", 112, 40],
@@ -576,7 +571,6 @@ const MAP_OBJECTS = [
   ["queso", 54, 56],
   ["queso", 97, 52],
   ["queso", 72, 64],
-  ["queso", 113, 74],
   ["queso", 61, 124],
   ["queso", 120, 119],
   ["tolok", 105, 22],
@@ -620,5 +614,17 @@ const MAP_OBJECTS = [
   ["huaypek", 118, 81],
   ["huaypek", 117, 71],
   ["huaypek", 118, 116],
-  ["boomerang", 116, 8],
+  ["queso", 121, 66],
+  ["alux", 68, 21],
+  ["alux", 71, 21],
+  ["alux", 69, 18],
+  ["alux", 70, 23],
+  ["alux", 66, 22],
+  ["alux", 71, 19],
+  ["alux", 7, 31],
+  ["alux", 10, 30],
+  ["alux", 3, 5],
+  ["boomerang", 105, 102],
+  ["piramide", 4, 46],
+  ["piramide", 84, 42.5],
 ];

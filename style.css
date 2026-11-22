@@ -53,16 +53,71 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 6px 10px;
+    padding: 10px 14px;
     font-family: 'Press Start 2P', monospace;
-    font-size: 7px;
+    font-size: clamp(11px, 2.6vw, 20px);
     color: #e8e8e8;
     background: #111;
     border-bottom: 2px solid #2b2b2b;
     flex: 0 0 auto;
     flex-wrap: wrap;
-    gap: 4px;
-    line-height: 1.5;
+    gap: 6px;
+    line-height: 1.6;
+}
+
+#healthDisplay {
+    white-space: nowrap;
+}
+
+/* En la pantalla de inicio no hay barra de estado ni se reserva su espacio: la imagen
+   del título cubre todo el display. Al empezar, el título se elimina y la barra aparece
+   (el lienzo se reajusta solo gracias al ResizeObserver de main.js). */
+.screen-viewport:has(#titleScreen:not(.closing)) .status-bar {
+    display: none;
+}
+
+/* La barra entra con un fundido al empezar el juego, a la vez que se desvanece la
+   pantalla de carga, para que no "salte" de golpe */
+.status-bar {
+    animation: statusBarIn 0.5s ease-out;
+}
+
+@keyframes statusBarIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+/* Si no caben en una sola fila, los coleccionables pasan a su propia línea
+   pero se quedan pegados a la derecha (los corazones siempre a la izquierda) */
+#itemDisplay {
+    margin-left: auto;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 2px 14px;
+    max-width: 100%;
+    min-width: 0;
+    text-align: right;
+}
+
+.hud-item {
+    white-space: nowrap;
+}
+
+@media (max-width: 520px) {
+    .status-bar {
+        padding: 8px 10px;
+        font-size: 10px;
+    }
+
+    #itemDisplay {
+        gap: 2px 10px;
+    }
 }
 
 .canvas-wrap {
@@ -84,9 +139,6 @@ body {
 }
 
 /* ---------- Caja de diálogo (letreros) ---------- */
-/* Ocupa el área de juego (debajo de la barra de estado). La letra escala con el
-   ancho de la pantalla: ~4% del ancho, entre 10px y 22px. Para ajustar, edita
-   --dialog-font. Si el mensaje es largo, el texto se desplaza dentro del letrero. */
 .dialog-box {
     --dialog-font: clamp(10px, 4cqw, 22px);
     position: absolute;
@@ -119,7 +171,6 @@ body {
 
 .dialog-box p {
     margin: auto 0;
-    /* centrado vertical; si no cabe, se desplaza */
     min-height: 0;
     max-height: 100%;
     overflow-y: auto;
@@ -159,7 +210,6 @@ body {
     padding-bottom: max(10px, env(safe-area-inset-bottom));
 }
 
-/* Oculto por HTML, pero mantenemos la clase por si acaso */
 .brand-tag {
     display: none;
 }
@@ -177,7 +227,6 @@ body {
     height: 260px;
 }
 
-/* ---------- ZONA DEL JOYSTICK (Táctil) ---------- */
 .dpad-wrapper {
     position: relative;
     width: 44vw;
@@ -190,7 +239,6 @@ body {
     z-index: 10;
 }
 
-/* ---------- D-Pad Visual ---------- */
 .dpad {
     pointer-events: none;
     width: 100%;
@@ -255,7 +303,6 @@ body {
     border-radius: 4px 4px 8px 8px;
 }
 
-/* ---------- Botones de acción A/B ---------- */
 .action-buttons {
     position: relative;
     display: flex;
@@ -300,12 +347,10 @@ body {
     box-shadow: 0 1px 0 #7a0e2e, inset 0 3px 0 #ffffff55;
 }
 
-/* Oculto por HTML */
 .btn-label {
     display: none;
 }
 
-/* ---------- SELECT / START ---------- */
 .center-buttons {
     position: absolute;
     left: 50%;
@@ -342,7 +387,6 @@ body {
     position: relative;
 }
 
-/* Área de toque más grande que el dibujo del botón */
 .pill-btn::after {
     content: "";
     position: absolute;
@@ -452,7 +496,6 @@ body {
    RESPONSIVE
    ============================================================ */
 
-/* ---------- MÓVIL: 60% juego / 40% controles ---------- */
 @media (max-width: 768px) {
 
     html,
@@ -467,7 +510,6 @@ body {
         justify-content: flex-start;
     }
 
-    /* 60% juego */
     .screen-viewport {
         flex: none;
         height: 60dvh;
@@ -476,7 +518,6 @@ body {
         border-width: 0 0 6px 0;
     }
 
-    /* 40% controles */
     .gameboy-body {
         flex: none;
         height: 40dvh;
@@ -491,7 +532,6 @@ body {
         padding: 3dvh 4% 0;
     }
 
-    /* Tamaños basados en la altura para que siempre quepan en el 40% */
     .dpad-wrapper {
         width: min(44vw, 26dvh);
         height: min(44vw, 26dvh);
@@ -520,7 +560,6 @@ body {
     }
 }
 
-/* ---------- ESCRITORIO ---------- */
 @media (min-width: 769px) {
     .console-shell {
         padding: 20px;
@@ -582,7 +621,9 @@ body {
     }
 }
 
-/* ---------- Pantalla principal ---------- */
+/* ============================================================
+   PANTALLA PRINCIPAL (MODIFICADA CON IMAGEN DE FONDO)
+   ============================================================ */
 .title-screen {
     position: absolute;
     inset: 0;
@@ -592,7 +633,13 @@ body {
     align-items: center;
     justify-content: center;
     gap: 4cqh;
-    background: radial-gradient(ellipse at center, rgba(20, 40, 30, 0.72) 0%, rgba(5, 10, 8, 0.92) 100%);
+
+    /* CAMBIO AQUÍ: Ruta de la imagen en la carpeta assets */
+    background-image: linear-gradient(rgba(5, 10, 8, 0.6), rgba(5, 10, 8, 0.8)), url('assets/menu.png');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+
     font-family: 'Press Start 2P', monospace;
     text-align: center;
     cursor: pointer;
@@ -763,7 +810,63 @@ body {
     text-shadow: 2px 2px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000;
 }
 
-/* ---------- Cinemática de introducción ---------- */
+/* ---------- Simbología del mapa ---------- */
+.map-legend {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    max-width: 46%;
+    max-height: 70%;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 6px 8px;
+    background: rgba(5, 10, 8, 0.72);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    border-radius: 4px;
+    font-family: 'Outfit', system-ui, sans-serif;
+    font-size: clamp(8px, 2.4cqw, 12px);
+    line-height: 1.3;
+    color: #fff3df;
+    pointer-events: none;
+}
+
+.map-legend-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+}
+
+.map-legend-swatch {
+    flex: none;
+    width: 13px;
+    height: 13px;
+    box-sizing: border-box;
+    border: 2px solid rgba(0, 0, 0, 0.55);
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.15);
+}
+
+.map-legend-square {
+    border-radius: 2px;
+}
+
+.map-legend-circle {
+    border-radius: 50%;
+}
+
+.map-legend-diamond {
+    transform: rotate(45deg);
+    border-radius: 1px;
+}
+
+.map-legend-diamondRing {
+    transform: rotate(45deg);
+    border-radius: 1px;
+    background: transparent !important;
+}
+
 .cutscene {
     position: absolute;
     inset: 0;
@@ -788,8 +891,6 @@ body {
     pointer-events: none;
 }
 
-/* El tamaño sale de la proporción real de cada viñeta (--ar, la pone cutscene.js):
-   ocupa todo el alto disponible sin pasarse del ancho */
 .cut-img {
     flex: 0 0 auto;
     display: block;
@@ -832,7 +933,6 @@ body {
     }
 }
 
-/* ---------- Pantalla de carga ---------- */
 .loading-screen {
     position: absolute;
     inset: 0;
@@ -914,7 +1014,6 @@ body {
     }
 }
 
-/* ---------- Arranque desde otro nivel (sin parpadeo del menú inicial) ---------- */
 html.arranque .title-screen {
     display: none;
 }
@@ -923,7 +1022,6 @@ html.arranque-carga .loading-screen.hidden {
     display: flex;
 }
 
-/* ---------- Selector de nivel (modo desarrollo) ---------- */
 .level-picker {
     z-index: 30;
     background: rgba(5, 10, 8, 0.9);
@@ -938,7 +1036,6 @@ html.arranque-carga .loading-screen.hidden {
     color: #7ed9a0;
 }
 
-/* Botón C (boomerang): siempre visible; sin boomerang no hace nada */
 .action-btn-c {
     width: 13vw;
     max-width: 56px;
@@ -948,7 +1045,6 @@ html.arranque-carga .loading-screen.hidden {
     box-shadow: 0 5px 0 #4a2b12, inset 0 3px 0 #ffffff55;
 }
 
-/* Botón D: reservado para una función futura (por ahora no hace nada) */
 .action-btn-d {
     background: radial-gradient(circle at 35% 30%, #8fdcff, #2a6fb0);
     box-shadow: 0 5px 0 #153d66, inset 0 3px 0 #ffffff55;
@@ -958,12 +1054,6 @@ html.arranque-carga .loading-screen.hidden {
     box-shadow: 0 1px 0 #153d66, inset 0 3px 0 #ffffff55;
 }
 
-
-/* ============================================================
-   AJUSTE FINAL: botones planos y carcasa con relieve sutil
-   ============================================================ */
-
-/* Carcasa: acabado mate con relieve neumórfico discreto. */
 .gameboy-body {
     background: #d5d1c5;
     border: 1px solid rgba(255, 255, 255, 0.42);
@@ -974,7 +1064,6 @@ html.arranque-carga .loading-screen.hidden {
         inset 1px 1px 2px rgba(255, 255, 255, 0.42);
 }
 
-/* Los grupos quedan paralelos, rectos y con separación uniforme. */
 .action-buttons {
     align-items: center;
     justify-content: center;
@@ -993,7 +1082,6 @@ html.arranque-carga .loading-screen.hidden {
     margin-bottom: 0;
 }
 
-/* Color completamente plano: sin gradientes ni sombras internas. */
 .action-btn,
 .action-btn.action-btn-c,
 .action-btn.action-btn-d {
@@ -1013,7 +1101,6 @@ html.arranque-carga .loading-screen.hidden {
     transition: transform 0.09s ease, box-shadow 0.09s ease;
 }
 
-/* Usar background completo elimina también cualquier degradado heredado. */
 #btnC {
     background: #42bd94 !important;
 }
@@ -1080,7 +1167,6 @@ html.arranque-carga .loading-screen.hidden {
     }
 }
 
-/* Distribución en cruceta: conserva la separación de la distribución diagonal anterior. */
 .action-buttons {
     --action-size: clamp(48px, 6vw, 64px);
     --action-major: clamp(42px, 4.9vw, 52px);
@@ -1114,7 +1200,6 @@ html.arranque-carga .loading-screen.hidden {
     margin: 0;
 }
 
-/* Cruceta clásica: C a la izquierda, D arriba, B abajo y A a la derecha. */
 #btnC {
     left: calc(50% - var(--action-major));
     top: 50%;
@@ -1155,8 +1240,6 @@ html.arranque-carga .loading-screen.hidden {
     }
 }
 
-
-/* Letras y colores finales de los botones de acción */
 .action-buttons .action-btn,
 .action-buttons .action-btn.action-btn-c,
 .action-buttons .action-btn.action-btn-d {
@@ -1172,7 +1255,6 @@ html.arranque-carga .loading-screen.hidden {
     background-image: none !important;
 }
 
-/* Izquierda: X rojo | Arriba: Y amarillo | Abajo: B azul | Derecha: A verde */
 .action-buttons #btnC {
     background: #e34b4b !important;
 }
@@ -1198,4 +1280,126 @@ html.arranque-carga .loading-screen.hidden {
     .action-buttons .action-btn.action-btn-d {
         font-size: clamp(16px, 4.5vw, 20px) !important;
     }
+}
+
+/* ============================================================
+   Collage final de recuerdos: cubre toda la ventana
+   ============================================================ */
+.collage {
+    position: fixed;
+    inset: 0;
+    z-index: 10000;
+    background: #14100d;
+    opacity: 0;
+    transition: opacity 0.8s ease;
+}
+
+.collage.show {
+    opacity: 1;
+}
+
+.collage.hidden {
+    display: none;
+}
+
+.collage-scroll {
+    position: absolute;
+    inset: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    overscroll-behavior: contain;
+    outline: none;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+    padding-top: env(safe-area-inset-top, 0px);
+}
+
+.collage-scroll::-webkit-scrollbar {
+    display: none;
+}
+
+.collage-set {
+    column-count: 4;
+    column-gap: 14px;
+    padding: 14px 14px 0;
+}
+
+@media (max-width: 1100px) {
+    .collage-set {
+        column-count: 3;
+    }
+}
+
+@media (max-width: 700px) {
+    .collage-set {
+        column-count: 2;
+        column-gap: 10px;
+        padding: 10px 10px 0;
+    }
+}
+
+.collage-photo {
+    margin: 0 0 14px;
+    padding: 8px;
+    background: #f5efe0;
+    border-radius: 3px;
+    box-shadow: 0 6px 14px rgba(0, 0, 0, 0.55);
+    break-inside: avoid;
+    transform: rotate(var(--tilt, 0deg));
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+.collage-photo img {
+    display: block;
+    width: 100%;
+    height: auto;
+    -webkit-touch-callout: none;
+}
+
+.collage-bar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: calc(10px + env(safe-area-inset-top, 0px)) 14px 22px;
+    background: linear-gradient(rgba(10, 8, 6, 0.92), rgba(10, 8, 6, 0));
+    pointer-events: none;
+}
+
+.collage-title {
+    font-family: 'Press Start 2P', monospace;
+    font-size: clamp(9px, 2.4vw, 16px);
+    color: #ffd166;
+    text-shadow: 2px 2px 0 #000;
+}
+
+.collage-exit {
+    pointer-events: auto;
+    font-family: 'Press Start 2P', monospace;
+    font-size: clamp(8px, 2vw, 13px);
+    padding: 10px 14px;
+    color: #fff;
+    background: #c0392b;
+    border: 3px solid #fff;
+    border-radius: 6px;
+    box-shadow: 0 4px 0 #6e1e15;
+    cursor: pointer;
+}
+
+.collage-exit:active {
+    transform: translateY(3px);
+    box-shadow: 0 1px 0 #6e1e15;
+}
+
+
+/* Mientras la fuente se descarga, los textos de estas pantallas no se muestran
+   (evita ver un momento la fuente de respaldo). La clase se quita en index.html. */
+html.fuentes-cargando :is(.title-screen, .loading-screen, .status-bar)>* {
+    visibility: hidden;
 }

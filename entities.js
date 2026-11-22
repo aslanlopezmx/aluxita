@@ -73,6 +73,7 @@ function spawnEntities() {
   if (swordItem) reserved.push({ gx: swordItem.gx, gy: swordItem.gy, r: 1.5 });
   if (boomerangItem)
     reserved.push({ gx: boomerangItem.gx, gy: boomerangItem.gy, r: 1.5 });
+  if (redItem) reserved.push({ gx: redItem.gx, gy: redItem.gy, r: 1.5 });
   checkpoints.forEach((cp) =>
     reserved.push({ gx: cp.gx, gy: cp.gy, r: CHECKPOINT_R + 0.8 }),
   );
@@ -106,6 +107,16 @@ function spawnEntities() {
   // Casas mayas de palma: ["casamaya", gx, gy, variante 0-2]
   byType("casamaya").forEach(([, gx, gy, v], i) => {
     addStatic(SP.mayaHouses[(v | 0) % SP.mayaHouses.length], gx, gy, {
+      canopy: true,
+      r: 0.6 * BUILD_SCALE,
+      flip: i % 2 === 1,
+    });
+    reserved.push({ gx, gy, r: 1.3 * BUILD_SCALE });
+  });
+
+  // Ruinas mayas (estructuras de piedra): ["ruina", gx, gy, variante 0-2]
+  byType("ruina").forEach(([, gx, gy, v], i) => {
+    addStatic(SP.ruins[(v | 0) % SP.ruins.length], gx, gy, {
       canopy: true,
       r: 0.6 * BUILD_SCALE,
       flip: i % 2 === 1,
@@ -353,6 +364,7 @@ function spawnEntities() {
     o.speed = HUAYCHIVO_SPEED;
     o.windup = HUAYCHIVO_WINDUP;
     o.damage = HUAYCHIVO_DAMAGE;
+    o.knockback = HUAYCHIVO_KNOCKBACK;
     o.sep = HUAYCHIVO_SEP;
     o.monteOnly = false;
     o.usePath = true; // como los perros: calcula una ruta (A*) y rodea troncos, rocas y agua
@@ -648,10 +660,7 @@ function attack() {
   if (typeof levelPickOpen !== "undefined" && levelPickOpen)
     return closeLevelPicker();
   if (menuOpen) return menuBack();
-  if (!dialogOverlay.classList.contains("hidden")) {
-    closeSignDialog();
-    return;
-  }
+  if (dismissSignDialog()) return;
   if (
     !hasSword ||
     isPaused ||
@@ -684,9 +693,9 @@ function attack() {
 // Va en línea recta hasta su alcance (sin colisiones: atraviesa todo), golpea a
 // los enemigos que cruza y regresa a su mano.
 function throwBoomerang() {
+  if (dismissSignDialog()) return;
   if (cutActive || menuOpen || isPaused) return;
   if (typeof levelPickOpen !== "undefined" && levelPickOpen) return;
-  if (!dialogOverlay.classList.contains("hidden")) return;
   if (!hasBoomerang || boomerang || player.faintT > 0 || player.boat) return;
   const ax = player.aimGx;
   const ay = player.aimGy;
@@ -746,6 +755,91 @@ function updateBoomerang() {
       b.back ? -b.dy : b.dy,
     );
   });
+}
+
+// ¿El hostil en (ox,oy) queda cubierto por la red ya abierta puesta en (rx,ry)?
+// Se compara en pantalla (como se ve dibujada: RED_OPEN_HW/HH), no con un radio
+// aparte, así toda el área que ocupa la red es la que inmoviliza.
+function redCovers(ox, oy, rx, ry) {
+  const dgx = ox - rx;
+  const dgy = oy - ry;
+  const sx = (dgx - dgy) * HW;
+  const sy = (dgx + dgy) * HH;
+  return (
+    (sx * sx) / (RED_OPEN_HW * RED_OPEN_HW) +
+      (sy * sy) / (RED_OPEN_HH * RED_OPEN_HH) <=
+    1
+  );
+}
+
+// Botón Y (btnD): lanza la red con pesas hacia donde mira la exploradora. Viaja en
+// línea recta sin colisiones (como el boomerang) hasta su alcance y ahí cae: si hay
+// NPC hostiles dentro del área, quedan inmovilizados (todos los que toque); si no
+// atrapó a nadie, desaparece casi de inmediato.
+function throwRed() {
+  if (dismissSignDialog()) return;
+  if (menuOpen) return menuSecretTap(); // 3 × Y en el menú de pausa: apartado secreto
+  if (cutActive || menuOpen || isPaused) return;
+  if (typeof levelPickOpen !== "undefined" && levelPickOpen) return;
+  if (!hasRed || redNet || redCooldown > 0 || player.faintT > 0 || player.boat)
+    return;
+  const ax = player.aimGx;
+  const ay = player.aimGy;
+  const n = Math.hypot(ax, ay) || 1;
+  redNet = {
+    gx: player.gx,
+    gy: player.gy,
+    dx: ax / n,
+    dy: ay / n,
+    dist: 0,
+    landed: false,
+    phase: 0, // 0 = comprimida … RED_OPEN_FRAMES = ya abierta del todo
+    life: 0, // cuadros transcurridos desde que cayó (parpadeo / desaparición)
+    caught: false,
+    stunMax: RED_MISS_FRAMES,
+  };
+  redCooldown = RED_THROW_COOLDOWN;
+}
+
+function updateRedNet() {
+  if (redCooldown > 0) redCooldown--;
+  const r = redNet;
+  if (!r) return;
+  if (!r.landed) {
+    r.phase = Math.min(RED_OPEN_FRAMES, r.phase + 1); // se va abriendo en vuelo
+    r.gx += r.dx * RED_SPEED;
+    r.gy += r.dy * RED_SPEED;
+    r.dist += RED_SPEED;
+    // Si su CENTRO pasa cerca de un hostil (antes de llegar a su alcance), ahí se
+    // detiene y se abre — no basta con rozarlo con el borde del área grande, así
+    // se frena sobre el grupo y, al abrirse, atrapa a todos los que queden dentro.
+    const hit = statics.find(
+      (o) =>
+        !o.dead &&
+        RED_STUN[o.kind] &&
+        Math.hypot(o.gx - r.gx, o.gy - r.gy) <= RED_CORE_R,
+    );
+    if (hit || r.dist >= RED_RANGE) {
+      r.landed = true;
+      // Atrapa a TODOS los hostiles que queden bajo el área de la red al caer
+      let minStun = Infinity;
+      statics.forEach((o) => {
+        if (o.dead || !RED_STUN[o.kind]) return;
+        if (!redCovers(o.gx, o.gy, r.gx, r.gy)) return;
+        o.netT = RED_STUN[o.kind];
+        o.moving = false;
+        if (RED_STUN[o.kind] < minStun) minStun = RED_STUN[o.kind];
+        burst(o.gx, o.gy, o.h, ["#e8e2d0", "#9a8a68", "#ffffff"], 10);
+      });
+      r.caught = minStun < Infinity;
+      // Si atrapó varios tipos distintos, la red dura lo que el más fuerte (el
+      // de menor tiempo); al zafarse éste, la red desaparece
+      if (r.caught) r.stunMax = minStun;
+    }
+    return;
+  }
+  r.life++;
+  if (r.life >= r.stunMax) redNet = null; // ya parpadeó lo suyo: desaparece
 }
 
 // Un enemigo recibe daño: se aturde y retrocede; con 0 corazones muere
@@ -1183,17 +1277,36 @@ function showDogMemory(dog) {
 }
 
 /* ---------- Daño al jugador ---------- */
-function hurtPlayer(n, fromGx, fromGy) {
+// push (opcional): casillas que sale despedida (golpe fuerte, p. ej. el huaychivo).
+// Sin push, el retroceso es el pequeño de siempre.
+function hurtPlayer(n, fromGx, fromGy, push) {
   if (player.invuln > 0 || isPaused || playerSafe()) return;
   health = Math.max(0, health - n);
   player.invuln = 70;
   updateHUD();
-  burst(player.gx, player.gy, player.h, ["#ff595e", "#ffffff", "#ffd166"], 12);
+  burst(
+    player.gx,
+    player.gy,
+    player.h,
+    ["#ff595e", "#ffffff", "#ffd166"],
+    push > 0 ? 12 + Math.round(push * 4) : 12,
+  );
 
-  // Pequeño retroceso, alejándose de quien lo golpeó
+  // Retroceso, alejándose de quien lo golpeó
   const dx = player.gx - fromGx;
   const dy = player.gy - fromGy;
   const dl = Math.hypot(dx, dy) || 1;
+  if (push > 0) {
+    // Golpe fuerte: sale despedida y se va frenando (update() en main.js aplica la
+    // velocidad cada cuadro; mientras dura no puede controlar al personaje). La
+    // distancia total es v0 / (1 − decay) = push.
+    const v0 = push * (1 - PLAYER_KB_DECAY);
+    player.kbX = (dx / dl) * v0;
+    player.kbY = (dy / dl) * v0;
+    player.jumpT = 0;
+    if (health <= 0) playerFaint();
+    return;
+  }
   const kx = (dx / dl) * 0.7;
   const ky = (dy / dl) * 0.7;
   if (walkable(player.gx + kx, player.gy + ky)) {
@@ -1211,6 +1324,8 @@ function hurtPlayer(n, fromGx, fromGy) {
 // Sin corazones: la exploradora se desmaya y despierta en el punto de inicio
 function playerFaint() {
   health = MAX_HEALTH;
+  player.kbX = 0;
+  player.kbY = 0;
   // Reaparece en el último checkpoint que pisó (o en el inicio si no pisó ninguno)
   player.gx = lastCheckpoint ? lastCheckpoint.gx : START_TILE.gx;
   player.gy = lastCheckpoint ? lastCheckpoint.gy : START_TILE.gy;
@@ -1353,6 +1468,15 @@ function updateAlux(o) {
     o.moving = false;
     return;
   }
+  // Atrapado bajo la red: inmóvil (no persigue, no ataca) hasta que se zafa; al
+  // terminar retoma justo el estado en el que estaba cuando cayó la red.
+  if (o.netT > 0) {
+    o.netT--;
+    o.moving = false;
+    o.h += (tileH(Math.round(o.gx), Math.round(o.gy)) - o.h) * 0.2;
+    o.depth = o.gx + o.gy;
+    return;
+  }
   // Golpeado: retrocede unos pasos sin poder actuar (sin salir de su zona ni atravesar nada)
   if (o.kbT > 0) {
     o.kbT--;
@@ -1468,7 +1592,7 @@ function updateAlux(o) {
       // Golpe: acierta si el jugador sigue a su alcance, en su zona y sin saltar
       o.hitT = 14;
       if (targetable && d < o.reach + 0.4 && player.z < 5) {
-        hurtPlayer(o.damage, o.gx, o.gy);
+        hurtPlayer(o.damage, o.gx, o.gy, o.knockback);
       }
       o.state = "recover";
       o.coolT = 40;

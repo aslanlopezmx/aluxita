@@ -14,37 +14,54 @@ const NIVELES_TOTAL = 4;
 // En el último nivel, "finN" es la cinemática final del juego.
 const CINEMATICAS = {
   intro: [
-    "assets/intro/escena1.jpg",
-    "assets/intro/escena2.jpg",
-    "assets/intro/escena3.jpg",
-    "assets/intro/escena4.jpg",
-    "assets/intro/escena5.jpg",
-    "assets/intro/escena6.jpg",
+    "assets/intro/escena1.png",
+    "assets/intro/escena2.png",
+    "assets/intro/escena3.png",
+    "assets/intro/escena4.png",
+    "assets/intro/escena5.png",
+    "assets/intro/escena6.png",
   ],
-  fin1: [],
+  // Transiciones entre niveles: una sola escena cada una (se ve al salir del nivel,
+  // antes de "CARGANDO"). Pon tus imágenes en estas rutas.
+  fin1: ["assets/fin1/escena1.png"], // nivel 1 → nivel 2
+  fin2: ["assets/fin2/escena1.png"], // nivel 2 → nivel 3
+  fin3: ["assets/fin3/escena1.png"], // nivel 3 → nivel 4
 
   // "choco" → al encontrar a Choco por primera vez (dentro del nivel, sin pantalla
   // de carga; después sale el recuerdo del nuevo amigo)
   choco: [
-    "assets/choco/escena1.jpg",
-    "assets/choco/escena2.jpg",
-    "assets/choco/escena3.jpg",
-    "assets/choco/escena4.jpg",
-    "assets/choco/escena5.jpg",
+    "assets/choco/escena1.png",
+    "assets/choco/escena2.png",
+    "assets/choco/escena3.png",
+    "assets/choco/escena4.png",
+    "assets/choco/escena5.png",
   ],
 
   // "cleo" → misma fórmula que "choco": al encontrar a Cleo por primera vez
   cleo: [
-    "assets/cleo/escena1.jpg",
-    "assets/cleo/escena2.jpg",
-    "assets/cleo/escena3.jpg",
-    "assets/cleo/escena4.jpg",
+    "assets/cleo/escena1.png",
+    "assets/cleo/escena2.png",
+    "assets/cleo/escena3.png",
+    "assets/cleo/escena4.png",
   ],
-  // fin2: ["assets/nivel2/escena1.jpg", "assets/nivel2/escena2.jpg"],
+
+  // "chelita" → misma fórmula que "choco" y "cleo": al encontrar a Chelita por
+  // primera vez (4 viñetas)
+  chelita: [
+    "assets/chelita/escena1.png",
+    "assets/chelita/escena2.png",
+    "assets/chelita/escena3.png",
+    "assets/chelita/escena4.png",
+  ],
 
   // fin4 = cinemática FINAL del juego: se dispara al rescatar al novio (que solo
-  // debe colocarse en el nivel 4). Agrega aquí tus imágenes cuando las tengas:
-  // fin4: ["assets/final/escena1.jpg", "assets/final/escena2.jpg", ...],
+  // debe colocarse en el nivel 4). Cuatro escenas; pon tus imágenes en estas rutas:
+  fin4: [
+    "assets/fin4/escena1.png",
+    "assets/fin4/escena2.png",
+    "assets/fin4/escena3.jpg",
+    "assets/fin4/escena4.jpg",
+  ],
 };
 
 /* ---------- Qué nivel se carga ---------- */

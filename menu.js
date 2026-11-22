@@ -13,6 +13,130 @@ let mapBase = null; // imagen 1 píxel por casilla, se crea la primera vez
 
 // Casillas que se ven a lo ancho en cada nivel de zoom
 const MAP_ACROSS = [24, 48, MAP_W + 6];
+
+// ---------- Símbolos del mapa (botón A → VER MAPA) ----------
+// Cada categoría tiene un color y una forma fijos. Los objetos que se pueden
+// recoger (cofres, coleccionables, armas, novio, perros) solo se dibujan
+// mientras falten por encontrar; los checkpoints y la salida siempre se ven,
+// ya que sirven como referencia aunque ya se hayan visitado.
+const DOG_MAP_COLOR = {
+  choco: "#ff8500",
+  cleo: "#00b4d8",
+  chelita: "#ffb703",
+};
+const COLLECT_MAP_COLOR = {
+  globito: "#3a86ff",
+  bevi: "#00e676",
+  queso: "#ff9f1c",
+};
+const COLLECT_MAP_LABEL = {
+  globito: "Globitos 🎈",
+  bevi: "Bevis 🥤",
+  queso: "Bolitas de queso 🧀",
+};
+const MAP_SYMBOL = {
+  cofre: { color: "#ffd60a", shape: "square", label: "Cofres sin abrir" },
+  espada: { color: "#ff1e3c", shape: "diamond", label: "Espada ⚔️" },
+  boomerang: { color: "#00e5ff", shape: "diamond", label: "Boomerang 🪃" },
+  red: { color: "#ff006e", shape: "diamond", label: "Red 🥅" },
+  checkpoint: { color: "#00f5a0", shape: "diamondRing", label: "Checkpoints" },
+  salida: { color: "#b100e8", shape: "diamond", label: "Salida del nivel" },
+  novio: { color: "#ff2d6d", shape: "circle", label: "Novio 🤗" },
+  perro: { color: "#ff8500", shape: "circle", label: "Perros por encontrar" },
+};
+
+// Dibuja un marcador cuadrado centrado en (gx, gy); hw = mitad del lado.
+// Lleva un borde oscuro para que resalte sobre cualquier color de terreno.
+function mapMarkerSquare(g, gx, gy, hw, color) {
+  g.fillStyle = "rgba(0,0,0,0.55)";
+  g.fillRect(gx - hw - hw * 0.22, gy - hw - hw * 0.22, hw * 2.44, hw * 2.44);
+  g.fillStyle = color;
+  g.fillRect(gx - hw, gy - hw, hw * 2, hw * 2);
+}
+
+// Dibuja un marcador en forma de rombo; outline = true dibuja solo el contorno
+function mapMarkerDiamond(g, gx, gy, hw, color, outline) {
+  g.save();
+  g.translate(gx, gy);
+  g.rotate(Math.PI / 4);
+  if (outline) {
+    g.strokeStyle = "rgba(0,0,0,0.6)";
+    g.lineWidth = Math.max(hw * 0.4, 0.4) + 1.4;
+    g.strokeRect(-hw, -hw, hw * 2, hw * 2);
+    g.strokeStyle = color;
+    g.lineWidth = Math.max(hw * 0.4, 0.4);
+    g.strokeRect(-hw, -hw, hw * 2, hw * 2);
+  } else {
+    g.fillStyle = "rgba(0,0,0,0.55)";
+    g.fillRect(-hw - hw * 0.22, -hw - hw * 0.22, hw * 2.44, hw * 2.44);
+    g.fillStyle = color;
+    g.fillRect(-hw, -hw, hw * 2, hw * 2);
+  }
+  g.restore();
+}
+
+// Dibuja un marcador circular; outline = true dibuja solo el contorno
+function mapMarkerCircle(g, gx, gy, r, color, outline) {
+  if (outline) {
+    g.beginPath();
+    g.arc(gx, gy, r, 0, Math.PI * 2);
+    g.strokeStyle = "rgba(0,0,0,0.6)";
+    g.lineWidth = Math.max(r * 0.4, 0.4) + 1.4;
+    g.stroke();
+    g.beginPath();
+    g.arc(gx, gy, r, 0, Math.PI * 2);
+    g.strokeStyle = color;
+    g.lineWidth = Math.max(r * 0.4, 0.4);
+    g.stroke();
+  } else {
+    g.beginPath();
+    g.arc(gx, gy, r * 1.22, 0, Math.PI * 2);
+    g.fillStyle = "rgba(0,0,0,0.55)";
+    g.fill();
+    g.beginPath();
+    g.arc(gx, gy, r, 0, Math.PI * 2);
+    g.fillStyle = color;
+    g.fill();
+  }
+}
+
+// Llena #mapLegend con la simbología de las categorías presentes en este nivel
+function renderMapLegend() {
+  const el = document.getElementById("mapLegend");
+  if (!el) return;
+  const rows = [];
+  if (treasures.length) rows.push(MAP_SYMBOL.cofre);
+  collectibles.forEach((grp) => {
+    if (!grp.items.length) return;
+    rows.push({
+      color: COLLECT_MAP_COLOR[grp.def.type] || "#ffffff",
+      shape: "circle",
+      label: COLLECT_MAP_LABEL[grp.def.type] || grp.def.type,
+    });
+  });
+  if (swordItem) rows.push(MAP_SYMBOL.espada);
+  if (boomerangItem) rows.push(MAP_SYMBOL.boomerang);
+  if (redItem) rows.push(MAP_SYMBOL.red);
+  if (checkpoints.length) rows.push(MAP_SYMBOL.checkpoint);
+  if (exits.length) rows.push(MAP_SYMBOL.salida);
+  if (novio) rows.push(MAP_SYMBOL.novio);
+  if (dogs.length) rows.push(MAP_SYMBOL.perro);
+
+  el.innerHTML = "";
+  rows.forEach((r) => {
+    const row = document.createElement("div");
+    row.className = "map-legend-row";
+    const sw = document.createElement("span");
+    sw.className = "map-legend-swatch map-legend-" + r.shape;
+    sw.style.borderColor = r.color;
+    sw.style.background = r.shape === "diamondRing" ? "transparent" : r.color;
+    row.appendChild(sw);
+    const txt = document.createElement("span");
+    txt.textContent = r.label;
+    row.appendChild(txt);
+    el.appendChild(row);
+  });
+}
 const MENU_ITEMS = [
   { act: "resume", label: "CONTINUAR" },
   { act: "save", label: "GUARDAR" },
@@ -24,7 +148,49 @@ const CONFIRM_ITEMS = [
   { act: "exitYes", label: "SÍ, SALIR" },
 ];
 let pauseMsgT = null;
-const curItems = () => (menuView === "confirm" ? CONFIRM_ITEMS : MENU_ITEMS);
+
+// ---------- Menú secreto ----------
+// En el menú de pausa, pulsar Y tres veces seguidas abre un apartado oculto.
+// "SALIDA SIEMPRE ABIERTA": la salida del nivel no exige nada (cofres, coleccionables,
+// armas ni perros). Empieza en NO; se recuerda mientras la pestaña siga abierta (así
+// sobrevive a la recarga entre niveles) y vuelve a NO al cerrarla.
+const SECRET_KEY = "zelda-yucatan-secreto-salida";
+let secretExitOpen = false;
+try {
+  secretExitOpen = sessionStorage.getItem(SECRET_KEY) === "1";
+} catch (e) {}
+const SECRET_ITEMS = [
+  {
+    act: "secretExit",
+    label: () => "SALIDA SIEMPRE ABIERTA: " + (secretExitOpen ? "SÍ" : "NO"),
+  },
+  { act: "secretBack", label: "VOLVER" },
+];
+const SECRET_TAPS = 3; // pulsaciones de Y necesarias
+const SECRET_GAP_MS = 1500; // tiempo máximo entre una pulsación y la siguiente
+let secretTaps = 0;
+let secretLastT = 0;
+
+// Botón Y con el menú de pausa abierto (se llama desde throwRed)
+function menuSecretTap() {
+  if (menuView !== "list") return;
+  const now = performance.now();
+  secretTaps = now - secretLastT > SECRET_GAP_MS ? 1 : secretTaps + 1;
+  secretLastT = now;
+  if (secretTaps < SECRET_TAPS) return;
+  secretTaps = 0;
+  menuView = "secret";
+  menuSel = 0;
+  setPauseMsg("¡MENÚ SECRETO!");
+  renderMenu();
+}
+
+const curItems = () =>
+  menuView === "confirm"
+    ? CONFIRM_ITEMS
+    : menuView === "secret"
+      ? SECRET_ITEMS
+      : MENU_ITEMS;
 
 // Paleta minimalista por tipo de casilla
 const MAP_COLORS = {
@@ -39,6 +205,7 @@ const MAP_COLORS = {
   [T_SHALLOW_LAGOON]: "#62b0d6",
   [T_SHALLOW_PINK]: "#eeb0c6",
   [T_PIER]: "#8a5a2e",
+  [T_MAYAN]: "#cfc8b0",
 };
 
 function buildMapBase() {
@@ -67,6 +234,7 @@ function openMenu() {
   menuOpen = true;
   menuView = "list";
   menuSel = 0;
+  secretTaps = 0;
   isPaused = true;
   setPauseMsg("");
   menuEl().classList.remove("hidden");
@@ -93,6 +261,7 @@ function openMapView() {
   mapCx = player.gx;
   mapCy = player.gy;
   if (!mapBase) buildMapBase();
+  renderMapLegend();
   renderMenu();
 }
 
@@ -119,6 +288,19 @@ function menuSelect(act) {
     menuView = "list";
     menuSel = MENU_ITEMS.findIndex((it) => it.act === "exit");
     renderMenu();
+  } else if (act === "secretExit") {
+    secretExitOpen = !secretExitOpen;
+    try {
+      sessionStorage.setItem(SECRET_KEY, secretExitOpen ? "1" : "0");
+    } catch (e) {}
+    // Si ya estaba parada sobre la salida, que se vuelva a evaluar al cerrar el menú
+    exits.forEach((ex) => (ex.inside = false));
+    setPauseMsg(secretExitOpen ? "SALIDA ABIERTA" : "SALIDA NORMAL");
+    renderMenu();
+  } else if (act === "secretBack") {
+    menuView = "list";
+    menuSel = 0;
+    renderMenu();
   } else if (act === "exitYes") {
     // Vuelve a la pantalla principal reiniciando el juego (lo no guardado se pierde)
     location.reload();
@@ -130,6 +312,7 @@ function menuNav(name) {
   if (menuView === "map") return;
   const dir = name === "down" ? 1 : name === "up" ? -1 : 0;
   if (!dir) return;
+  secretTaps = 0;
   const n = curItems().length;
   menuSel = (menuSel + dir + n) % n;
   renderMenu();
@@ -144,14 +327,17 @@ function uiNav(name) {
 
 // Botón A
 function menuA() {
+  secretTaps = 0;
   if (menuView === "map") mapLevel = (mapLevel + 1) % MAP_ACROSS.length;
   else menuSelect(curItems()[menuSel].act);
 }
 
 // Botón B
 function menuBack() {
-  if (menuView === "map" || menuView === "confirm") {
+  secretTaps = 0;
+  if (menuView === "map" || menuView === "confirm" || menuView === "secret") {
     menuView = "list";
+    menuSel = 0;
     renderMenu();
   } else closeMenu();
 }
@@ -161,12 +347,17 @@ function renderMenu() {
     .getElementById("pausePanel")
     .classList.toggle("hidden", menuView === "map");
   const confirming = menuView === "confirm";
+  const secret = menuView === "secret";
   document.getElementById("pauseTitle").textContent = confirming
     ? "¿SALIR?"
-    : "PAUSA";
+    : secret
+      ? "SECRETO"
+      : "PAUSA";
   document.getElementById("pauseHint").innerHTML = confirming
     ? "EL PROGRESO NO GUARDADO<br>SE PERDERÁ"
-    : "▲▼ ELEGIR &nbsp; A ACEPTAR &nbsp; START VOLVER";
+    : secret
+      ? "▲▼ ELEGIR &nbsp; A CAMBIAR &nbsp; B VOLVER"
+      : "▲▼ ELEGIR &nbsp; A ACEPTAR &nbsp; START VOLVER";
   document
     .getElementById("mapView")
     .classList.toggle("hidden", menuView !== "map");
@@ -174,7 +365,7 @@ function renderMenu() {
   list.innerHTML = "";
   curItems().forEach((it, i) => {
     const li = document.createElement("li");
-    li.textContent = it.label;
+    li.textContent = typeof it.label === "function" ? it.label() : it.label;
     if (i === menuSel) li.className = "sel";
     li.addEventListener("pointerdown", (e) => {
       e.stopPropagation();
@@ -227,21 +418,83 @@ function drawMapView() {
   g.setTransform(s, 0, 0, s, w / 2 - mapCx * s, h / 2 - mapCy * s);
   g.drawImage(mapBase, -0.5, -0.5);
 
-  // Marcador: sitios visitados y cofres abiertos
+  // Marcadores: cada categoría con su color/forma (ver simbología y MAP_SYMBOL)
   const u = 1 / s;
+  // Tamaño base de los marcadores (en casillas): más grande = se ven mejor,
+  // pero menos exacta es la posición exacta dentro de la casilla.
+  const MK = 5.3 * u;
+  const MK_SMALL = 4.4 * u;
+
+  // Checkpoints: rombo relleno si ya se visitó, solo contorno si falta
   checkpoints.forEach((c) => {
-    if (!c.visited) return;
-    g.fillStyle = "#ffffff";
-    g.save();
-    g.translate(c.gx, c.gy);
-    g.rotate(Math.PI / 4);
-    g.fillRect(-3 * u, -3 * u, 6 * u, 6 * u);
-    g.restore();
+    mapMarkerDiamond(
+      g,
+      c.gx,
+      c.gy,
+      MK,
+      MAP_SYMBOL.checkpoint.color,
+      !c.visited,
+    );
   });
+
+  // Cofres: cuadro de color; los ya abiertos llevan una cruz oscura encima
   treasures.forEach((t) => {
-    if (!t.opened) return;
-    g.fillStyle = "#ffd166";
-    g.fillRect(t.gx - 3 * u, t.gy - 3 * u, 6 * u, 6 * u);
+    mapMarkerSquare(g, t.gx, t.gy, MK, MAP_SYMBOL.cofre.color);
+    if (t.opened) {
+      g.strokeStyle = "rgba(0,0,0,0.65)";
+      g.lineWidth = Math.max(1.6 * u, 0.5);
+      g.beginPath();
+      g.moveTo(t.gx - MK * 0.8, t.gy - MK * 0.8);
+      g.lineTo(t.gx + MK * 0.8, t.gy + MK * 0.8);
+      g.moveTo(t.gx + MK * 0.8, t.gy - MK * 0.8);
+      g.lineTo(t.gx - MK * 0.8, t.gy + MK * 0.8);
+      g.stroke();
+    }
+  });
+
+  // Coleccionables (globitos, bevis, bolitas de queso): solo los que faltan
+  collectibles.forEach((grp) => {
+    const color = COLLECT_MAP_COLOR[grp.def.type] || "#ffffff";
+    grp.items.forEach((it) => {
+      if (it.collected) return;
+      mapMarkerCircle(g, it.gx, it.gy, MK_SMALL, color);
+    });
+  });
+
+  // Armas: espada, boomerang y red, solo mientras no se recojan
+  if (swordItem && !swordItem.collected)
+    mapMarkerDiamond(
+      g,
+      swordItem.gx,
+      swordItem.gy,
+      MK,
+      MAP_SYMBOL.espada.color,
+    );
+  if (boomerangItem && !boomerangItem.collected)
+    mapMarkerDiamond(
+      g,
+      boomerangItem.gx,
+      boomerangItem.gy,
+      MK,
+      MAP_SYMBOL.boomerang.color,
+    );
+  if (redItem && !redItem.collected)
+    mapMarkerDiamond(g, redItem.gx, redItem.gy, MK, MAP_SYMBOL.red.color);
+
+  // Salida del nivel
+  exits.forEach((ex) => {
+    mapMarkerDiamond(g, ex.gx, ex.gy, MK * 1.05, MAP_SYMBOL.salida.color);
+  });
+
+  // Novio: hasta que se rescata
+  if (novio && !novio.rescued)
+    mapMarkerCircle(g, novio.gx, novio.gy, MK, MAP_SYMBOL.novio.color);
+
+  // Perros compañeros: solo mientras no se encuentren (cada uno con su color)
+  dogs.forEach((d) => {
+    if (d.found) return;
+    const color = (d.cfg && DOG_MAP_COLOR[d.cfg.key]) || MAP_SYMBOL.perro.color;
+    mapMarkerCircle(g, d.gx, d.gy, MK_SMALL, color);
   });
 
   // Exploradora (parpadea)
@@ -381,6 +634,7 @@ function irANivelDev(n) {
       ? {
           sword: true,
           boomerang: true,
+          red: true,
           dogs: DOG_KINDS.map((d) => d.key),
           mem: 0,
         }

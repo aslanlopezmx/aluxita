@@ -2,11 +2,13 @@
 
 /* ---------- Salida de nivel ---------- */
 // Para salir hay que haber encontrado TODOS los cofres y TODOS los objetos del nivel
-// (globitos, bevis, quesos y la espada si el nivel tiene una).
+// (globitos, bevis, quesos, la espada si el nivel tiene una y los perros del nivel).
 
 // Lista de lo que falta, p. ej. ["2 cofres", "3 🎈"]
 function levelMissing() {
   const falta = [];
+  // Opción secreta (menú de pausa, 3 × Y): la salida no exige nada
+  if (typeof secretExitOpen !== "undefined" && secretExitOpen) return falta;
   const c = treasures.length - foundCount;
   if (c > 0) falta.push(c + (c === 1 ? " cofre" : " cofres"));
   collectibles.forEach((g) => {
@@ -15,6 +17,12 @@ function levelMissing() {
   });
   if (swordItem && !swordItem.collected) falta.push("la espada ⚔️");
   if (boomerangItem && !boomerangItem.collected) falta.push("el boomerang 🪃");
+  if (redItem && !redItem.collected) falta.push("la red 🥅");
+  // Los perros que hay en este nivel también son obligatorios (los que ya venían
+  // de un nivel anterior llegan con found = true, así que no cuentan)
+  dogs.forEach((d) => {
+    if (!d.found) falta.push(d.name + " 🐶");
+  });
   return falta;
 }
 const levelComplete = () => levelMissing().length === 0;
@@ -31,7 +39,8 @@ function checkExit() {
     const falta = levelMissing();
     if (falta.length)
       openSignDialog(
-        "Aún no puedes salir.\n\nTe falta encontrar: " + falta.join(", ") + ".",
+        "Aún no puedes salir.\n\nTe falta encontrar:\n" +
+          falta.map((f) => "- " + f).join("\n"),
       );
     else beginLevelExit();
   } else if (!inside) ex.inside = false;
@@ -42,11 +51,22 @@ function beginLevelExit() {
   exitBusy = true;
   isPaused = true;
   keys = { up: false, down: false, left: false, right: false };
-  startCutscene("fin" + NIVEL, () => {
-    if (NIVEL >= NIVELES_TOTAL) finDelJuego();
-    else irANivel(NIVEL + 1);
-    return true;
-  });
+  const ultimo = NIVEL >= NIVELES_TOTAL;
+  if (ultimo && typeof collagePreload === "function") collagePreload(); // fotos listas al terminar la cinemática
+  startCutscene(
+    "fin" + NIVEL,
+    () => {
+      // Último nivel: tras la cinemática final se muestra el collage de recuerdos
+      // (su botón regresa al menú principal con finDelJuego)
+      if (ultimo) {
+        showCollage();
+        return;
+      }
+      irANivel(NIVEL + 1);
+      return true;
+    },
+    { sinCarga: ultimo, mantener: ultimo },
+  );
 }
 
 // Guarda lo que pasa al siguiente nivel (espada y perros encontrados) y recarga la página
@@ -54,13 +74,14 @@ function irANivel(n) {
   const carry = {
     sword: !!hasSword,
     boomerang: !!hasBoomerang,
+    red: !!hasRed,
     dogs: dogs.filter((d) => d.found).map((d) => d.cfg.key),
     mem: MEM_OFFSET + treasures.length, // recuerdos ya usados: el siguiente nivel sigue desde ahí
   };
   setPendiente({ nivel: n, modo: "carry", carry });
 }
 
-// Último nivel superado: vuelve a la pantalla principal
+// Último nivel superado (se llama desde el botón del collage): vuelve a la pantalla principal
 function finDelJuego() {
   try {
     localStorage.removeItem(PENDING_KEY);
@@ -86,7 +107,24 @@ function nuevaPartida() {
 // Al cargar la página: si venimos de otro nivel, entra directo al juego
 function autoStart() {
   if (!ARRANQUE) return;
-  if (ARRANQUE === "nueva") return nuevaPartida();
+  if (ARRANQUE === "nueva") {
+    // Se llega aquí tras recargar la página desde otro nivel: la pantalla de carga ya
+    // se veía desde el HTML (así no se ve el lienzo azul). Se lanza la cinemática de
+    // introducción por debajo y la carga se desvanece para dejarla ver.
+    nuevaPartida();
+    const load = document.getElementById("loadingScreen");
+    load.classList.remove("hidden", "fading");
+    // "arranque" se queda: mantiene oculta la pantalla de título hasta que empiece el juego
+    document.documentElement.classList.remove("arranque-carga");
+    setTimeout(() => {
+      if (cutLoading) return; // la cinemática ya se saltó y usa la pantalla de carga
+      load.classList.add("fading");
+      setTimeout(() => {
+        if (!cutLoading) load.classList.add("hidden");
+      }, 500);
+    }, 500);
+    return;
+  }
   const t = document.getElementById("titleScreen");
   if (t) t.remove();
   gameStarted = true;

@@ -6,7 +6,7 @@
       name="viewport"
       content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
     />
-    <title>Zelda Retro: Aventura en Yucatán</title>
+    <title>Aventura en Yucatán</title>
     <script>
       // Si se llega desde otro nivel, evita que parpadee el menú inicial
       (function () {
@@ -15,7 +15,8 @@
           if (p && p.nivel) {
             var c = document.documentElement.classList;
             c.add("arranque");
-            if (p.modo === "carry" || p.modo === "dev") c.add("arranque-carga");
+            if (p.modo === "carry" || p.modo === "dev" || p.modo === "nueva")
+              c.add("arranque-carga");
           }
         } catch (e) {}
       })();
@@ -23,42 +24,61 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Outfit:wght@400;600&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Outfit:wght@400;600&display=block"
       rel="stylesheet"
     />
     <link rel="stylesheet" href="style.css" />
+    <script>
+      // Evita el cambio de fuente a la vista: los textos de la pantalla de título, la
+      // carga y la barra de estado se muestran hasta que la fuente ya está lista
+      // (máx. 2.5 s por si no hay internet; entonces se usa la fuente de respaldo).
+      (function () {
+        var c = document.documentElement.classList;
+        c.add("fuentes-cargando");
+        var listo = function () {
+          c.remove("fuentes-cargando");
+        };
+        try {
+          if (!document.fonts || !document.fonts.load) return listo();
+          var txt = "AÁÉÍÓÚÑaeiou¡¿0123456789";
+          Promise.race([
+            Promise.all([
+              document.fonts.load('16px "Press Start 2P"', txt),
+              document.fonts.load('16px "Outfit"', txt),
+            ]),
+            new Promise(function (r) {
+              setTimeout(r, 2500);
+            }),
+          ]).then(listo, listo);
+        } catch (e) {
+          listo();
+        }
+      })();
+    </script>
   </head>
   <body>
-    <!-- Contenedor Principal (Simula consola portátil en PC / Pantalla completa en móvil) -->
     <div class="console-shell">
-      <!-- Pantalla Superior: El Juego (Estilo Zelda NES) -->
       <div class="screen-viewport">
-        <!-- Barra superior limpia y reorganizada -->
         <div class="status-bar">
           <span id="healthDisplay">❤️ ❤️ ❤️ ❤️ ❤️</span>
           <span id="itemDisplay">🥐 0/5 | 🎈 0/10 | 🥤 0/9 | 🧀 0/3</span>
         </div>
-        <!-- Área de juego: el lienzo y el letrero comparten contenedor, así el letrero
-             queda siempre debajo de la barra de estado -->
         <div class="canvas-wrap">
           <canvas id="gameCanvas" width="320" height="240"></canvas>
 
-          <!-- Pantalla principal: se cierra con START, Enter o un toque -->
+          <!-- Pantalla principal -->
           <div id="titleScreen" class="title-screen">
             <div class="title-top">AVENTURA EN</div>
             <h1 class="title-main">YUCATÁN</h1>
-            <div class="title-sub">ZELDA RETRO</div>
+
             <div id="titleStart" class="title-start">PRESIONA START</div>
             <ul id="titleList" class="menu-list hidden"></ul>
             <div id="titleHint" class="pause-hint hidden">
               ▲▼ ELEGIR &nbsp; A / START ACEPTAR
             </div>
-            <div id="titleSelect" class="pause-hint title-select">
-              SELECT: ELEGIR NIVEL
-            </div>
           </div>
 
-          <!-- Selector de nivel (SELECT en la pantalla principal; para desarrollo) -->
+          <!-- Selector de nivel -->
           <div id="levelPicker" class="pause-menu level-picker hidden">
             <div class="pause-panel">
               <div class="pause-title">ELEGIR NIVEL</div>
@@ -70,7 +90,7 @@
             </div>
           </div>
 
-          <!-- Cinemática de introducción (partida nueva) -->
+          <!-- Cinemática de introducción -->
           <div id="cutscene" class="cutscene hidden">
             <img id="cutImg" class="cut-img" alt="" />
             <div class="cut-hint">
@@ -79,7 +99,7 @@
             </div>
           </div>
 
-          <!-- Pantalla de carga (después de la cinemática) -->
+          <!-- Pantalla de carga -->
           <div id="loadingScreen" class="loading-screen hidden">
             <div class="loading-text">
               CARGANDO<span class="loading-dots"></span>
@@ -87,7 +107,7 @@
             <div class="loading-bar"><div class="loading-fill"></div></div>
           </div>
 
-          <!-- Menú de pausa (START) con vista de mapa -->
+          <!-- Menú de pausa -->
           <div id="pauseMenu" class="pause-menu hidden">
             <div id="pausePanel" class="pause-panel">
               <div id="pauseTitle" class="pause-title">PAUSA</div>
@@ -100,6 +120,7 @@
             <div id="mapView" class="map-view hidden">
               <canvas id="mapCanvas"></canvas>
               <div class="map-title">MAPA</div>
+              <div id="mapLegend" class="map-legend"></div>
               <div class="map-hint">
                 ◀▲▼▶ MOVER &nbsp; A ZOOM &nbsp; B VOLVER
               </div>
@@ -109,17 +130,14 @@
           <!-- Mensajes del juego -->
           <div id="dialogOverlay" class="dialog-box hidden">
             <p id="dialogText">¡Has encontrado un cofre del tesoro!</p>
-            <div class="dialog-hint">Presiona B para salir</div>
+            <div class="dialog-hint">Presiona cualquier botón para salir</div>
           </div>
         </div>
       </div>
 
-      <!-- Pantalla Inferior: Carcasa Estilo Game Boy con Controles e Interfaz -->
+      <!-- Pantalla Inferior -->
       <div class="gameboy-body">
-        <!-- Se ha eliminado el brand-tag de aquí -->
-
         <div class="controls-deck">
-          <!-- Cruceta Direccional (D-Pad) - JOYSTICK VIRTUAL -->
           <div class="dpad-wrapper" id="joystickZone">
             <div class="dpad">
               <button class="d-btn d-up" id="btnUp">▲</button>
@@ -130,7 +148,6 @@
             </div>
           </div>
 
-          <!-- Botones Select / Start -->
           <div class="center-buttons">
             <div class="pill-btn-group">
               <div class="pill-btn" id="btnSelect"></div>
@@ -142,26 +159,23 @@
             </div>
           </div>
 
-          <!-- Botones de Acción (A y B) -->
           <div class="action-buttons">
             <div class="action-group">
               <button class="action-btn action-btn-c" id="btnC">X</button>
               <button class="action-btn" id="btnB">B</button>
-              <!-- Se ha eliminado el label ESPADA -->
             </div>
             <div class="action-group">
               <button class="action-btn action-btn-c action-btn-d" id="btnD">
                 Y
               </button>
               <button class="action-btn" id="btnA">A</button>
-              <!-- Se ha eliminado el label SALTAR -->
             </div>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Modal de Recuerdo Desbloqueado (Al abrir cofres) -->
+    <!-- Modal de Recuerdo -->
     <div id="memoryModal" class="modal hidden">
       <div class="modal-card">
         <span id="memoryBadge" class="modal-badge">* TESORO ENCONTRADO *</span>
@@ -174,6 +188,17 @@
       </div>
     </div>
 
+    <!-- Collage final de recuerdos (cubre toda la ventana) -->
+    <div id="collage" class="collage hidden">
+      <div class="collage-bar">
+        <span class="collage-title">NUESTROS RECUERDOS</span>
+        <button id="collageExit" class="collage-exit" type="button">
+          MENÚ PRINCIPAL
+        </button>
+      </div>
+      <div id="collageScroll" class="collage-scroll" tabindex="0"></div>
+    </div>
+
     <script src="levelmaps.js"></script>
     <script src="config.js"></script>
     <script src="utils.js"></script>
@@ -183,6 +208,7 @@
     <script src="render.js"></script>
     <script src="cutscene.js"></script>
     <script src="save.js"></script>
+    <script src="collage.js"></script>
     <script src="salida.js"></script>
     <script src="menu.js"></script>
     <script src="main.js"></script>

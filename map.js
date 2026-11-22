@@ -36,6 +36,7 @@ function buildMap() {
     G: T_SHALLOW_LAGOON,
     R: T_SHALLOW_PINK,
     W: T_PIER,
+    C: T_MAYAN,
   };
 
   mapGrid = Array.from({ length: MAP_H }, (_, gy) =>
@@ -89,7 +90,13 @@ function buildMap() {
       for (let x = cx0 - rr; x <= cx0 + rr; x++) {
         if (Math.hypot(x - cx0, y - cy0) > CHECKPOINT_R) continue;
         const t = tileAt(x, y);
-        if (t !== T_SAND && t !== T_GRASS && t !== T_PATH && t !== T_MONTE)
+        if (
+          t !== T_SAND &&
+          t !== T_GRASS &&
+          t !== T_PATH &&
+          t !== T_MONTE &&
+          t !== T_MAYAN
+        )
           continue;
         cp.tiles.add(tileKey(x, y));
         safeTiles.add(tileKey(x, y));
@@ -115,6 +122,7 @@ const PAL = {
     [T_SHALLOW_LAGOON]: ["#74d8ee", "#58c8e8", "#c4f3fb"],
     [T_SHALLOW_PINK]: ["#ffc3d6", "#ffadc6", "#ffe5ee"],
     [T_PIER]: ["#b88246", "#9c6a34", "#d09a5a"],
+    [T_MAYAN]: ["#d3cbb2", "#bdb59c", "#e6dfc9"],
   },
 };
 
@@ -255,6 +263,94 @@ function paintPierPlanks(c, cx, cy) {
   px(c, cx + 8, cy, "#4a2e14");
 }
 
+// Camino maya: losas de piedra caliza con juntas, talladas con un patrón maya.
+// Cada casilla elige (según su posición) uno de tres diseños:
+//   0 = greca escalonada (xicalcalco) alrededor de un botón central
+//   1 = glifo Ik' (la "T" del viento) dentro de un marco
+//   2 = losa lisa con una grieta y un poco de musgo
+// Se dibuja en coordenadas de casilla (u, v) en [-8, 8]: dx = u - v, dy = (u + v) / 2
+const MAYAN_PAL = ["#d3cbb2", "#bdb59c", "#e6dfc9"];
+function mayanCarved(variant, u, v) {
+  const au = Math.abs(u);
+  const av = Math.abs(v);
+  const r = Math.max(au, av);
+  if (variant === 0) {
+    if (r < 1) return true; // botón central
+    const s = au >= av ? v : u;
+    // anillo exterior con aberturas en el centro de cada lado
+    if (r >= 4.6 && r < 6.4) return Math.abs(s) >= 1.8;
+    // anillo interior completo (pirámide escalonada vista desde arriba)
+    if (r >= 2 && r < 3.6) return true;
+    return false;
+  }
+  if (variant === 1) {
+    if (r >= 6 && r < 6.8) return true; // marco
+    if (au <= 4.2 && v >= -4.6 && v < -2.6) return true; // barra de la T
+    if (au <= 1.3 && v >= -2.6 && v <= 3.8) return true; // tronco de la T
+    return false;
+  }
+  return false;
+}
+function paintMayan(c, cx, cy, gx, gy) {
+  const rnd = mulberry32(gx * 7919 + gy * 104729 + 11);
+  const q = rnd();
+  const variant = q < 0.4 ? 0 : q < 0.7 ? 1 : 2;
+  const crack = rnd() < 0.5;
+  for (let r = 0; r < 16; r++) {
+    const w = 4 * (Math.min(r, 15 - r) + 1);
+    const x0 = cx - (w >> 1);
+    const y = cy - 8 + r;
+    for (let i = 0; i < w; i++) {
+      const x = x0 + i;
+      const dx = x + 0.5 - cx;
+      const dy = y + 0.5 - cy;
+      const u = dy + dx / 2;
+      const v = dy - dx / 2;
+      const edge = Math.max(Math.abs(u), Math.abs(v));
+      // piedra caliza: base lisa con muy poco grano
+      const n = hash2(x, y, 5);
+      px(
+        c,
+        x,
+        y,
+        n < 0.04 ? MAYAN_PAL[1] : n > 0.97 ? MAYAN_PAL[2] : MAYAN_PAL[0],
+      );
+      // juntas entre losas (más claras en el lado iluminado, oscuras en el otro)
+      if (edge > 7.1) {
+        px(c, x, y, u < 0 || v < 0 ? "#9c957d" : "#8a846d");
+        continue;
+      }
+      if (edge > 6.3 && variant !== 1 && (u < -6.3 || v < -6.3)) {
+        px(c, x, y, "#ece6d3");
+        continue;
+      }
+      if (mayanCarved(variant, u, v)) {
+        px(c, x, y, "#8e8770");
+      }
+    }
+  }
+  if (variant === 2) {
+    if (crack) {
+      // grieta en diagonal
+      const ox = Math.round((rnd() - 0.5) * 8);
+      for (let k = 0; k < 8; k++) {
+        const x = cx + ox - 6 + k * 2 + (k % 3 === 1 ? 1 : 0);
+        const y = cy - 2 + (k >> 1) + (k % 2);
+        px(c, x, y, "#7b745d");
+        px(c, x + 1, y, "#8f8870");
+      }
+    }
+    // musgo
+    for (let k = 0; k < 4; k++) {
+      const ox = Math.round((rnd() - 0.5) * 22);
+      const oy = Math.round((rnd() - 0.5) * 9);
+      if (Math.abs(ox) / 16 + Math.abs(oy) / 8 > 0.7) continue;
+      px(c, cx + ox, cy + oy, "#6f8a44");
+      px(c, cx + ox + 1, cy + oy, "#88a458");
+      px(c, cx + ox, cy + oy + 1, "#5d7638");
+    }
+  }
+}
 // Monte: vegetación densa y baja pintada sobre el terreno
 function paintMonte(c, cx, cy, gx, gy) {
   const r = mulberry32(gx * 977 + gy * 131 + 6);
@@ -296,6 +392,10 @@ function paintMonte(c, cx, cy, gx, gy) {
 function decorateTop(c, cx, cy, type, gx, gy) {
   if (type === T_PIER) {
     paintPierPlanks(c, cx, cy);
+    return;
+  }
+  if (type === T_MAYAN) {
+    paintMayan(c, cx, cy, gx, gy);
     return;
   }
   if (type === T_MONTE) {
@@ -377,7 +477,12 @@ function cliff(c, side, cx, cy, d, t, nt) {
   let base = grass ? (L ? "#8a5a2c" : "#6a4222") : L ? "#dbb86c" : "#bb964e";
   let dark = grass ? (L ? "#6e451f" : "#51321a") : L ? "#c09d55" : "#9c7a3a";
   let light = grass ? (L ? "#a56f38" : "#80522a") : L ? "#ebcd86" : "#d0ab62";
-  if (t === T_PIER) {
+  if (t === T_MAYAN) {
+    // Borde de piedra caliza: bloques apilados
+    base = L ? "#b3ac93" : "#98927b";
+    dark = L ? "#8f8971" : "#777159";
+    light = L ? "#cdc6ad" : "#b0aa92";
+  } else if (t === T_PIER) {
     base = L ? "#8c5d2b" : "#6e4720";
     dark = L ? "#5c3c1b" : "#4a2e14";
     light = L ? "#a8743a" : "#865628";
@@ -811,6 +916,7 @@ function landAt(gx, gy) {
     t === T_SAND ||
     t === T_GRASS ||
     t === T_PATH ||
+    t === T_MAYAN ||
     t === T_MONTE ||
     t === T_PIER ||
     isShallow(t)

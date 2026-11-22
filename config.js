@@ -100,8 +100,9 @@ const T_SHALLOW_SEA = 7; // Playa de mar (agua somera, se camina)
 const T_SHALLOW_LAGOON = 8; // Playa de laguna / lago
 const T_SHALLOW_PINK = 9; // Playa de laguna rosa
 const T_PIER = 10; // Muelle de madera (se camina por encima del agua)
+const T_MAYAN = 11; // Camino maya (losas de piedra caliza con grecas y glifos)
 // La playa de mar (índice 7) está a nivel del mar: sin escalón ni borde
-const HEIGHT = [0, 1, 2, 0.5, 2, 0.5, 2, 0, 0.3, 0.3, 0.8];
+const HEIGHT = [0, 1, 2, 0.5, 2, 0.5, 2, 0, 0.3, 0.3, 0.8, 2];
 
 const isShallow = (t) =>
   t === T_SHALLOW_SEA || t === T_SHALLOW_LAGOON || t === T_SHALLOW_PINK;
@@ -110,35 +111,86 @@ const isShallow = (t) =>
 // Recuerdos en orden: el 1.er cofre que el jugador abra (esté donde esté) da el
 // recuerdo 1, el 2.º da el 2, y así sucesivamente.
 const MEMORIES = [
+  // --- Nivel 1 ---
   {
-    image: "https://images.unsplash.com/photo-1518199266791-5375a83190b7?w=500",
-    title: "Marquesita en el Centro Histórico",
-    message:
-      "Bombón: eres más dulce que una marquesita de bola con mucho queso de vara frente a la catedral. ¡Aquí empezó nuestra bonita historia!",
+    image: "assets/memories/1.png",
+    title: "Encontraste un recuerdo:",
+    message: "Contigo hasta lo simple se vuelve una aventura inolvidable.",
   },
   {
-    image: "https://images.unsplash.com/photo-1529333166437-7750a6dd5a70?w=500",
-    title: "Atardecer en Las Coloradas",
-    message:
-      "Entre flamencos y aguas rosas al norte de Yucatán, caminar contigo de la mano es lo más chulo de esta vida, mi amor.",
+    image: "assets/memories/2.png",
+    title: "Encontraste un recuerdo:",
+    message: "Eres mi persona fabobita.",
   },
   {
-    image: "https://images.unsplash.com/photo-1516589178581-6cd7833ae3b2?w=500",
-    title: "Laguna de los Siete Colores",
-    message:
-      "El tesoro más grande eres tú. Contigo quiero armar nuestra casa cerca de estas aguas cristalinas del sur.",
+    image: "assets/memories/3.png",
+    title: "Encontraste un recuerdo:",
+    message: "Contigo hasta el silencio sabe a conversación.",
   },
   {
-    image: "https://images.unsplash.com/photo-1522673607200-164d1b6ce486?w=500",
-    title: "Secretos de Chichén y el Cenote",
-    message:
-      "Un buen loch tuyo me cura de cualquier susto. Gracias por ser mi apapacho favorito en cada aventura.",
+    image: "assets/memories/4.jpg",
+    title: "Encontraste un recuerdo:",
+    message: "Amarte se volvió mi actividad favorita.",
   },
   {
-    image: "https://images.unsplash.com/photo-1494774157365-9e04c6720e47?w=500",
-    title: "Promesa en la Costa del Golfo",
+    image: "assets/memories/5.jpg",
+    title: "Encontraste un recuerdo:",
+    message: "Mi lugar favorito, sin importar en qué ciudad estemos.",
+  },
+
+  // --- Nivel 2 ---
+  {
+    image: "assets/memories/6.png",
+    title: "Encontraste un recuerdo:",
+    message: "No hay distancia que le gane a lo que siento por ti.",
+  },
+  {
+    image: "assets/memories/7.jpg",
+    title: "Encontraste un recuerdo:",
+    message: "Mi lugar seguro siempre serás tú.",
+  },
+  {
+    image: "assets/memories/8.png",
+    title: "Encontraste un recuerdo:",
+    message: "Gracias por quererme incluso en mis días difíciles.",
+  },
+  {
+    image: "assets/memories/9.png",
+    title: "Encontraste un recuerdo:",
+    message: "Eres el lugar al que siempre quiero volver.",
+  },
+  {
+    image: "assets/memories/10.jpg",
+    title: "Encontraste un recuerdo:",
+    message: "No me cansaría de elegirte una y otra vez.",
+  },
+
+  // --- Nivel 3 ---
+  {
+    image: "assets/memories/11.png",
+    title: "Encontraste un recuerdo:",
+    message: "Mi corazón ya sabía que eras tú.",
+  },
+  {
+    image: "assets/memories/12.jpg",
+    title: "Encontraste un recuerdo:",
+    message: "Contigo aprendí que amar también se siente tranquilo.",
+  },
+  {
+    image: "assets/memories/13.jpg",
+    title: "Encontraste un recuerdo:",
+    message: "Eres la razón por la que creo en el amor bonito.",
+  },
+  {
+    image: "assets/memories/14.jpg",
+    title: "Encontraste un recuerdo:",
     message:
-      "Te amo con todo mi corazón, uay. Prometo cuidarte y alcahuetearte hoy, mañana y siempre en esta tierra hermosa.",
+      "El amor bonito es el que se construye poquito a poquito, como esta aventura.",
+  },
+  {
+    image: "assets/memories/15.png",
+    title: "Encontraste un recuerdo:",
+    message: "Te elijo a ti, hoy y todos los días que vengan.",
   },
 ];
 // La lista es una sola para todo el juego y se reparte en orden entre los niveles:
@@ -205,7 +257,7 @@ const COLLECT_DEFS = [
       badge: "* GLOBITO ENCONTRADO *",
       title: "¡Encontraste un globito!",
       message:
-        "¡Qué rico! Hay más globitos escondidos por toda la península. ¡Encuéntralos todos, bombón!",
+        "¡Qué rico! Hay más globitos escondidos por toda la península. ¡Encuéntralos todos!",
     },
     all: {
       badge: "* ¡MISIÓN CUMPLIDA! *",
@@ -225,7 +277,7 @@ const COLLECT_DEFS = [
       badge: "* BEVI ENCONTRADO *",
       title: "¡Encontraste un bevi!",
       message:
-        "¡Qué chulo! Hay más bevis escondidos por toda la península. ¡Encuéntralos todos, bombón!",
+        "¡Genial! Hay más bevis escondidos por toda la península. ¡Encuéntralos todos!",
     },
     all: {
       badge: "* ¡MISIÓN CUMPLIDA! *",
@@ -250,13 +302,13 @@ const COLLECT_DEFS = [
       badge: "* BOLITAS DE QUESO ENCONTRADAS *",
       title: "¡Encontraste unas bolitas de queso!",
       message:
-        "¡Qué ricas! Hay más bolitas de queso escondidas por toda la península. ¡Encuéntralas todas, bombón!",
+        "¡Qué ricas! Hay más bolitas de queso escondidas por toda la península. ¡Encuéntralas todas!",
     },
     all: {
       badge: "* ¡MISIÓN CUMPLIDA! *",
       title: "¡Encontraste todas las bolitas de queso!",
       message:
-        "Juntaste todas las bolitas de queso del mapa. ¡Eres la mejor exploradora de Yucatán!",
+        "Juntaste todas las bolitas de queso del mapa. ¡Eres la mejor exploradora de Yucatán! ¿No tienes un pelacito de queso?",
     },
   },
 ];
@@ -321,6 +373,52 @@ const BOOMERANG_DAMAGE = 1;
 const BOOMERANG_HIT_R = 0.8; // radio de impacto sobre enemigos
 // Proyectil en vuelo (null = en la mano). Solo puede haber uno a la vez.
 let boomerang = null;
+
+/* ---------- Red con pesas (atrapa a los NPC hostiles) ---------- */
+// Objeto "red" del editor (solo cuenta la primera). Funciona igual que el
+// boomerang: si el mapa trae una, siempre se coloca; hasta que la exploradora la
+// recoge, el botón Y no hace nada.
+const redSpot = MAP_OBJECTS.find((o) => o[0] === "red");
+const redItem = redSpot
+  ? {
+      kind: "red",
+      gx: redSpot[1],
+      gy: redSpot[2],
+      h: 0,
+      depth: redSpot[1] + redSpot[2] + 0.01,
+      collected: false,
+    }
+  : null;
+let hasRed = !redItem && !!(CARRY && CARRY.red);
+
+const RED_RANGE = BOOMERANG_RANGE + 0.5; // un poco más de alcance que el boomerang
+const RED_SPEED = 0.3; // casillas por cuadro al volar (como el boomerang)
+// Mitad del ancho/alto (en píxeles de pantalla) de la red ya abierta (ver
+// makeRedOpen en sprites.js): lo que inmoviliza es TODA esa área, no un radio
+// aparte, así que si cambias el tamaño del sprite ahí, cambia esto también.
+const RED_OPEN_HW = 40;
+const RED_OPEN_HH = 34;
+// Qué tan cerca de su CENTRO (no de su borde) tiene que pasar un hostil para que
+// la red se detenga y se abra ahí mismo: así se frena sobre el grupo, no en la
+// orilla del primero que roza, y al abrirse atrapa a todos los que queden dentro.
+const RED_CORE_R = 0.4;
+const RED_THROW_COOLDOWN = 60; // 10 s a 60 cuadros/s: espera para volver a lanzarla
+const RED_OPEN_FRAMES = 10; // cuadros que tarda en pasar de "comprimida" a abierta
+const RED_MISS_FRAMES = 14; // si no atrapa a nadie, desaparece casi al instante
+const RED_BLINK_FRAMES = 36; // cuadros de parpadeo antes de desaparecer, si sí atrapó
+// Cuadros (a 60/cuadro por segundo) que queda inmovilizado cada hostil: entre menos
+// corazones tiene (ver ENEMY_HP), más le cuesta zafarse — así se insinúa su fuerza.
+// El kaskabal, el más resistente, se libera primero.
+const RED_STUN = {
+  alux: 300, // 6 s
+  huaypek: 180, // 5 s
+  huaychivo: 120, // 4 s
+  xtabay: 240, // 3.5 s
+  kaskabal: 60, // 2.5 s
+};
+// Red en vuelo o tendida en el suelo (null = en la mano). Solo una a la vez.
+let redNet = null;
+let redCooldown = 0; // cuadros que faltan para poder volver a lanzarla
 
 /* ---------- Checkpoints (zona segura de concreto) ---------- */
 // Se colocan en el editor de mapas (objeto "checkpoint"). Alrededor de cada uno hay
@@ -395,8 +493,9 @@ const HUAYCHIVO_REACH = 1.0; // alcance de su golpe
 const HUAYCHIVO_SPEED = 0.062; // velocidad al perseguir (el jugador camina a 0.075)
 const HUAYCHIVO_WINDUP = 4; // frames que tarda en preparar el golpe (se esquiva saltando)
 const HUAYCHIVO_DAMAGE = 2; // corazones que quita cada golpe
+const HUAYCHIVO_KNOCKBACK = 4; // retroceso de su golpe: casillas que sale despedida la exploradora (0 = el empujón normal)
 const HUAYCHIVO_SEP = 0.9; // distancia mínima entre huaychivos
-const HUAYCHIVO_SCALE = 1; // escala del sprite (1 = tamaño nativo 60x76; 0.5 = mitad)
+const HUAYCHIVO_SCALE = 0.5; // escala del sprite (1 = tamaño nativo 60x76; 0.5 = mitad)
 // Huaypek: su comportamiento es igual al del alux (vive en una zona circular
 // alrededor de su punto, persigue y golpea), pero con apariencia propia: un perro
 // fantasma negro de ojos rojos (ver makeHuaypek). Estos valores son independientes
@@ -488,7 +587,7 @@ const DOG_KINDS = [
     boatSparks: ["#e8dcb4", "#c08448", "#ffffff"],
     image: "assets/choco.jpg",
     message:
-      "Choco estaba esperándote por la península. ¡Ahora será tu amigo y te seguirá en tu aventura, bombón!",
+      "Choco estaba esperándote por la península. ¡Ahora será tu amigo y te seguirá en tu aventura, estoy seguro de que te protegerá de los peligros!",
   },
   {
     type: "perrocleo",
@@ -501,7 +600,7 @@ const DOG_KINDS = [
     boatSparks: ["#e0e0e0", "#9a9a9a", "#ffffff"],
     image: "assets/cleo.png", // sin foto: se usa el dibujo generado de Cleo
     message:
-      "Cleo estaba esperándote por la península. ¡Ahora será tu amiga y te seguirá en tu aventura, bombón!",
+      "Cleo estaba esperándote por la península. ¡Ahora será tu amiga y te seguirá en tu aventura! Es un poco miedosa, pero te seguirá hasta el fin.",
   },
   {
     type: "perrochelita",
@@ -515,7 +614,7 @@ const DOG_KINDS = [
     boatSparks: ["#f0e2cc", "#c8722e", "#ffffff"],
     image: "assets/chelita.png",
     message:
-      "Chelita estaba esperándote por la península. ¡Ahora será tu amiguita y te seguirá en tu aventura, bombón!",
+      "Chelita estaba esperándote por la península. ¡Ahora será tu amiguita y te seguirá en tu aventura! Es muy juguetona.",
   },
 ];
 const dogSpots = DOG_KINDS.flatMap((k) =>
@@ -541,6 +640,8 @@ const player = {
   attackT: 0,
   invuln: 0,
   face: 1,
+  kbX: 0, // velocidad de retroceso por un golpe fuerte (casillas por cuadro; se va frenando)
+  kbY: 0,
   aimGx: Math.SQRT1_2, // hacia dónde apunta la espada (última dirección de marcha, sin suavizar)
   aimGy: Math.SQRT1_2,
   dirGx: Math.SQRT1_2, // dirección de marcha suavizada (para los puestos de los perros)
@@ -560,6 +661,7 @@ const LOOK_AHEAD_Y = 0.2;
 // más bajo = más lento y suave; más alto = más rápido y brusco
 const LOOK_EASE_MOVE = 0.02; // al caminar / cambiar de dirección
 const LOOK_EASE_STOP = 0.012; // al detenerse (vuelve al centro)
+const PLAYER_KB_DECAY = 0.88; // cuánto se conserva del retroceso en cada cuadro (menor = se frena antes)
 const look = { x: 0, y: 0 };
 const camera = {
   x: 0,

@@ -1,139 +1,780 @@
 // mapas/nivel4.js - generado por el Editor de Mapa Yucatán
 // Cuadrícula 128x128: fila = gy (0-127), columna = gx (0-127)
-// Leyenda: ~ agua  . arena  # pasto  L laguna  = camino  P laguna rosa  M monte  S playa mar  G playa laguna  R playa laguna rosa  W muelle
+// Leyenda: ~ agua  . arena  # pasto  L laguna  = camino  P laguna rosa  M monte  S playa mar  G playa laguna  R playa laguna rosa  W muelle  C camino maya
 const MAP_ROWS = [
-  "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~", // 000
-  "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~", // 001
-  "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~", // 002
-  "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~", // 003
-  "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~", // 004
-  "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~", // 005
-  "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~", // 006
-  "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~", // 007
-  "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~", // 008
-  "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~", // 009
-  "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~", // 010
-  "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~", // 011
-  "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~", // 012
-  "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~", // 013
-  "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~", // 014
-  "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~", // 015
-  "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~", // 016
-  "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~", // 017
-  "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~", // 018
-  "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~", // 019
-  "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~", // 020
-  "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~", // 021
-  "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~", // 022
-  "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~", // 023
-  "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~", // 024
-  "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~", // 025
-  "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~", // 026
-  "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~", // 027
-  "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~", // 028
-  "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~", // 029
-  "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~", // 030
-  "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~", // 031
-  "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~", // 032
-  "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~", // 033
-  "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~", // 034
-  "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~", // 035
-  "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~", // 036
-  "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~", // 037
-  "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~", // 038
-  "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~", // 039
-  "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~####~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~", // 040
-  "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~##########~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~", // 041
-  "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~################~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~", // 042
-  "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~##################~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~", // 043
-  "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~####################~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~", // 044
-  "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~######################~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~", // 045
-  "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~########################~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~", // 046
-  "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~##########################~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~", // 047
-  "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~###########################~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~", // 048
-  "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~############################~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~", // 049
-  "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#############################~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~", // 050
-  "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~##############################~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~", // 051
-  "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~###############################~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~", // 052
-  "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~###############################~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~", // 053
-  "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#################################~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~", // 054
-  "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~##################################~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~", // 055
-  "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~##################################~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~", // 056
-  "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~##################################~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~", // 057
-  "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~##################################~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~", // 058
-  "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~###################################~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~", // 059
-  "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~####################################~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~", // 060
-  "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~###################################~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~", // 061
-  "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~####################################~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~", // 062
-  "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~###################################~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~", // 063
-  "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~###################################~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~", // 064
-  "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~##################################~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~", // 065
-  "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~###################################~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~", // 066
-  "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~##################################~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~", // 067
-  "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#################################~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~", // 068
-  "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~################################~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~", // 069
-  "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~################################~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~", // 070
-  "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~##############################~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~", // 071
-  "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~############################~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~", // 072
-  "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~###########################~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~", // 073
-  "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#########################~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~", // 074
-  "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~########################~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~", // 075
-  "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~######################~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~", // 076
-  "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~###################~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~", // 077
-  "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#################~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~", // 078
-  "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#############~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~", // 079
-  "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~##########~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~", // 080
-  "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~", // 081
-  "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~", // 082
-  "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~", // 083
-  "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~", // 084
-  "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~", // 085
-  "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~", // 086
-  "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~", // 087
-  "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~", // 088
-  "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~", // 089
-  "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~", // 090
-  "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~", // 091
-  "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~", // 092
-  "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~", // 093
-  "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~", // 094
-  "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~", // 095
-  "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~", // 096
-  "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~", // 097
-  "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~", // 098
-  "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~", // 099
-  "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~", // 100
-  "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~", // 101
-  "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~", // 102
-  "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~", // 103
-  "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~", // 104
-  "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~", // 105
-  "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~", // 106
-  "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~", // 107
-  "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~", // 108
-  "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~", // 109
-  "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~", // 110
-  "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~", // 111
-  "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~", // 112
-  "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~", // 113
-  "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~", // 114
-  "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~", // 115
-  "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~", // 116
-  "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~", // 117
-  "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~", // 118
-  "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~", // 119
-  "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~", // 120
-  "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~", // 121
-  "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~", // 122
-  "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~", // 123
-  "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~", // 124
-  "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~", // 125
-  "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~", // 126
-  "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~", // 127
+  "MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM####C", // 000
+  "MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM####CC", // 001
+  "MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM##CCCC", // 002
+  "MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM#CCCCC", // 003
+  "MMMMM##MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMCCCC##", // 004
+  "MMMM######MMMMMMMMMMMMMMMMMMMMM#MM######M#######MMMMMMMMMMMMMMMMMMMM##MM#MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM#M#CC####", // 005
+  "MMM#########MMMMMMMMMMMMMMMMMM##CCCCCC#########CC##MMMMMMMMMMMMMMMMM###########MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM###CCC####", // 006
+  "MMM#########MMMMMMMMMMMMMMMCCCCCCCCCCCCC##CCCCCCCCCC#MMMMMMMMMMMMMMM############MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM###CCCC####", // 007
+  "MMM#########CCCCCCMMMMCCCMMCCCCCCCC#CCCCCCCCCCCCCCCCCCCMMMMMMMMMMMCCCCC############MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM####CCC#####", // 008
+  "MMM########CCCCCCCCMMCCCCMMMMM#########CCCCC######CCCCCCCMMMMMMMMMCCCCCCCCCCCC#C########MMMMMMMMMMMMMMMMMMMMMMMMMMM####CCC######", // 009
+  "MMMM#######CCC###CCMMCCCMMMMMMM######################CCCCMMMMMMMMMMM##CCCCCCCCCCCCCCC#####MMMMMMMMMMMMMMMMMMMMMMMM#####CCC######", // 010
+  "MMMMM#####CCC#####MMMMMMMMMMMMMM######################MMMMMMMMMMMMMMM###CCC###CCCCCCCCCCCCC#MMMMMMMMMMMMMMMMMMMMMM####CCC#####MM", // 011
+  "MMMMM#####CCC#####MMMMMMMMMMMMMMMM##################MMMMMMMMMMMMMMMMMMM###########CCCCCCCCCCCCMMMMMCCMCCCMMCCCMM#####CCCC####MMM", // 012
+  "MMMMMM####CCC#####MMMMMMMMMMMMMMMMM################MMMMMMMMMMMMMMMMMMMMMM###############CCCCCCCCMMMCCCCCCMMCCCCCCCCCCCCC####MMMM", // 013
+  "MMMMMMM###CCC###MMMMMMMMMMMMMMMMMMMMMMMM###########MMMMMMMMMMMMMMMMMMMMMMMMMM#######M#######CCCCMMMCCCCCMMMCCCCCCCCCCCC####MMMMM", // 014
+  "MMMMMMM###CC###MMMMMMMMMMMMMMMMMMMMMMMMM##########MMMMMMMMMMMMMMMMMMMMMMMMMMMMMM###############MMMMMMMMMMMMMMM######MMM##MMMMMMM", // 015
+  "MMMMMMM###CC###MMMMMMMMMMMMMMMMMMMMMMMMMMMM#######MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM############MMMMMMMMMMMMMMMM#####MMMMMMMMMMMM", // 016
+  "MMMMMMM###CC###MMMMMMMMMMMMMMMMMMMMMMMMMMMMM######MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM########MMMMMMMMMMMMMMMMM###MMMMMMMMMMMMM", // 017
+  "MMMMMMM##CCC###MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM###MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM#####MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM", // 018
+  "MMMMMM##CCCC###MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM", // 019
+  "MMMMMM##CCC###MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM", // 020
+  "MMMMMM##CCC###MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM", // 021
+  "MMMMMM###CC###MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM", // 022
+  "MMMMMM###CC###MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM", // 023
+  "MMMMMMM##CCC##MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM", // 024
+  "MMMMMMM###CC###MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM", // 025
+  "MMMMMMM###CC###MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM", // 026
+  "MMMMMMMM##CCC##MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM######MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM", // 027
+  "MMMMMMMM##CCC##MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM#######MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM", // 028
+  "MMMMMMMM###CC###MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM###########MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM", // 029
+  "MMMMMMMMM##CC###MMMMMMMMMMMMMMMMMMMMM###MMMMMMMMMMMMMMMMMMMMMMM############MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM", // 030
+  "MMMMMMMMM##CC###MMMMMMMMMMMMMMMMMMMM########MMMMMMMMMMMMMMMMMMM#############MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM", // 031
+  "MMMMMMMMM##CC###MMMMMMMMMMMMMMMMMMMM#############MMMMMMMMMMMMMM##############MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM", // 032
+  "MMMMMMMMM##CC####MMMMMMMMMMMMMMMMMMM#################MMMMMMMMMM###############MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM", // 033
+  "MMMMMMMMM##CC#####MMMMMMMMMMMMMMMMM####################MMMMMMMMM###############MMMMMMMMMMMMMMMMMM###MMMMMMMMMMMMMMMMMMMMMMMMMMMM", // 034
+  "MMMMMMMMM##CCCC####MMMMMMMMMMMMMMM######################MMMMMMMM###############MMMMMMMMMMMMMMMMM######MMMMMMMMMMMMMMMMMMMMMMMMMM", // 035
+  "MMMMMMMM####CCCC#####MMMMMMMMMMMMM#######################MMMMMMM###############MMMMMMMMMMMMMMMMM#######MMMMMMMMMMMMMMMMMMMMMMMMM", // 036
+  "MMMMMMMM#####CCCCCC###MMMMMMMMMMMM#######################MMMMMMMM##############MMMMMMMMMMMMMMMMM#########MMMMMMMMMMMMMMMMMMMMMMM", // 037
+  "MMMMMMMMM######CCCCCCCCCMMMMMMMMMMM######################MMMMMMMMMCCCCC########MMMMMMMMMMMMMMMM############MMMMMMMMMMMMMMMMMMMMM", // 038
+  "MMMMMMMMM########CCCCCCCCCMMMMMMMMM#######################MMMMMMMMCCCCCC########MMMMMMMMMMMMMMM##############MMMMMMMMMMMMMMMMMMM", // 039
+  "MMMMMMMMMM############CCCCCCMMMMMMCCCC#####################MMMMCCMMMMCCCC#######MMMMMMMMMMMMMMM###############MMMMMMMMMMMMMMMMMM", // 040
+  "MMMMMMMMMMM############MCCCCMMMMMMCCCCCCCC#############CCCCCCCCCCMMMM##CCC######MMMMMMMMMMMMMMM#################MMMMMMMMMMMMMMMM", // 041
+  "MMMMMMMMMMMMM#########MMMMMMMMMMMMM#CCCCCCCCC########CCCCCCCCCCCMMMMM##CCC#####MMMM##MMMMMMMMMMM#################MMMMMMMMMMMMMMM", // 042
+  "MMMMMMMMMMMMMMMM####MMMMMMMMMMMMMMMMM####CCCCCCC###CCCCCC##CCCMMMMMMM##CCCC##MMMMMM#####MMMMMMMM##################MMMMMMMMMMMMMM", // 043
+  "MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM######CCCCCCCCCCC#######MMMMMMM###CCC##MMMMMM#######MMMMMMM###################MMMMMMMMMMMM", // 044
+  "MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM#####CCCCCCC#########MMMMMMMMMMCCCMMMMMMMM#######MMMMMMM###################MMMMMMMMMMMM", // 045
+  "MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM######CC#########MMMMMMMMMMMMCCMMMMMMMM#####CCCCCCMMMM###################MMMMMMMMMMM", // 046
+  "MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM##############MMMMMMMMMMMMCCMMMMMMMM####CCCCCCCMMMMMCCCC###############MMMMMMMMMM", // 047
+  "MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM##########MMMMMMMMMMMMMMMMMMMMMMM####CCC##MMMMMMMCCCCCCCC############MMMMMMMMM", // 048
+  "MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM####MMMMMMMMMMMMMMMMMMMMMMMMM###CCC####MMMMMMMMMCCCCCCC##########MMMMMMMMM", // 049
+  "MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM###CCC####MMMMMMMMMM##CCCCCCC########MMMMMMMM", // 050
+  "MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMCCMMMMMMM#CCCC###MMMMMMMMMMM#####CCCC#########MMMMMMM", // 051
+  "MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMCCCMMMMMMMCCCMMMMMMMMMMMMMMMMM#####CCC########MMMMMMM", // 052
+  "MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMCCCMMMMMMMCCMMMMMMMMMMMMMMMMMMM#####CCC########MMMMMM", // 053
+  "MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMCC####MMMMMMMMMMMMMMMMMMMMMMMMMMM##CCCC#######MMMMMM", // 054
+  "MMMMMMMMMMMMMMMMMMMMMMMMMMMMM##MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM#CCC####MMMMMMMMMMMMMMMMMMMMMMMMMMM##CCCC######MMMMMM", // 055
+  "MMMMMMMMMMMMMMMMMMMMMMMMMMMM######MMMMMMMMMMMMMMMMMMMMMMM######MMMMMMMMMMMMMCCCCCCCCCCMMMMMMMMMMMMMMMMMMMMMMMMM###CCC#####MMMMMM", // 056
+  "MMMMMMMMMMMMMMMMMMMMMMMMMMMM##CCCCCCC####MMMMMMMMMMMMMMMM########MMMMMMMMMMM##CCCCCCCCMMMMMMMMMMMMMMMMMMMMMMMMMMM##CCC####MMMMMM", // 057
+  "MMMMMMMMMMMMMMMMMMMMMMMMMMM#CCCCCCCCCCCCC###MMM####MMMMM##########MMMMMMMMMM####CCCCMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM##CCC###MMMMMM", // 058
+  "MMMMMMMMMMMMMMMMMMMMMMMM###CCCC####CCCCCCCCC#########MMM###########MMMMMMMMMM#######MMMMMMMMMMMMMMMMMMMMMMMMMMMMMM###CC####MMMMM", // 059
+  "MMMMMMMMMMMMMMMMMMMMMMMM##CCCC#########CCCCCCC#####################MMMMMMMMMM#######MMMMMMMMMMMMMMMMMMMMMMMMMMMMMM###CCC###MMMMM", // 060
+  "MMMMMMMMMMMMMMMMMMMMMMMMCCCC##############CCCCCC####################MMMMMMMMMM######MMMMMMMMMMMMMMMMMMMMMMMMMMMMMM####CCC##MMMMM", // 061
+  "MMMMMMMMMMMMMMMMMMMMMMMCCCCC#################CCCCC###################MMMMMMMMMMM####MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM###CCC##MMMMM", // 062
+  "MMMMMMMMMMMMMMMMMMMMMMCCCC#####################CCCCC###################MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM####CCC#MMMMM", // 063
+  "MMMMMMMM##MMMMMMMMMMMMCCC##########MMMMMM########CCCCCC###CCCCCC########MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM####CCC#MMMMM", // 064
+  "MMMMMMMM#####MMMMMMMMMCCM#########MMMMMMMMM########CCCCCCCCCCCCCCCC#######MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM####CCC#MMMMM", // 065
+  "MMMMMMM#####CCCCCCCMMMMMM########MMMMMMMMMMMMM#######CCCCCC###CCCCCC########MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM#####CC#MMMMM", // 066
+  "MMMMMM##CCCCCCCCCCCMMMMMMM#######MMMMMMMMMMMMMMM#################CCCC#######MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM####CC#MMMMM", // 067
+  "MMMMM###CCCCCC##MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM#################CCCCC#####MMMMMMMMMMMMMMMMMMMMMMMMMMMM##MMMMMMMMMM####CCCMMMMM", // 068
+  "MMMMM##CCC#######MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM################CCCCC####MMMMMMMMMMMMMMMMMMMMMMMMMMMM####MMMMMMM######CCMMMMM", // 069
+  "MMMM###CCC#######MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM################CCCC###MMMMMMMMMMMMMMMMMMMMMMMMMMMM################CCCMMMMM", // 070
+  "MMMM####CC#####MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM################CCCC##MMMMMMMMMMMMMMMMMMMMMMMMMMMM###############CCC#MMMMM", // 071
+  "MMMM####CC####MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM###############CCCC#MMMMMMMMMMMMMMMMMMMMMMMMMMM#######CCCCCCCC#CCC#MMMMM", // 072
+  "MMMM####CC###MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM###############CCCMMMMMMMMMMMMMMMMMMMMMMMMMMMM#######CCCCCCCCCCC##MMMMM", // 073
+  "MMMM####CC###MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM###############CCCMMMMMMMMMMMMMMMMMMMMMMMMMMM######CCC#####CCCC##MMMMM", // 074
+  "MMMM####CC###MMMMMMMMMMMMMMMMMMMM####MMMMMMMMMMMMMMMMMMMMM###############CCCMMMMMMMMMMMMMMMMMMMMMMMMMMM######CCC###########MMMMM", // 075
+  "MMMM####CCC##MMMMMMMMMMMMMMMMM#########MMMMMMMMMMMMMMMMMMMM##############MCCMMMMMMMMMMMMMMMMMMMMMMMMMMMM#####CCC###########MMMMM", // 076
+  "MMMMM###CCC##MMMMMMMMMMMMMMM############MMMMMM#####MMMMMMMMMM############MCCMMMMMMMMMMMMMMMMMMMMMMMMMM#######CCC###########MMMMM", // 077
+  "MMMMM###CC##MMMMMMMMMMMMMMM##############MMMMM######MMMMMMMMMM##########MMMMMMMMMMMMMMMMMMMMMMMMMMMMM########CC###########MMMMMM", // 078
+  "MMMMM###CC###MMMMMMMMMMMMMM#####CCCCCCCC#MMMMM########MMMMMMMMM########MMMMMMMMMMMMMMMMMMMMMMMMMMMMMM########CC#########MMMMMMMM", // 079
+  "MMMMM###CC##MMMMMMMMMMMMMM#####CCCCCCCCCCCCMMCCCCC######MMMMMMMMM####MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM########CCC###MMMMMMMMMMMMM", // 080
+  "MMMMM###CC###MMMMMMMMMMMMM#####CCC####CCCCCMMCCCCCCC#####MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM########CCC###MMMMMMMMMMMMM", // 081
+  "MMMMM###CC###MMMMMMMMMMMM######CC########MMMMMM##CCCCC####MMMMMMMMMMMMMMMMMCCMMMMMMMMMMMMMMMM######M##########CC###MMMMMMMMMMMMM", // 082
+  "#MMM####CC###MMMMMMMMMMMM######CC#######MMMMMMMM###CCCC####MMMMMMMMMMMMMMMMCCMMMMMMMMMMMMMMM##################CCC##MMMMMMMMMMMMM", // 083
+  "###M###CCC###MMMMMMMMMMMM#####CCC#######MMMMMMMM####CCC####MMMMMMMMMMMMMMMCCC##MMMMMMMMMMMM####################CC##MMMMMMMMMMMMM", // 084
+  "#######CC####MMMMMMMMMMMM#####CCC#######MMMMMMMMM####CCC###MMMMMMMMMMMMMMMCCC###MMMMMMMMMMM####################CCC#MMMMMMMMMMMMM", // 085
+  "#######CC####MMMMMMMMMMMM#####CCC#######MMMMMMMMMMM###CC###MMMMMMMMMMMMMMMMCC###MMMMMMMMMMM####################CCC##MMMMMMMMMMMM", // 086
+  "#######CCC####MMMMMMMMMMMM###CCCC####MMMMMMMMMMMMMMM##CCMMMMMMMMMMMMMMMM###CC###MMMMMMMMMMMM############MM######CC##MMMMMMMMMMMM", // 087
+  "########CC####MMMMMMMMMMMM##CCCC####MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM###CCC###MMMMMMMMMMM############MMMMM###CCC##MMMMMMMMMMM", // 088
+  "########CC####MMMMMMMMMMM##CCCC#####MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM###CCC###MMMMMMMMMMMM##########MMMMMMM##CCCC#MMMMMMMMMMM", // 089
+  "########CCC####MMMMMMMMMM##CCC######MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM####CC###MMMMMMMMMMMMM########MMMMMMMM###CCC##MMMMMMMMMM", // 090
+  "M#######CCC####MMMMMMMMMM##CC#######MMMMMMMMMMM#####MMMMMMMMMMMMMMMMMMMMM###CCC##MMMMMMMMMMMMMM######MMMMMMMMM####CC##MMMMMMMMMM", // 091
+  "MM######CC#####MMMMMMMMMMMCCC######MMMMMMMMM###########MMCCMMMMMMMMMMMMMM####CC###MMMMMMMMMMMMMMM###MMMMMMMMMMM###CCC#MMMMMMMMMM", // 092
+  "MM######CC#####MMMMMMMMMMMCCC#####MMMMMMMM###############CCMMMMMMMMMMMMMM####CCC##MMMMMMMMMMMMMMMMMMMMMMMMMMMMM###CCC##MMMMMMMMM", // 093
+  "MMMM####CCC#####MMMMMMMMMCCCMMMMMMMMMMMMM################CCMMMMMMMMMMMMMM#####CC##MMMMMMMMMMMMMMMMMMMMMMMMMMMMM####CC##MMMMMMMMM", // 094
+  "MMMM####CCC#####MMMMMMMMMCCMMMMMMMMMMMMM#################CCCMMMMMMMMMMMMM#####CC###MMMMMMMMMMMMMMMMMMMMMMMMMMMMM###CCC#MMMMMMMMM", // 095
+  "MMMM#####CCC#####MMMMMMMMMMMMMMMMMMMMMM###################CCMMMMMMMMMMMMM#####CC###MMMMMMMMMMMMMMMMMMMMMMMMMMMMM###CCC##MMMMMMMM", // 096
+  "MMMMM####CCCCC###MMMMMMMMMMMMMMMMMMMMM####################CC#MMMMMMMMMMMM#####CC###MMMMMMMMMMMMMMMMMMMMMMMMMMMMM##CCCC##MMMMMMMM", // 097
+  "MMMMM#####CCCCCCCCCCCCMMMMMMMMMMMMMMM###########CCCCC#####CC##MMMMMMMMMMM#####CCC###MMMMMMMMMMMMMMMMMMMMMMMMMMMM##CCCC##MMMMMMMM", // 098
+  "MMMMMM#######CCCCCCCCCMMMMMMMMMMMMMMM##########CCCCCCCC###CC###MMMMMMMMMM#####CCC####MMMMMMMMMMMMMMMMMMMMMMMMMMMMCCC####MMMMMMMM", // 099
+  "MMMMMM#########CCCCCMMMMMMMMMMMMMMMMM######CC#CCCCCCCCCC#CCC####MMMMMMMMMM####CCC####MMMMMMMMMMMMMMMMMMMMMMMMMMCCCCC####MMMMMMMM", // 100
+  "MMMMMMM############MMMMMMMMMMMMMMMMMM####CCCCCCCCCCCCCCCCCC#####MMMMMMMMMM#####CCC###MMMMMMMMMMMMMMMMMMMMMMMMMCCCCCMM##MMMMMMMMM", // 101
+  "MMMMMMMM############MMMMMMMMMMMMMMMM#####CCCCCCCCCCCCCCCCCC######MMMMMMMMM######CC###MMMMMMMMMMMMMMMMMMMMMMMMMCCMMMMMMMMMMMMMMMM", // 102
+  "MMMMMMMMMM###########MMMMMMMMMMMMMM#####CCCCCCCCCCCCCCCCCCCC######MMMMMMMM######CCC##MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM", // 103
+  "MMMMMMMMMMMM########MMMMMMMMMMMMMMM#####CCCCCCCCCCCCCCCCCCCCC#####MMMMMMMM######CCCC#MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM", // 104
+  "MMMMMMMMMMMMMMM####MMMMMMMMMMMMMMM######CCCCCCCCCCCCCCCCCCCCC######MMMMMMMM######CCCC##MMMMMMM######MMCCCMMMMMMMMMMMMMMMMMMMMMMM", // 105
+  "MMMMMMMMMMMMMMMMM##MMMMMMMMMMMMMMM######CCCCCCCCCCCCCCCCCCCCC######MMMMMMMM#######CCC#####MMM#######CCCCCMMMMMMMMMMMMMMMMMMMMMMM", // 106
+  "MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM#######CCCCCCCCCCCCCCCCCCCCCC#####MMMMMMMMM#######CCC##############CCCCMMMMMMMMMMMMMMMMMMMMMMMM", // 107
+  "MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM######CCCCCCCCCCCCCCCCCCCCCCCC#####MMMMMMMMM######CCCC############CCCMMMMMMMMMMMMMMMMMMMMMMMMMM", // 108
+  "MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM######CCCCCCCCCCCCCCCCCCCCCCCCC#####MMMMMMMMMM######CCC#########CCCCCCMMMMMMMMMMMMMMMMMMMMMMMMMM", // 109
+  "MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM#######CCCCCCCCCCCCCCCCCCCCCCCCCC#####MMMMMMMMMM######CCCC######CCCCCC#MMMMMMMMMMMMMMMMMMMMMMMMMM", // 110
+  "MMMMMMMMMMMMMMMMMMMMMMMMMMMMMM#######CCCCCCCCCCCCCCCCCCCCCCCCCCCC####MMMMMMMMMM#######CCCCC##CCCCC####MMMMMMMMMMMMMMMMMMMMMMMMMM", // 111
+  "MMMMMMMMMMMMMMMMMMMMMMMMMMMMM#######CCCCCCCCCCCCCCCCCCCCCCCCCCCCC#####MMMMMMMMM########CCCCCCCCCC#####MMMMMMMMMMMMMMMMMMMMMMMMMM", // 112
+  "MMMMMMMMMMMMMMMMMMMMMMMMMMMMM######CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC####MMMMMMMMMM#########CCCCCCC######MMMMMMMMMMMMMMMMMMMMMMMMMM", // 113
+  "MMMMMMMMMMMMMMMMMMMMMMMMMMMM######CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC####MMMMMMMMM############CC######MMMMMMMMMMMMMMMMMMMMMMMMMMMM", // 114
+  "MMMMMMMMMMMMMMMMMMMMMMMMMMMM######CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC###MMMMMMMMM###################MMMMMMMMMMMMMMMMMMMMMMMMMMMMM", // 115
+  "MMMMMMMMMMMMMMMMMMMMMMMMMMMM#####CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC##MMMMMMMMMM#################MMMMMMMMMMMMMMMMMMMMMMMMMMMMMM", // 116
+  "MMMMMMMMMMMMMMMMMMMMMMMMMMMM#####CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC##MMMMMMMMMM##############MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM", // 117
+  "MMMMMMMMMMMMMMMMMMMMMMMMMMMM####CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC###MMMMMMMMMMM###########MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM", // 118
+  "MMMMMMMMMMMMMMMMMMMMMMMMMMM#####CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC#MMMMMMMMMMMMM########MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM", // 119
+  "MMMMMMMMMMMMMMMMMMMMMMMMMM######CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC##MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM", // 120
+  "MMMMMMMMMMMMMMMMMMMMMMMMMM######CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC###MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM", // 121
+  "MMMMMMMMMMMMMMMMMMMMMMMMMM######CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC##MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM", // 122
+  "MMMMMMMMMMMMMMMMMMMMMMMMM#######CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC##MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM", // 123
+  "MMMMMMMMMMMMMMMMMMMMMMMMM######CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC##MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM", // 124
+  "MMMMMMMMMMMMMMMMMMMMMMMMM######CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC##MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM", // 125
+  "MMMMMMMMMMMMMMMMMMMMMMMMM######CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC###MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM", // 126
+  "MMMMMMMMMMMMMMMMMMMMMMMMM######CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC###MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM", // 127
 ];
 
-// [tipo, gx, gy] (casa: variante 0-4; casamaya: variante 0-2; tronco: largo 1-4, dir 0 = hacia +gx / 1 = hacia +gy; letrero: texto entre comillas)
+// [tipo, gx, gy] (casa: variante 0-4; casamaya: variante 0-2; ruina: variante 0-2; tronco: largo 1-4, dir 0 = hacia +gx / 1 = hacia +gy; letrero: texto entre comillas)
 const MAP_OBJECTS = [
-  ["inicio", 69, 68],
-  ["novio", 47, 51],
+  ["alux", 112, 16],
+  ["alux", 114, 12],
+  ["alux", 119, 13],
+  ["alux", 89, 17],
+  ["alux", 85, 10],
+  ["alux", 76, 10],
+  ["alux", 79, 10],
+  ["alux", 80, 13],
+  ["alux", 71, 9],
+  ["alux", 94, 13],
+  ["alux", 82, 11],
+  ["huaychivo", 39, 7],
+  ["checkpoint", 6, 8],
+  ["checkpoint", 62, 60],
+  ["huaychivo", 13, 39],
+  ["huaychivo", 13, 32],
+  ["huaychivo", 12, 25],
+  ["tolok", 46, 33],
+  ["tolok", 13, 73],
+  ["tolok", 7, 99],
+  ["tolok", 33, 85],
+  ["tolok", 57, 62],
+  ["tolok", 79, 104],
+  ["tolok", 111, 77],
+  ["tolok", 115, 54],
+  ["mono", 65, 75],
+  ["mono", 61, 73],
+  ["mono", 65, 71],
+  ["mono", 68, 75],
+  ["mono", 6, 94],
+  ["mono", 6, 88],
+  ["mono", 10, 85],
+  ["mono", 70, 36],
+  ["mono", 75, 40],
+  ["mono", 89, 15],
+  ["mono", 123, 11],
+  ["mono", 122, 14],
+  ["hamaca", 44, 37],
+  ["hamaca", 45, 99],
+  ["hamaca", 120, 57],
+  ["tronco", 63, 20, 4, 0],
+  ["tronco", 68, 20, 4, 0],
+  ["tronco", 67, 22, 2, 0],
+  ["tronco", 75, 21, 4, 1],
+  ["tronco", 81, 23, 4, 0],
+  ["tronco", 77, 26, 4, 0],
+  ["tronco", 88, 22, 4, 0],
+  ["tronco", 89, 28, 4, 0],
+  ["tronco", 104, 30, 4, 0],
+  ["tronco", 93, 23, 4, 0],
+  ["tronco", 104, 23, 4, 0],
+  ["tronco", 113, 24, 4, 0],
+  ["tronco", 111, 28, 4, 0],
+  ["tronco", 123, 29, 4, 0],
+  ["tronco", 121, 31, 4, 0],
+  ["tronco", 100, 25, 3, 1],
+  ["tronco", 105, 25, 3, 1],
+  ["tronco", 112, 30, 2, 1],
+  ["tronco", 118, 32, 2, 0],
+  ["tronco", 120, 24, 3, 1],
+  ["tronco", 122, 23, 2, 0],
+  ["tronco", 51, 23, 4, 0],
+  ["tronco", 59, 24, 4, 0],
+  ["tronco", 44, 23, 3, 0],
+  ["tronco", 32, 18, 4, 0],
+  ["tronco", 35, 24, 4, 0],
+  ["tronco", 25, 17, 4, 0],
+  ["tronco", 35, 21, 4, 0],
+  ["tronco", 41, 21, 1, 0],
+  ["tronco", 20, 23, 4, 0],
+  ["tronco", 28, 23, 4, 0],
+  ["tronco", 29, 29, 2, 0],
+  ["tronco", 18, 18, 4, 0],
+  ["tronco", 21, 28, 4, 0],
+  ["tronco", 25, 22, 3, 1],
+  ["tronco", 32, 24, 2, 1],
+  ["tronco", 55, 26, 2, 1],
+  ["tronco", 0, 47, 4, 0],
+  ["tronco", 11, 49, 4, 0],
+  ["tronco", 20, 48, 4, 0],
+  ["tronco", 30, 49, 1, 0],
+  ["tronco", 9, 54, 4, 0],
+  ["tronco", 20, 51, 4, 0],
+  ["tronco", 28, 50, 4, 0],
+  ["tronco", 42, 53, 4, 0],
+  ["tronco", 35, 47, 4, 0],
+  ["tronco", 46, 50, 4, 0],
+  ["tronco", 57, 54, 4, 0],
+  ["tronco", 68, 51, 4, 1],
+  ["tronco", 70, 58, 3, 0],
+  ["tronco", 74, 62, 4, 0],
+  ["tronco", 80, 66, 4, 1],
+  ["tronco", 82, 71, 1, 0],
+  ["tronco", 62, 51, 4, 1],
+  ["tronco", 84, 64, 4, 1],
+  ["tronco", 87, 63, 3, 0],
+  ["tronco", 90, 55, 4, 1],
+  ["tronco", 93, 55, 4, 0],
+  ["tronco", 98, 55, 4, 0],
+  ["tronco", 106, 58, 3, 0],
+  ["tronco", 110, 63, 3, 1],
+  ["tronco", 105, 65, 4, 0],
+  ["tronco", 100, 64, 4, 0],
+  ["tronco", 95, 64, 3, 0],
+  ["tronco", 93, 67, 2, 0],
+  ["tronco", 93, 69, 4, 1],
+  ["tronco", 88, 74, 2, 0],
+  ["tronco", 83, 75, 3, 1],
+  ["tronco", 82, 79, 4, 1],
+  ["tronco", 83, 86, 4, 1],
+  ["tronco", 86, 92, 4, 0],
+  ["tronco", 91, 95, 4, 0],
+  ["tronco", 96, 96, 4, 0],
+  ["tronco", 101, 96, 2, 0],
+  ["tronco", 83, 124, 4, 1],
+  ["tronco", 74, 115, 3, 0],
+  ["tronco", 79, 119, 4, 1],
+  ["tronco", 73, 108, 4, 1],
+  ["tronco", 69, 100, 4, 1],
+  ["tronco", 65, 89, 4, 1],
+  ["tronco", 63, 85, 1, 0],
+  ["tronco", 35, 70, 4, 0],
+  ["tronco", 43, 69, 4, 0],
+  ["tronco", 50, 72, 4, 1],
+  ["tronco", 57, 79, 4, 0],
+  ["tronco", 62, 83, 4, 0],
+  ["tronco", 20, 87, 3, 1],
+  ["tronco", 19, 82, 4, 1],
+  ["tronco", 18, 72, 4, 1],
+  ["tronco", 25, 67, 4, 0],
+  ["tronco", 25, 72, 4, 0],
+  ["tronco", 47, 88, 3, 0],
+  ["tronco", 43, 87, 3, 0],
+  ["tronco", 39, 88, 4, 0],
+  ["tronco", 36, 91, 3, 0],
+  ["tronco", 36, 95, 4, 1],
+  ["tronco", 34, 99, 4, 1],
+  ["tronco", 28, 104, 4, 0],
+  ["tronco", 25, 108, 4, 0],
+  ["tronco", 24, 112, 4, 1],
+  ["tronco", 21, 116, 4, 1],
+  ["tronco", 17, 120, 4, 0],
+  ["tronco", 15, 123, 2, 0],
+  ["tronco", 12, 123, 2, 0],
+  ["roca", 17, 124],
+  ["roca", 23, 117],
+  ["roca", 25, 110],
+  ["roca", 29, 105],
+  ["roca", 31, 103],
+  ["roca", 37, 95],
+  ["roca", 38, 92],
+  ["roca", 40, 89],
+  ["roca", 44, 88],
+  ["roca", 21, 87],
+  ["roca", 21, 81],
+  ["roca", 20, 78],
+  ["roca", 21, 75],
+  ["roca", 23, 72],
+  ["roca", 24, 71],
+  ["roca", 28, 69],
+  ["roca", 30, 70],
+  ["roca", 34, 71],
+  ["roca", 37, 71],
+  ["roca", 39, 70],
+  ["roca", 43, 71],
+  ["roca", 45, 70],
+  ["roca", 55, 77],
+  ["roca", 59, 77],
+  ["roca", 61, 89],
+  ["roca", 62, 94],
+  ["roca", 66, 89],
+  ["roca", 65, 85],
+  ["roca", 68, 93],
+  ["roca", 65, 101],
+  ["roca", 69, 109],
+  ["roca", 70, 94],
+  ["roca", 66, 97],
+  ["roca", 69, 105],
+  ["roca", 75, 112],
+  ["roca", 102, 97],
+  ["roca", 99, 98],
+  ["roca", 89, 96],
+  ["roca", 87, 93],
+  ["roca", 84, 87],
+  ["roca", 83, 82],
+  ["roca", 84, 77],
+  ["roca", 84, 73],
+  ["roca", 84, 70],
+  ["roca", 86, 65],
+  ["roca", 93, 63],
+  ["roca", 99, 61],
+  ["roca", 105, 61],
+  ["roca", 88, 56],
+  ["roca", 83, 64],
+  ["roca", 103, 56],
+  ["roca", 103, 53],
+  ["roca", 70, 59],
+  ["roca", 69, 57],
+  ["roca", 64, 55],
+  ["roca", 60, 53],
+  ["roca", 55, 56],
+  ["roca", 51, 56],
+  ["roca", 42, 50],
+  ["roca", 46, 51],
+  ["roca", 57, 53],
+  ["roca", 63, 50],
+  ["roca", 48, 53],
+  ["roca", 51, 52],
+  ["roca", 44, 50],
+  ["roca", 39, 49],
+  ["roca", 36, 49],
+  ["roca", 35, 50],
+  ["roca", 27, 49],
+  ["roca", 23, 49],
+  ["roca", 21, 50],
+  ["roca", 18, 50],
+  ["roca", 10, 50],
+  ["roca", 5, 49],
+  ["roca", 2, 48],
+  ["roca", 1, 48],
+  ["roca", 26, 31],
+  ["roca", 25, 27],
+  ["roca", 24, 21],
+  ["roca", 24, 16],
+  ["roca", 25, 14],
+  ["roca", 25, 12],
+  ["roca", 32, 22],
+  ["roca", 42, 24],
+  ["roca", 59, 25],
+  ["roca", 44, 19],
+  ["roca", 49, 25],
+  ["roca", 53, 25],
+  ["roca", 59, 20],
+  ["roca", 61, 22],
+  ["roca", 67, 25],
+  ["roca", 61, 16],
+  ["roca", 71, 19],
+  ["roca", 72, 22],
+  ["roca", 72, 23],
+  ["roca", 86, 25],
+  ["roca", 84, 24],
+  ["roca", 77, 21],
+  ["roca", 79, 24],
+  ["roca", 94, 26],
+  ["roca", 104, 29],
+  ["roca", 91, 24],
+  ["roca", 90, 24],
+  ["roca", 96, 24],
+  ["roca", 108, 24],
+  ["roca", 115, 27],
+  ["roca", 112, 25],
+  ["roca", 107, 25],
+  ["roca", 116, 31],
+  ["roca", 77, 118],
+  ["roca", 80, 117],
+  ["roca", 81, 120],
+  ["roca", 85, 125],
+  ["roca", 78, 117],
+  ["roca", 77, 115],
+  ["roca", 70, 107],
+  ["roca", 73, 103],
+  ["roca", 63, 92],
+  ["roca", 67, 96],
+  ["roca", 68, 97],
+  ["roca", 53, 75],
+  ["roca", 51, 74],
+  ["roca", 47, 71],
+  ["roca", 46, 70],
+  ["roca", 27, 106],
+  ["roca", 33, 49],
+  ["roca", 15, 50],
+  ["ceiba", 105, 4],
+  ["ceiba", 99, 6],
+  ["ceiba", 82, 3],
+  ["ceiba", 63, 3],
+  ["ceiba", 59, 17],
+  ["ceiba", 26, 0],
+  ["ceiba", 18, 1],
+  ["ceiba", 19, 6],
+  ["ceiba", 46, 1],
+  ["ceiba", 32, 0],
+  ["ceiba", 43, 6],
+  ["ceiba", 11, 2],
+  ["ceiba", 7, 16],
+  ["ceiba", 1, 25],
+  ["ceiba", 6, 27],
+  ["ceiba", 3, 38],
+  ["ceiba", 17, 47],
+  ["ceiba", 30, 37],
+  ["ceiba", 39, 33],
+  ["ceiba", 57, 35],
+  ["ceiba", 50, 37],
+  ["ceiba", 54, 31],
+  ["ceiba", 67, 29],
+  ["ceiba", 80, 30],
+  ["ceiba", 79, 36],
+  ["ceiba", 92, 42],
+  ["ceiba", 109, 35],
+  ["ceiba", 125, 35],
+  ["ceiba", 120, 44],
+  ["ceiba", 124, 52],
+  ["ceiba", 125, 70],
+  ["ceiba", 119, 92],
+  ["ceiba", 118, 80],
+  ["ceiba", 123, 87],
+  ["ceiba", 123, 103],
+  ["ceiba", 125, 120],
+  ["ceiba", 118, 122],
+  ["ceiba", 109, 120],
+  ["ceiba", 107, 111],
+  ["ceiba", 114, 108],
+  ["ceiba", 125, 106],
+  ["ceiba", 121, 113],
+  ["ceiba", 115, 112],
+  ["ceiba", 113, 116],
+  ["ceiba", 110, 123],
+  ["ceiba", 102, 122],
+  ["ceiba", 90, 123],
+  ["ceiba", 89, 126],
+  ["ceiba", 84, 116],
+  ["ceiba", 77, 108],
+  ["ceiba", 73, 102],
+  ["ceiba", 88, 86],
+  ["ceiba", 92, 98],
+  ["ceiba", 86, 91],
+  ["ceiba", 84, 78],
+  ["ceiba", 91, 74],
+  ["ceiba", 98, 70],
+  ["ceiba", 99, 67],
+  ["ceiba", 100, 59],
+  ["ceiba", 68, 63],
+  ["ceiba", 40, 52],
+  ["ceiba", 25, 47],
+  ["ceiba", 12, 45],
+  ["ceiba", 2, 54],
+  ["ceiba", 11, 55],
+  ["ceiba", 15, 51],
+  ["ceiba", 5, 72],
+  ["ceiba", 3, 77],
+  ["ceiba", 3, 97],
+  ["ceiba", 5, 115],
+  ["ceiba", 9, 119],
+  ["ceiba", 10, 110],
+  ["guanacaste", 16, 113],
+  ["guanacaste", 21, 110],
+  ["guanacaste", 28, 101],
+  ["guanacaste", 34, 93],
+  ["guanacaste", 58, 91],
+  ["guanacaste", 99, 36],
+  ["guanacaste", 119, 35],
+  ["guanacaste", 115, 26],
+  ["guanacaste", 122, 19],
+  ["guanacaste", 120, 19],
+  ["guanacaste", 126, 11],
+  ["guanacaste", 116, 2],
+  ["guanacaste", 116, 6],
+  ["guanacaste", 110, 4],
+  ["guanacaste", 82, 5],
+  ["guanacaste", 56, 18],
+  ["guanacaste", 30, 28],
+  ["guanacaste", 4, 43],
+  ["guanacaste", 2, 52],
+  ["guanacaste", 3, 58],
+  ["guanacaste", 13, 57],
+  ["guanacaste", 23, 54],
+  ["guanacaste", 34, 31],
+  ["guanacaste", 59, 33],
+  ["guanacaste", 63, 36],
+  ["guanacaste", 82, 27],
+  ["guanacaste", 90, 37],
+  ["guanacaste", 113, 35],
+  ["guanacaste", 122, 44],
+  ["guanacaste", 120, 84],
+  ["guanacaste", 126, 106],
+  ["guanacaste", 116, 125],
+  ["guanacaste", 100, 119],
+  ["guanacaste", 77, 116],
+  ["guanacaste", 17, 57],
+  ["guanacaste", 9, 61],
+  ["guanacaste", 4, 62],
+  ["guanacaste", 1, 80],
+  ["guanacaste", 2, 104],
+  ["guanacaste", 1, 115],
+  ["guanacaste", 3, 123],
+  ["guanacaste", 11, 116],
+  ["guanacaste", 49, 96],
+  ["guanacaste", 46, 93],
+  ["guanacaste", 33, 114],
+  ["guanacaste", 31, 123],
+  ["flamboyan", 16, 60],
+  ["flamboyan", 54, 34],
+  ["flamboyan", 125, 34],
+  ["flamboyan", 96, 74],
+  ["flamboyan", 69, 86],
+  ["flamboyan", 21, 55],
+  ["flamboyan", 2, 22],
+  ["flamboyan", 55, 4],
+  ["flamboyan", 67, 15],
+  ["flamboyan", 91, 2],
+  ["flamboyan", 108, 19],
+  ["flamboyan", 124, 50],
+  ["flamboyan", 124, 40],
+  ["flamboyan", 85, 33],
+  ["flamboyan", 96, 76],
+  ["flamboyan", 86, 69],
+  ["flamboyan", 120, 111],
+  ["flamboyan", 127, 95],
+  ["flamboyan", 104, 125],
+  ["flamboyan", 92, 125],
+  ["flamboyan", 53, 88],
+  ["flamboyan", 19, 93],
+  ["flamboyan", 15, 81],
+  ["flamboyan", 24, 79],
+  ["flamboyan", 3, 54],
+  ["flamboyan", 9, 112],
+  ["flamboyan", 1, 109],
+  ["balche", 6, 120],
+  ["balche", 15, 85],
+  ["balche", 26, 76],
+  ["balche", 26, 52],
+  ["balche", 36, 52],
+  ["balche", 8, 45],
+  ["balche", 3, 35],
+  ["balche", 2, 1],
+  ["balche", 17, 4],
+  ["balche", 101, 6],
+  ["balche", 102, 25],
+  ["balche", 94, 28],
+  ["balche", 89, 35],
+  ["balche", 115, 35],
+  ["balche", 121, 42],
+  ["balche", 31, 52],
+  ["balche", 65, 51],
+  ["balche", 103, 59],
+  ["balche", 94, 59],
+  ["balche", 89, 70],
+  ["balche", 120, 41],
+  ["balche", 84, 33],
+  ["balche", 46, 27],
+  ["balche", 52, 20],
+  ["balche", 24, 20],
+  ["chaka", 6, 58],
+  ["chaka", 99, 3],
+  ["chaka", 99, 20],
+  ["chaka", 84, 2],
+  ["chaka", 70, 2],
+  ["chaka", 58, 5],
+  ["chaka", 50, 1],
+  ["chaka", 37, 0],
+  ["chaka", 22, 3],
+  ["chaka", 28, 14],
+  ["chaka", 23, 34],
+  ["chaka", 113, 39],
+  ["chaka", 92, 33],
+  ["chaka", 91, 79],
+  ["chaka", 78, 73],
+  ["chaka", 88, 100],
+  ["chaka", 107, 95],
+  ["chaka", 109, 112],
+  ["chaka", 108, 119],
+  ["chaka", 104, 116],
+  ["chaka", 124, 124],
+  ["chaka", 118, 117],
+  ["chaka", 126, 113],
+  ["chaka", 99, 122],
+  ["chaka", 21, 125],
+  ["chaka", 14, 108],
+  ["chaka", 7, 104],
+  ["chaka", 10, 126],
+  ["chaka", 3, 121],
+  ["chaka", 41, 74],
+  ["chaka", 39, 67],
+  ["chaka", 31, 72],
+  ["makulis", 2, 65],
+  ["makulis", 10, 102],
+  ["makulis", 20, 30],
+  ["makulis", 4, 18],
+  ["makulis", 59, 1],
+  ["despeinada", 18, 118],
+  ["despeinada", 92, 8],
+  ["despeinada", 125, 20],
+  ["despeinada", 125, 26],
+  ["despeinada", 118, 30],
+  ["despeinada", 101, 32],
+  ["despeinada", 79, 32],
+  ["despeinada", 85, 39],
+  ["despeinada", 79, 48],
+  ["despeinada", 69, 49],
+  ["despeinada", 28, 31],
+  ["despeinada", 44, 84],
+  ["despeinada", 14, 76],
+  ["despeinada", 13, 61],
+  ["despeinada", 99, 126],
+  ["despeinada", 122, 112],
+  ["despeinada", 107, 103],
+  ["checkpoint", 101, 42],
+  ["checkpoint", 3, 90],
+  ["checkpoint", 53, 96],
+  ["ruina", 36, 116, 0],
+  ["ruina", 37, 108, 0],
+  ["ruina", 64, 110, 0],
+  ["ruina", 49, 68, 0],
+  ["ruina", 38, 36, 0],
+  ["ruina", 74, 69, 0],
+  ["ruina", 80, 60, 0],
+  ["ruina", 107, 42, 0],
+  ["ruina", 127, 9, 0],
+  ["ruina", 75, 6, 0],
+  ["ruina", 49, 14, 0],
+  ["ruina", 50, 29, 0],
+  ["ruina", 39, 13, 0],
+  ["ruina", 14, 19, 0],
+  ["ruina", 8, 36, 0],
+  ["ruina", 57, 57, 0],
+  ["ruina", 29, 52, 0],
+  ["ruina", 32, 67, 0],
+  ["ruina", 5, 79, 0],
+  ["ruina", 73, 121, 0],
+  ["ruina", 81, 113, 0],
+  ["ruina", 96, 105, 0],
+  ["ruina", 101, 87, 0],
+  ["ruina", 94, 86, 0],
+  ["ruina", 96, 90, 0],
+  ["ruina", 97, 83, 1],
+  ["ruina", 105, 81, 1],
+  ["ruina", 106, 71, 1],
+  ["ruina", 118, 50, 1],
+  ["ruina", 95, 41, 1],
+  ["ruina", 83, 43, 1],
+  ["ruina", 69, 30, 1],
+  ["ruina", 54, 36, 1],
+  ["ruina", 56, 48, 1],
+  ["ruina", 44, 13, 1],
+  ["ruina", 16, 14, 1],
+  ["ruina", 17, 43, 1],
+  ["ruina", 90, 17, 1],
+  ["ruina", 80, 15, 1],
+  ["ruina", 70, 4, 2],
+  ["ruina", 35, 4, 2],
+  ["ruina", 17, 32, 2],
+  ["ruina", 8, 63, 2],
+  ["ruina", 12, 82, 2],
+  ["ruina", 32, 63, 2],
+  ["ruina", 62, 104, 2],
+  ["ruina", 46, 118, 2],
+  ["ruina", 63, 125, 2],
+  ["ruina", 56, 106, 2],
+  ["ruina", 74, 95, 2],
+  ["ruina", 82, 95, 2],
+  ["ruina", 91, 116, 2],
+  ["ruina", 89, 108, 2],
+  ["ruina", 49, 57, 2],
+  ["ruina", 28, 65, 2],
+  ["alux", 27, 63],
+  ["alux", 28, 59],
+  ["alux", 32, 57],
+  ["alux", 36, 58],
+  ["alux", 44, 63],
+  ["alux", 51, 64],
+  ["alux", 58, 64],
+  ["alux", 66, 66],
+  ["alux", 11, 70],
+  ["alux", 9, 72],
+  ["alux", 9, 80],
+  ["alux", 9, 86],
+  ["alux", 8, 92],
+  ["alux", 15, 98],
+  ["alux", 27, 85],
+  ["alux", 31, 84],
+  ["alux", 38, 78],
+  ["alux", 51, 81],
+  ["alux", 56, 85],
+  ["alux", 67, 120],
+  ["alux", 57, 123],
+  ["alux", 40, 118],
+  ["alux", 43, 110],
+  ["alux", 52, 115],
+  ["alux", 61, 115],
+  ["novio", 53, 120],
+  ["huaychivo", 40, 106],
+  ["huaychivo", 65, 124],
+  ["huaychivo", 56, 118],
+  ["huaychivo", 48, 113],
+  ["huaychivo", 98, 87],
+  ["huaychivo", 114, 46],
+  ["alux", 78, 60],
+  ["alux", 77, 59],
+  ["alux", 87, 44],
+  ["alux", 84, 42],
+  ["huaychivo", 47, 36],
+  ["huaychivo", 62, 112],
+  ["kaskabal", 108, 28],
+  ["kaskabal", 90, 25],
+  ["kaskabal", 77, 23],
+  ["kaskabal", 65, 18],
+  ["kaskabal", 55, 2],
+  ["kaskabal", 30, 14],
+  ["kaskabal", 14, 2],
+  ["kaskabal", 4, 22],
+  ["kaskabal", 29, 38],
+  ["kaskabal", 8, 50],
+  ["kaskabal", 20, 58],
+  ["kaskabal", 41, 47],
+  ["kaskabal", 67, 46],
+  ["kaskabal", 83, 35],
+  ["kaskabal", 108, 63],
+  ["kaskabal", 96, 58],
+  ["kaskabal", 90, 68],
+  ["kaskabal", 72, 55],
+  ["kaskabal", 88, 81],
+  ["kaskabal", 94, 70],
+  ["kaskabal", 120, 83],
+  ["kaskabal", 118, 36],
+  ["kaskabal", 109, 108],
+  ["kaskabal", 113, 122],
+  ["kaskabal", 120, 108],
+  ["kaskabal", 65, 97],
+  ["kaskabal", 42, 85],
+  ["kaskabal", 22, 70],
+  ["kaskabal", 19, 92],
+  ["kaskabal", 26, 101],
+  ["kaskabal", 20, 106],
+  ["kaskabal", 5, 107],
+  ["kaskabal", 2, 118],
+  ["kaskabal", 16, 126],
+  ["kaskabal", 94, 1],
+  ["inicio", 126, 1],
+  ["ceiba", 108, 9],
+  ["ceiba", 97, 9],
+  ["ceiba", 62, 6],
+  ["ceiba", 25, 4],
+  ["ceiba", 5, 14],
+  ["ceiba", 2, 6],
+  ["ceiba", 6, 2],
+  ["ceiba", 7, 31],
+  ["ceiba", 6, 36],
+  ["ceiba", 31, 36],
+  ["ceiba", 40, 28],
+  ["ceiba", 46, 28],
+  ["ceiba", 62, 29],
+  ["ceiba", 74, 27],
+  ["ceiba", 95, 34],
+  ["huaychivo", 73, 33],
 ];

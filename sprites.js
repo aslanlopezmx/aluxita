@@ -870,6 +870,197 @@ function makeMayaHouse(v) {
   });
 }
 
+// ---------- Ruinas mayas (3 variantes, estructuras de piedra caliza, sin pirámides) ----------
+// 0 = muros caídos con greca, 1 = columnas rotas con fuste caído,
+// 2 = arco maya de bóveda en saliente (corbel), derruido de un lado
+const RUIN_FACE = ["#e2d6b6", "#c9bc9a", "#a89b7c"]; // cara clara, media y oscura
+const RUIN_SEAM = "#7d7158";
+const RUIN_GRECA = ["11111111", "10000001", "10111101", "10100001", "10111111"];
+
+// sillar suelto
+function ruinBlock(c, x, y, w, h) {
+  rect(c, x, y, w, h, "#b9ad8f");
+  rect(c, x, y, w, 1, "#e0d4b4");
+  rect(c, x + w - 1, y, 1, h, "#8f846b");
+  rect(c, x, y + h - 1, w, 1, "#7d7158");
+}
+
+// parches de musgo y enredadera sobre la piedra
+function ruinMoss(c, cx, cy, rx, ry, seed, n) {
+  const r = mulberry32(seed);
+  for (let k = 0; k < n; k++) {
+    const x = Math.round(cx + (r() - 0.5) * 2 * rx);
+    const y = Math.round(cy + (r() - 0.5) * 2 * ry);
+    px(c, x, y, "#4f7a2e");
+    px(c, x + 1, y, "#6f9a40");
+    if (r() < 0.5) px(c, x, y + 1, "#3d6024");
+  }
+}
+
+// Pared vista de lado, en el plano del eje gx (o gy si dir = -1).
+// hs(s) = alto en píxeles de la columna s (0 = hueco). skip(s, z) = true si ahí no hay piedra
+// (vano). La cara va de (x0, y0) hacia la derecha-abajo (dir 1) o izquierda-abajo (dir -1).
+function ruinWall(c, x0, y0, len, dir, hs, opt) {
+  opt = opt || {};
+  const face = dir === 1 ? RUIN_FACE[1] : RUIN_FACE[2];
+  const faceL = dir === 1 ? RUIN_FACE[0] : RUIN_FACE[1];
+  for (let s = 0; s < len; s++) {
+    const h = hs(s);
+    if (h <= 0) continue;
+    const x = x0 + dir * s;
+    const yb = y0 + (s >> 1);
+    // cara superior (grosor del muro)
+    rect(c, x, yb - h - 2, 1, 2, "#e8dcbc");
+    for (let z = 0; z < h; z++) {
+      const y = yb - z;
+      if (opt.skip && opt.skip(s, z)) {
+        // interior oscuro del vano
+        px(c, x, y, z > 14 ? "#3f372a" : z > 7 ? "#322b20" : "#241f16");
+        continue;
+      }
+      const n = hash2(x, z, 7);
+      let col = z > h - 3 ? faceL : face;
+      if (z % 5 === 4 || (s + Math.floor(z / 5) * 3) % 9 === 0) col = RUIN_SEAM;
+      else if (n < 0.1) col = RUIN_FACE[2];
+      else if (n > 0.93) col = RUIN_FACE[0];
+      px(c, x, y, col);
+    }
+    if (opt.greca) {
+      const gs = s - opt.greca[0];
+      if (gs >= 0 && gs < opt.greca[1]) {
+        const gz = opt.greca[2];
+        for (let r = 0; r < 5; r++)
+          if (RUIN_GRECA[r][gs % 8] === "1" && gz + r < h - 2)
+            px(c, x, yb - gz - r, dir === 1 ? "#6f634b" : "#5d523e");
+      }
+    }
+  }
+}
+
+// columna de fuste con tambores; roto = recorte irregular arriba
+function ruinColumn(c, x, yb, h, w, seed, broken) {
+  const r = mulberry32(seed);
+  const x0 = x - (w >> 1);
+  for (let i = 0; i < w; i++) {
+    const u = i / (w - 1);
+    const col = u < 0.3 ? "#e2d6b6" : u < 0.7 ? "#c9bc9a" : "#9c8f72";
+    const jag = broken ? Math.floor(r() * 4) : 0;
+    rect(c, x0 + i, yb - h + jag, 1, h - jag, col);
+  }
+  for (let k = 4; k < h - 1; k += 6) rect(c, x0, yb - k, w, 1, RUIN_SEAM);
+  ellipse(c, x, yb, (w >> 1) + 2, 2, "#8f846b"); // base
+  ellipse(c, x, yb - 1, (w >> 1) + 1, 1, "#b9ad8f");
+  if (!broken) {
+    // capitel
+    rect(c, x0 - 2, yb - h - 2, w + 4, 3, "#d8cbab");
+    rect(c, x0 - 2, yb - h + 1, w + 4, 1, RUIN_SEAM);
+  } else {
+    rect(c, x0 + 1, yb - h + 1, w - 2, 1, "#8f846b"); // fractura
+  }
+}
+
+function makeRuin(v) {
+  return sprite(84, 80, 42, 62, (c) => {
+    const CX = 42;
+    const B = 62;
+    ellipse(c, CX, B + 3, 36, 12, "rgba(0,0,0,0.25)");
+    const hw = v === 2 ? 26 : 28;
+    // plataforma baja de piedra
+    isoBox(
+      c,
+      CX,
+      B,
+      hw,
+      4,
+      "#bfb391",
+      "#847859",
+      "#a89c7c",
+      "#8e8366",
+      "#756a50",
+    );
+    const cy = B - 4;
+
+    if (v === 0) {
+      // ---- Muros caídos: dos muros en L con vano y greca ----
+      // muro A (hacia +gx, el más alto): se derrumba en dos puntos
+      ruinWall(
+        c,
+        CX,
+        cy - 11,
+        26,
+        1,
+        (s) => {
+          if (s >= 11 && s < 15) return 5; // brecha
+          if (s >= 15) return 13 - Math.floor((s - 15) / 3);
+          return s < 8 ? 24 : 24 - (s - 7) * 2;
+        },
+        { greca: [2, 8, 7] },
+      );
+      // muro B (hacia +gy)
+      ruinWall(
+        c,
+        CX,
+        cy - 11,
+        22,
+        -1,
+        (s) => (s < 12 ? 20 - Math.floor(s / 2) : s < 16 ? 7 : 5),
+        {},
+      );
+    } else if (v === 1) {
+      // ---- Columnas rotas ----
+      ruinColumn(c, CX + 1, cy - 8, 28, 7, 1, false); // atrás, entera
+      ruinColumn(c, CX - 15, cy - 1, 21, 7, 2, true);
+      ruinColumn(c, CX + 17, cy, 14, 7, 3, true);
+      ruinColumn(c, CX - 3, cy + 6, 7, 7, 4, true); // tocón al frente
+      // fuste caído sobre el piso (a lo largo de gx)
+      for (let s = 0; s < 18; s++) {
+        const x = CX + 6 + s;
+        const y = cy + 6 + (s >> 1);
+        const seam = s % 6 === 5;
+        rect(c, x, y - 3, 1, 1, "#e2d6b6");
+        rect(c, x, y - 2, 1, 2, seam ? RUIN_SEAM : "#c9bc9a");
+        rect(c, x, y, 1, 2, seam ? RUIN_SEAM : "#9c8f72");
+      }
+      ellipse(c, CX + 24, cy + 15, 3, 2, "#b9ad8f"); // extremo del fuste
+    } else {
+      // ---- Arco maya de bóveda en saliente ----
+      const half = (z) => 9 - 2 * Math.floor(z / 4);
+      ruinWall(
+        c,
+        CX - 20,
+        cy - 10,
+        40,
+        1,
+        (s) => {
+          if (s < 20) return 28;
+          if (s < 30) return 28 - Math.floor((s - 20) * 1.6);
+          return 8;
+        },
+        { skip: (s, z) => z < 20 && Math.abs(s - 14) < half(z) },
+      );
+    }
+
+    // escombros y vegetación
+    [
+      [CX - 22, cy + 6, 5, 4],
+      [CX - 16, cy + 9, 4, 3],
+      [CX + 10, cy + 11, 5, 4],
+      [CX + 4, cy + 13, 3, 3],
+      [CX + 21, cy + 6, 4, 3],
+    ].forEach(([x, y, w, h]) => ruinBlock(c, x, y, w, h));
+    ruinMoss(c, CX, cy, 20, 8, 31 + v, 16);
+    // enredadera colgando
+    const r = mulberry32(900 + v);
+    for (let k = 0; k < 4; k++) {
+      const x = CX - 16 + Math.round(r() * 32);
+      const y = cy - 14 + Math.round(r() * 12);
+      const L = 3 + Math.round(r() * 5);
+      for (let i = 0; i < L; i++)
+        px(c, x, y + i, i % 2 ? "#4f7a2e" : "#6f9a40");
+    }
+  });
+}
+
 // Faro costero con muralla almenada: torre cónica con franjas rojas, galería
 // con barandal, linterna de cristal con luz encendida y cúpula roja.
 // (Dibujado al doble de resolución que antes para poder darle detalle.)
@@ -5881,52 +6072,66 @@ function makeNovio(freed) {
       px(c, gx, gy - 1, MOSS);
     });
 
-    // Sombra bajo la plataforma (entre las patas)
-    rect(c, 13, 14, 20, 6, "rgba(0,0,0,0.28)");
-
-    // Patas de piedra (bloques con juntas, grietas y musgo)
-    [5, 33].forEach((lx) => {
-      rect(c, lx - 1, 10, 10, 11, OL);
-      rect(c, lx, 11, 8, 9, STONE_D);
-      rect(c, lx, 11, 8, 3, STONE);
-      rect(c, lx + 1, 12, 3, 1, STONE_L);
-      rect(c, lx, 14, 8, 1, "#3a3a35"); // junta entre bloques
-      rect(c, lx + 4, 15, 1, 4, "#3a3a35");
-      rect(c, lx + 1, 15, 2, 1, STONE);
-      rect(c, lx + 5, 16, 2, 1, STONE);
-      px(c, lx + 2, 18, "#33332e"); // grieta
-      px(c, lx + 3, 17, "#33332e");
-      rect(c, lx, 19, 8, 2, "#2c2c29");
-      // musgo
-      px(c, lx, 17, MOSS);
-      px(c, lx, 18, MOSS);
-      px(c, lx + 1, 18, MOSS_L);
-      px(c, lx + 7, 15, MOSS);
-      px(c, lx + 6, 14, MOSS_L);
+    // ---- Altar de piedra maya con rostros tallados ----
+    // Escalones de piedra (abajo)
+    rect(c, 0, 22, 46, 5, OL);
+    rect(c, 1, 23, 44, 3, STONE);
+    rect(c, 1, 23, 44, 1, STONE_L);
+    rect(c, 1, 25, 44, 1, STONE_D);
+    for (let x = 8; x < 44; x += 11) px(c, x, 24, STONE_D); // juntas
+    rect(c, 3, 20, 40, 3, OL);
+    rect(c, 4, 21, 38, 2, STONE_L);
+    rect(c, 4, 22, 38, 1, STONE);
+    // Cuerpo del altar
+    rect(c, 2, 11, 42, 10, OL);
+    rect(c, 3, 12, 40, 8, STONE);
+    rect(c, 3, 19, 40, 1, STONE_D);
+    // Pilares entre los rostros
+    [3, 15, 29, 41].forEach((px0) => {
+      const w = px0 === 3 || px0 === 41 ? 2 : 3;
+      rect(c, px0, 12, w, 8, STONE_L);
+      rect(c, px0 + w - 1, 12, 1, 8, STONE_D);
+      px(c, px0, 14, STONE);
+      px(c, px0, 17, STONE);
     });
-
-    // Petate de hojas de palma trenzadas
-    rect(c, 0, 7, 46, 8, OL);
-    rect(c, 1, 8, 44, 6, LEAF_D);
-    for (let x = 1; x <= 44; x++) {
-      const band = Math.floor((x - 1) / 3) % 2;
-      rect(c, x, 9, 1, 4, band ? LEAF : STRAW);
-      px(c, x, 9, band ? LEAF_L : STRAW_L);
-      if (x % 3 === 1) px(c, x, 11, band ? LEAF_D : "#5f512a"); // trenzado
-    }
-    rect(c, 1, 8, 44, 1, LEAF_L);
-    rect(c, 1, 13, 44, 1, "#2b4a20");
-    // Flecos deshilachados en las puntas
+    // Tres rostros tallados con mueca
     [
-      [0, 14],
-      [1, 15],
-      [2, 14],
-      [43, 14],
-      [44, 15],
-      [45, 14],
-    ].forEach(([fx, fy]) => px(c, fx, fy, LEAF_D));
-    px(c, 0, 15, STRAW);
-    px(c, 45, 15, STRAW);
+      [9, 5, 8],
+      [22, 18, 8],
+      [36, 32, 8],
+    ].forEach(([cx, x0, w]) => {
+      rect(c, x0, 12, w + 1, 8, OL);
+      rect(c, x0 + 1, 13, w - 1, 6, STONE_D);
+      rect(c, cx - 3, 13, 7, 1, STONE); // frente
+      rect(c, cx - 3, 14, 2, 1, STONE_L); // cejas
+      rect(c, cx + 2, 14, 2, 1, STONE_L);
+      rect(c, cx - 3, 15, 2, 1, OL); // ojos
+      rect(c, cx + 2, 15, 2, 1, OL);
+      px(c, cx, 15, STONE);
+      px(c, cx, 16, STONE_L); // nariz
+      rect(c, cx - 3, 17, 7, 2, OL); // boca
+      for (let t = -2; t <= 2; t += 2) px(c, cx + t, 17, "#d8d8c8"); // dientes
+      px(c, cx - 1, 18, "#d8d8c8");
+      px(c, cx + 1, 18, "#d8d8c8");
+    });
+    // Losa superior (plancha plana)
+    rect(c, 0, 7, 46, 5, OL);
+    rect(c, 1, 8, 44, 3, STONE_L);
+    rect(c, 1, 8, 44, 1, "#c4c4b6");
+    rect(c, 1, 10, 44, 1, STONE);
+    rect(c, 1, 11, 44, 1, STONE_D);
+    px(c, 14, 9, STONE);
+    px(c, 33, 9, STONE);
+    px(c, 34, 10, STONE_D);
+    px(c, 20, 10, STONE_D);
+    // Musgo y grietas
+    px(c, 1, 22, MOSS);
+    px(c, 2, 22, MOSS_L);
+    px(c, 44, 22, MOSS);
+    px(c, 43, 21, MOSS_L);
+    px(c, 14, 21, MOSS);
+    px(c, 28, 20, STONE_D);
+    px(c, 29, 19, STONE_D);
 
     // ---- El novio, acostado de espaldas sobre el petate (cabeza a la izquierda) ----
 
@@ -5977,58 +6182,47 @@ function makeNovio(freed) {
     // Manchas de suciedad
     px(c, 14, 7, SHIRT_DD);
 
-    // Cabeza (de perfil hacia arriba): cuello, cara, oreja y nariz
+    // Cabeza (hacia arriba): cuello, cara, oreja y nariz. El pelo va a la IZQUIERDA.
     rect(c, 10, 6, 3, 3, SKIN_D); // cuello
-    box(2, -1, 10, 10, SKIN);
-    rect(c, 2, 7, 10, 2, SKIN_D); // sombra de la mandíbula
-    rect(c, 3, 0, 8, 1, SKIN_L);
-    px(c, 2, 1, SKIN_L);
+    box(1, -1, 11, 10, SKIN);
+    rect(c, 1, 7, 11, 2, SKIN_D); // sombra de la mandíbula
+    rect(c, 6, 0, 5, 1, SKIN_L); // frente
     rect(c, 10, 3, 2, 3, SKIN_D); // oreja
     px(c, 11, 4, "#a8704c");
-    px(c, 7, 5, SKIN_D); // nariz
-    px(c, 6, 6, SKIN_D);
-    px(c, 8, 6, SKIN_D);
-    px(c, 7, 4, SKIN_L);
+    px(c, 8, 5, SKIN_D); // nariz
+    px(c, 7, 6, SKIN_D);
+    px(c, 9, 6, SKIN_D);
+    px(c, 8, 4, SKIN_L);
 
-    // Pelo (con volumen, brillo y mechones)
-    rect(c, 1, -4, 11, 4, HAIR);
-    rect(c, 2, -5, 9, 1, HAIR);
-    rect(c, 0, -2, 3, 5, HAIR); // patilla izquierda
-    rect(c, 10, -2, 2, 3, HAIR);
-    px(c, 3, -6, HAIR);
-    px(c, 7, -6, HAIR);
-    px(c, 9, -5, HAIR);
-    px(c, 5, -5, HAIR_L);
-    px(c, 6, -4, HAIR_L);
-    px(c, 3, -3, HAIR_L);
-    px(c, 8, -3, HAIR_L);
-    px(c, 10, -3, HAIR_L);
-    px(c, 1, 1, HAIR);
-    px(c, 4, 0, HAIR);
-    px(c, 7, 0, HAIR);
-    px(c, 9, 0, HAIR);
-    px(c, 6, -1, HAIR_L);
+    // Pelo: solo en el lado izquierdo de la cabeza (dentro del contorno de la cara)
+    rect(c, 1, -1, 5, 9, HAIR);
+    rect(c, 5, -1, 1, 3, HAIR); // hacia la frente
+    rect(c, 5, 6, 1, 2, HAIR); // hacia la nuca
+    pline(c, 2, 0, 2, 6, HAIR_L, 1);
+    px(c, 4, 1, HAIR_L);
+    px(c, 4, 4, HAIR_L);
+    px(c, 3, 6, HAIR_L);
+    px(c, 3, 7, "#1a0f0a");
+    px(c, 4, 3, "#1a0f0a");
 
     if (freed) {
       // Cejas relajadas y ojos abiertos (con brillo)
-      rect(c, 3, 1, 3, 1, HAIR);
-      rect(c, 8, 1, 2, 1, HAIR);
-      rect(c, 3, 2, 3, 2, "#ffffff");
-      rect(c, 8, 2, 2, 2, "#ffffff");
-      px(c, 4, 2, "#2a1a10");
-      px(c, 4, 3, "#2a1a10");
-      px(c, 9, 2, "#2a1a10");
-      px(c, 9, 3, "#2a1a10");
-      px(c, 3, 2, "#9a6a40");
+      rect(c, 7, 1, 2, 1, HAIR);
+      rect(c, 10, 1, 1, 1, HAIR);
+      rect(c, 7, 2, 2, 2, "#ffffff");
+      rect(c, 10, 2, 1, 2, "#ffffff");
+      px(c, 8, 2, "#2a1a10");
+      px(c, 8, 3, "#2a1a10");
+      px(c, 10, 3, "#2a1a10");
+      px(c, 7, 2, "#9a6a40");
       // Mejillas sonrojadas
-      px(c, 3, 5, "#ee8f8f");
-      px(c, 4, 5, "#ee8f8f");
-      px(c, 9, 5, "#ee8f8f");
+      px(c, 7, 5, "#ee8f8f");
+      px(c, 8, 5, "#ee8f8f");
       // Sonrisa con dientes
-      rect(c, 4, 7, 5, 1, "#ffffff");
-      px(c, 3, 6, "#8a4a3a");
-      px(c, 9, 6, "#8a4a3a");
-      rect(c, 4, 8, 5, 1, "#8a4a3a");
+      rect(c, 7, 7, 4, 1, "#ffffff");
+      px(c, 6, 6, "#8a4a3a");
+      px(c, 11, 6, "#8a4a3a");
+      rect(c, 7, 8, 4, 1, "#8a4a3a");
 
       // Una mano libre saluda: antebrazo en alto con manga y mano abierta
       box(16, -1, 3, 5, SHIRT_D);
@@ -6060,26 +6254,24 @@ function makeNovio(freed) {
       px(c, 30, -6, "#ff8fc0");
     } else {
       // Cejas fruncidas y ojos cerrados (con pestañas)
-      rect(c, 3, 1, 3, 1, HAIR);
-      rect(c, 8, 1, 2, 1, HAIR);
-      px(c, 5, 2, HAIR);
-      px(c, 8, 2, HAIR);
-      rect(c, 3, 3, 3, 1, OL);
-      rect(c, 8, 3, 2, 1, OL);
-      px(c, 3, 4, SKIN_D);
-      px(c, 9, 4, SKIN_D);
+      rect(c, 7, 1, 2, 1, HAIR);
+      rect(c, 10, 1, 1, 1, HAIR);
+      px(c, 9, 2, HAIR);
+      rect(c, 7, 3, 2, 1, OL);
+      rect(c, 10, 3, 1, 1, OL);
+      px(c, 7, 4, SKIN_D);
       // Moretón y rasguño en la cara
-      px(c, 3, 5, "#9a6a8a");
-      px(c, 4, 5, "#8a5a7a");
+      px(c, 7, 5, "#9a6a8a");
+      px(c, 8, 5, "#8a5a7a");
       pline(c, 9, 4, 10, 5, "#a8453a", 1);
       // Gota de sudor
-      px(c, 1, 4, "#bfe6ff");
-      px(c, 1, 5, "#8fd0f5");
+      px(c, 7, -2, "#bfe6ff");
+      px(c, 7, -1, "#8fd0f5");
       // Mordaza de tela con nudo y cabos
-      rect(c, 2, 6, 10, 2, OL);
-      rect(c, 3, 6, 8, 2, CLOTH);
-      rect(c, 3, 7, 8, 1, CLOTH_D);
-      px(c, 5, 6, "#ffffff");
+      rect(c, 5, 6, 7, 2, OL);
+      rect(c, 6, 6, 5, 2, CLOTH);
+      rect(c, 6, 7, 5, 1, CLOTH_D);
+      px(c, 7, 6, "#ffffff");
       rect(c, 11, 5, 3, 3, OL);
       rect(c, 11, 6, 2, 2, CLOTH_D); // nudo
       px(c, 12, 5, CLOTH);
@@ -6110,7 +6302,7 @@ function makeNovio(freed) {
       px(c, 37, 3, ROPE_L);
       px(c, 37, 6, ROPE_D);
       px(c, 38, 8, ROPE_D);
-      // Cabos de la cuerda atados al petate, a los lados
+      // Cabos de la cuerda atados al altar, a los lados
       pline(c, 14, 8, 6, 10, ROPE_D, 1);
       pline(c, 26, 9, 12, 12, ROPE_D, 1);
       pline(c, 37, 9, 43, 11, ROPE_D, 1);
@@ -6333,6 +6525,128 @@ function makeBoomerangSprite() {
     rect(c, 10, 6, 1, 1, S);
     rect(c, 7, 10, 2, 1, S);
   });
+}
+
+/* ---------- Red con pesas (atrapa a los NPC hostiles) ---------- */
+// Malla sostenida por sus 4 esquinas (una pesa en cada una): los 4 lados se
+// hunden hacia el centro, como una hamaca tensada. rows/cols = cuántos hilos
+// lleva la malla (más = más tupida, para cuando ya está bien abierta).
+function drawNetMesh(c, cx, cy, hw, hh, sag, rows, cols) {
+  const ROPE = "#6b2a1d";
+  const EDGE = "#8a3f26";
+  const WEIGHT = "#241022";
+  const x0 = cx - hw,
+    x1 = cx + hw;
+  const y0 = cy - hh,
+    y1 = cy + hh;
+  // Bézier cuadrática: el lado es recto en sus 2 extremos (las esquinas, donde
+  // van las pesas) y se arquea "sag" px hacia el centro a la mitad del camino
+  const bez = (ax, ay, mx, my, bx, by, t) => {
+    const u = 1 - t;
+    return [
+      u * u * ax + 2 * u * t * mx + t * t * bx,
+      u * u * ay + 2 * u * t * my + t * t * by,
+    ];
+  };
+  const topAt = (t) => bez(x0, y0, cx, y0 + sag, x1, y0, t);
+  const botAt = (t) => bez(x0, y1, cx, y1 - sag, x1, y1, t);
+  const leftAt = (t) => bez(x0, y0, x0 + sag, cy, x0, y1, t);
+  const rightAt = (t) => bez(x1, y0, x1 - sag, cy, x1, y1, t);
+
+  // Dibuja cada lado curvo (muestreado en segmentos rectos)
+  const curve = (fn) => {
+    const N = 10;
+    let prev = fn(0);
+    for (let s = 1; s <= N; s++) {
+      const p = fn(s / N);
+      pline(c, prev[0], prev[1], p[0], p[1], EDGE);
+      prev = p;
+    }
+  };
+  curve(topAt);
+  curve(botAt);
+  curve(leftAt);
+  curve(rightAt);
+
+  // Hilos interiores: de un punto del lado izquierdo al del lado derecho
+  // (horizontales) y de uno de arriba al de abajo (verticales)
+  for (let i = 1; i < rows; i++) {
+    const t = i / rows;
+    const [lx, ly] = leftAt(t);
+    const [rx, ry] = rightAt(t);
+    pline(c, lx, ly, rx, ry, ROPE);
+  }
+  for (let j = 1; j < cols; j++) {
+    const t = j / cols;
+    const [tx, ty] = topAt(t);
+    const [bx, by] = botAt(t);
+    pline(c, tx, ty, bx, by, ROPE);
+  }
+
+  // Pesas en las 4 esquinas
+  [
+    [x0, y0],
+    [x1, y0],
+    [x0, y1],
+    [x1, y1],
+  ].forEach(([x, y]) => disc(c, x, y, 3, WEIGHT));
+}
+
+// Fase 1: comprimida, como un atado cerrado con un cordón (las pesas asoman abajo)
+function makeRedBundle() {
+  return sprite(18, 20, 9, 18, (c) => {
+    ellipse(c, 9, 13, 7, 7, "#8a6a3a");
+    ellipse(c, 9, 13, 5, 5, "#6b4a2a");
+    rect(c, 6, 4, 6, 3, "#4a3118");
+    disc(c, 4, 18, 2, "#241022");
+    disc(c, 14, 18, 2, "#241022");
+  });
+}
+
+// Fase 2: a medio abrir (misma forma que la abierta, pero más chica y menos tupida)
+function makeRedMid() {
+  return sprite(56, 50, 28, 25, (c) => drawNetMesh(c, 28, 25, 22, 19, 9, 4, 4));
+}
+
+// Fase 3: abierta del todo; a propósito un poco más grande (en área) que el
+// kaskabal (el hostil más grande, sprite de 64x72), así se ve bien sobre
+// cualquier NPC hostil que atrape.
+function makeRedOpen() {
+  return sprite(92, 80, 46, 40, (c) =>
+    drawNetMesh(c, 46, 40, RED_OPEN_HW, RED_OPEN_HH, 16, 6, 6),
+  );
+}
+
+function buildRedSprites() {
+  return { closed: makeRedBundle(), mid: makeRedMid(), open: makeRedOpen() };
+}
+
+// Imagen del recuerdo "¡Encontraste la red!" (se dibuja en un canvas)
+function makeRedCardImage() {
+  const W = 160;
+  const H = 120;
+  const cv = makeCanvas(W, H);
+  const c = cv.getContext("2d");
+  c.imageSmoothingEnabled = false;
+  const g = c.createLinearGradient(0, 0, 0, H);
+  g.addColorStop(0, "#1b3a2a");
+  g.addColorStop(1, "#5a6a2a");
+  c.fillStyle = g;
+  c.fillRect(0, 0, W, H);
+  const spr = SP.red.open;
+  const k = 1.3;
+  c.drawImage(
+    spr.cv,
+    0,
+    0,
+    spr.cv.width,
+    spr.cv.height,
+    (W - spr.cv.width * k) / 2,
+    (H - spr.cv.height * k) / 2 + 6,
+    spr.cv.width * k,
+    spr.cv.height * k,
+  );
+  return cv.toDataURL("image/png");
 }
 
 // Imagen del recuerdo "¡Encontraste el boomerang!" (se dibuja en un canvas)
@@ -6831,6 +7145,7 @@ function buildSprites() {
   SP.cathedral = makeCathedral();
   SP.houses = Array.from({ length: HOUSE_VARIANTS }, (_, v) => makeHouse(v));
   SP.mayaHouses = [0, 1, 2].map(makeMayaHouse);
+  SP.ruins = [0, 1, 2].map(makeRuin);
   SP.lighthouse = makeLighthouse();
   SP.crop = makeCropPatch();
   SP.boat = makeBoat();
@@ -6841,6 +7156,7 @@ function buildSprites() {
   SP.monteGrass = [0, 1, 2, 3].map(makeMonteGrass);
   SP.sword = makeSwordSprite();
   SP.boomerang = makeBoomerangSprite();
+  SP.red = buildRedSprites();
   SP.checkpoint = [makeCheckpointSprite(false), makeCheckpointSprite(true)];
   SP.sign = makeSignSprite();
   SP.collect = {};

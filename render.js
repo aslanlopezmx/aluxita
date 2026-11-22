@@ -1482,6 +1482,48 @@ function drawObj(o, x, y, now) {
       break;
     }
 
+    case "red": {
+      // Pickup en el suelo: mismo tratamiento que la espada/boomerang (flota y brilla)
+      const bob = Math.round(Math.sin(now / 350) * 2);
+      ellipse(ctx, x, y, 8, 3, "rgba(0,0,0,0.25)");
+      ctx.globalAlpha = 0.18 + 0.1 * Math.sin(now / 300);
+      ellipse(ctx, x, y - 10 + bob, 12, 10, "#ffe28a");
+      ctx.globalAlpha = 1;
+      blit(SP.red.closed, x, y - 4 + bob);
+      const tw = Math.sin(now / 240);
+      if (tw > 0.2) {
+        const sx = x + (tw > 0.6 ? -9 : 9);
+        const sy = y - 22 + Math.round(tw * 2);
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(sx, sy - 1, 1, 3);
+        ctx.fillRect(sx - 1, sy, 3, 1);
+      }
+      break;
+    }
+
+    case "redFly": {
+      // En vuelo: se ve "abriéndose" según su fase (comprimida → a medio abrir → abierta)
+      ellipse(ctx, x, y, 8, 3, "rgba(0,0,0,0.3)");
+      const spr =
+        redNet.phase < RED_OPEN_FRAMES * 0.4
+          ? SP.red.closed
+          : redNet.phase < RED_OPEN_FRAMES
+            ? SP.red.mid
+            : SP.red.open;
+      blit(spr, x, y + (spr === SP.red.closed ? -6 : -18));
+      break;
+    }
+
+    case "redGround": {
+      // Tendida y abierta en el suelo: si atrapó a alguien, parpadea justo antes
+      // de desaparecer; si no atrapó a nadie, ya se ve que se va casi de inmediato.
+      const left = redNet.stunMax - redNet.life;
+      if (redNet.caught && left < RED_BLINK_FRAMES && redNet.life % 8 < 4)
+        break; // parpadeo
+      blit(SP.red.open, x, y - 18);
+      break;
+    }
+
     case "sword": {
       // Flota, brilla con un halo y suelta destellos
       const bob = Math.round(Math.sin(now / 350) * 2);
@@ -1602,6 +1644,16 @@ function draw(now) {
     boomerang.h = tileH(Math.round(boomerang.gx), Math.round(boomerang.gy));
     boomerang.depth = boomerang.gx + boomerang.gy + 0.5;
     pushObj(boomerang);
+  }
+  if (redItem && !redItem.collected) {
+    redItem.h = tileH(Math.round(redItem.gx), Math.round(redItem.gy));
+    pushObj(redItem);
+  }
+  if (redNet) {
+    redNet.kind = redNet.landed ? "redGround" : "redFly";
+    redNet.h = tileH(Math.round(redNet.gx), Math.round(redNet.gy));
+    redNet.depth = redNet.gx + redNet.gy + 0.5;
+    pushObj(redNet);
   }
   checkpoints.forEach((cp) => {
     if (!cp.obj)
